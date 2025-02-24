@@ -42,17 +42,21 @@ class _ImageWidgetState extends State<ImageWidget> {
         ),
       ),
       Positioned(
-        left: 25,
-        top: 40,
-        child: Container(
+          left: 25,
+          top: 40,
+          child: Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.grey[200],
             ),
-            child: Icon(Icons.arrow_back)),
-      )
+            child: IconButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                icon: Icon(Icons.arrow_back)),
+          ))
     ]);
   }
 }
