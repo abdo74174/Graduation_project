@@ -5,6 +5,7 @@ import 'package:graduation_project/Models/subcateoery_model.dart';
 import 'package:graduation_project/components/Category_view.dart';
 import 'package:graduation_project/components/product.dart';
 import 'package:graduation_project/components/subcategory.dart';
+import 'package:graduation_project/components/test.dart';
 import 'package:graduation_project/screens/product_page.dart';
 
 List<Category> categories = [
@@ -45,15 +46,11 @@ List<SubCategory> subCategories = [
   SubCategory(id: 18, categoryId: 5, name: "First Aid Kits"),
   SubCategory(id: 19, categoryId: 5, name: "Mobility Aids"),
 ];
-// admin 
+// admin
 
+// user
 
-
-// user 
-
-
-
-// merchant 
+// merchant
 
 List<Product> products = [
   // Furniture - Patients Room

@@ -5,9 +5,10 @@ import 'package:graduation_project/components/Category_view.dart';
 import 'package:graduation_project/components/drawer.dart';
 import 'package:graduation_project/components/product.dart';
 import 'package:graduation_project/components/searchbar.dart';
+import 'package:graduation_project/components/test.dart';
 import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
-import 'package:graduation_project/screens/product_page.dart';
+
 import 'package:graduation_project/screens/wishlist.dart';
 
 class HomePage extends StatefulWidget {

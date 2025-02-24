@@ -28,9 +28,7 @@ class CategoryView extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: borderColor, width: 2),
                 image: DecorationImage(
-                    image: AssetImage(category.imageUrl), // Load image here
-                    fit: BoxFit.fill // Adjust image fit
-                    ),
+                    image: AssetImage(category.imageUrl), fit: BoxFit.fill),
               ),
             ),
             SizedBox(height: 5),

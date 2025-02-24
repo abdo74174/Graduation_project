@@ -18,7 +18,7 @@ class ProductCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Container(
-            width: 180,
+            width: 160,
             padding: EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -28,7 +28,7 @@ class ProductCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
                     product.imageUrl,
-                    height: 120,
+                    height: 140,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>
