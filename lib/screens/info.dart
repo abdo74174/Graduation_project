@@ -13,7 +13,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   String? selectedRole;
   String? selectedSpecialty;
 
-  final List<String> roles = ['As a Doctor'];
+  final List<String> roles = ['Doctor', 'Merchant', 'MedicalTrader'];
+
   final List<String> specialties = [
     'General Internal Medicine',
     'Cardiology',

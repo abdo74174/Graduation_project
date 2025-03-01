@@ -126,8 +126,6 @@ class _WishlistPageState extends State<WishlistPage> {
                     },
                   ),
                 ),
-
-                // Filter Button
                 Expanded(
                   child: GestureDetector(
                     onTap: _openFilterDialog,

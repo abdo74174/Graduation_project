@@ -25,7 +25,7 @@ class _ImageWidgetState extends State<ImageWidget> {
       Positioned(
         left: 350,
         top: 40,
-        child: Container(
+        child: SizedBox(
           width: 40,
           height: 40,
           child: IconButton(

@@ -1,10 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+import 'package:graduation_project/components/productc/build_text_field.dart';
+import 'package:graduation_project/components/productc/build_description_field.dart';
+import 'package:graduation_project/components/productc/build_drop_down.dart';
+import 'package:graduation_project/components/productc/pricing_section.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _AddProductScreenState createState() => _AddProductScreenState();
 }
 
@@ -15,6 +20,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  String? selectedStatus;
+  String? selectedCategory;
+  String? selectedSubCategory;
+
   List<String> productStatus = ["Available", "Out of Stock"];
   List<String> productCategories = ["Medicine", "Equipment"];
   List<String> productSubCategories = ["Dental", "Surgical"];
@@ -22,56 +31,131 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Add New Product"),
-        leading: BackButton(),
-      ),
+      appBar: AppBar(title: Text("Add New Product"), leading: BackButton()),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField("Product Name", _productNameController),
+            BuildTextField(
+              controller: _productNameController,
+              label: "Product Name",
+            ),
             SizedBox(height: 10),
-            _buildDescriptionField(),
+            BuildDescriptionField(
+              descriptionController: _descriptionController,
+            ),
             SizedBox(height: 10),
-            _buildDropdown("Product Status", productStatus),
+            BuildDropdown(
+              label: "Product Status",
+              options: productStatus,
+              selectedValue: selectedStatus,
+              onChanged: (value) {
+                setState(() {
+                  selectedStatus = value;
+                });
+              },
+            ),
             SizedBox(height: 10),
-            _buildDropdown("Product Category", productCategories),
-            _buildDropdown("Product SubCategory", productSubCategories),
+            BuildDropdown(
+              label: "Product Category",
+              options: productCategories,
+              selectedValue: selectedCategory,
+              onChanged: (value) {
+                setState(() {
+                  selectedCategory = value;
+                });
+              },
+            ),
+            SizedBox(height: 10),
+            BuildDropdown(
+              label: "Product SubCategory",
+              options: productSubCategories,
+              selectedValue: selectedSubCategory,
+              onChanged: (value) {
+                setState(() {
+                  selectedSubCategory = value;
+                });
+              },
+            ),
             SizedBox(height: 20),
-            _buildImageSection(),
+            ImageUploadSection(), // قسم رفع الصور
             SizedBox(height: 20),
-            _buildPricingSection(),
+            PricingSection(
+              comparePriceController: _comparePriceController,
+              discountController: _discountController,
+              priceController: _priceController,
+            ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildImageSection() {
+class ImageUploadSection extends StatefulWidget {
+  const ImageUploadSection({super.key});
+
+  @override
+  _ImageUploadSectionState createState() => _ImageUploadSectionState();
+}
+
+class _ImageUploadSectionState extends State<ImageUploadSection> {
+  final List<File> _imageFiles = [];
+  // final ImagePicker _picker = ImagePicker();
+
+  // Future<void> _pickImage() async {
+  //   final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _imageFiles.add(File(pickedFile.path));
+  //     });
+  //   }
+  // }
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Product Images",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(
+          "Product Images",
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
         SizedBox(height: 10),
-        SizedBox(
-          height: 100,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _buildImageItem('assets/images/photo.jpg'),
-              _buildImageItem('assets/images/photo2.jpg'),
-              _buildImageItem('assets/images/photo3.jpg'),
-            ],
-          ),
+        Row(
+          children: [
+            GestureDetector(
+              // onTap: _pickImage,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade400),
+                  borderRadius: BorderRadius.circular(10),
+                  color: Colors.grey.shade200,
+                ),
+                child: Icon(Icons.add_a_photo, color: Colors.grey.shade600),
+              ),
+            ),
+            SizedBox(width: 10),
+            Expanded(
+              child: SizedBox(
+                height: 100,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children:
+                      _imageFiles.map((file) => _buildImageItem(file)).toList(),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildImageItem(String imagePath) {
+  Widget _buildImageItem(File imageFile) {
     return Container(
       width: 80,
       height: 80,
@@ -80,140 +164,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(10),
         color: Colors.grey.shade200,
-        image: DecorationImage(
-          image: AssetImage(imagePath),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPricingSection() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-              color: const Color.fromARGB(255, 255, 255, 255),
-              blurRadius: 3,
-              spreadRadius: 2),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Pricing",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _buildTextField("Price", _priceController)),
-              SizedBox(width: 10),
-              Expanded(
-                  child: _buildTextField(
-                      "Compare at Price", _comparePriceController,
-                      isStrikethrough: true)),
-            ],
-          ),
-          SizedBox(height: 10),
-          _buildTextField("Discount", _discountController, isPercentage: true),
-          SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _buildButton("Discard", Colors.white, Colors.black, true),
-              SizedBox(width: 10),
-              _buildButton("Schedule", Colors.blue.shade100, Colors.black),
-              SizedBox(width: 10),
-              _buildButton("Add Product", Colors.blue, Colors.white),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(String label, TextEditingController controller,
-      {bool isPercentage = false, bool isStrikethrough = false}) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.grey.shade600),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade600, width: 2),
-        ),
-        suffixText: isPercentage ? "%" : null,
-      ),
-      style: TextStyle(
-        color: Colors.grey.shade800,
-        decoration:
-            isStrikethrough ? TextDecoration.lineThrough : TextDecoration.none,
-      ),
-      keyboardType: TextInputType.number,
-    );
-  }
-
-  Widget _buildButton(String text, Color bgColor, Color textColor,
-      [bool isOutlined = false]) {
-    return ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        backgroundColor: bgColor,
-        foregroundColor: textColor,
-        side: isOutlined ? BorderSide(color: Colors.black) : BorderSide.none,
-      ),
-      child: Text(text),
-    );
-  }
-
-  Widget _buildDescriptionField() {
-    return TextField(
-      controller: _descriptionController,
-      maxLines: 4,
-      decoration: InputDecoration(
-        labelText: "Product Description",
-        labelStyle: TextStyle(color: Colors.grey.shade600),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade600, width: 2),
-        ),
-      ),
-      style: TextStyle(color: Colors.grey.shade800),
-    );
-  }
-
-  Widget _buildDropdown(String label, List<String> options) {
-    return DropdownButtonFormField<String>(
-      items: options
-          .map((option) => DropdownMenuItem(value: option, child: Text(option)))
-          .toList(),
-      onChanged: (value) {},
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.grey.shade400),
-        ),
+        image: DecorationImage(image: FileImage(imageFile), fit: BoxFit.cover),
       ),
     );
   }

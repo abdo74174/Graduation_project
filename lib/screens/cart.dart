@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/components/cart/cart_item.dart';
+import 'package:graduation_project/components/cart/checkout_button.dart';
+import 'package:graduation_project/components/cart/total_amount_row.dart';
 import 'package:graduation_project/screens/homepage.dart';
 
 class CartPage extends StatefulWidget {
@@ -96,24 +99,30 @@ class _CartPageState extends State<CartPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                    child: cartItem(
-                        'assets/images/photo.jpg',
-                        'Anesthesia Machine WATO EX-20',
-                        price1,
-                        '450',
-                        quantity1, (value) {
-                  setState(() => quantity1 = value);
-                })),
+                  child: CartItem(
+                    imagePath: 'assets/images/photo.jpg',
+                    price: 400,
+                    oldPrice: '600',
+                    title: 'Anesthesia Machine WATO EX-20',
+                    quantity: 3,
+                    onQuantityChanged: (value) {
+                      setState(() => quantity2 = value);
+                    },
+                  ),
+                ),
                 SizedBox(width: 10),
                 Expanded(
-                    child: cartItem(
-                        'assets/images/photo2.jpg',
-                        'Air Compressing Therapy Device Power-Q1000 Plus',
-                        price2,
-                        '',
-                        quantity2, (value) {
-                  setState(() => quantity2 = value);
-                })),
+                  child: CartItem(
+                    imagePath: 'assets/images/photo2.jpg',
+                    oldPrice: '400',
+                    price: 300,
+                    onQuantityChanged: (value) {
+                      setState(() => quantity2 = value);
+                    },
+                    quantity: 4,
+                    title: 'Air Compressing Therapy Device Power-Q1000 Plus',
+                  ),
+                ),
               ],
             ),
             Divider(),
@@ -132,81 +141,6 @@ class _CartPageState extends State<CartPage> {
             )
           ],
         ),
-      ),
-    );
-  }
-
-  Widget totalAmountRow() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text('Total Amount',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text('\$$totalAmount',
-            style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black)),
-      ],
-    );
-  }
-
-  Widget cartItem(String imagePath, String title, int price, String oldPrice,
-      int quantity, Function(int) onQuantityChanged) {
-    return Column(
-      children: [
-        Image.asset(imagePath, width: 100, height: 100, fit: BoxFit.cover),
-        SizedBox(height: 5),
-        Text(title,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('\$$price',
-                style: TextStyle(
-                    color: Colors.red,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold)),
-            SizedBox(width: 10),
-            if (oldPrice.isNotEmpty)
-              Text('\$$oldPrice',
-                  style: TextStyle(
-                      decoration: TextDecoration.lineThrough,
-                      color: Colors.grey)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget checkoutButton() {
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
-          colors: [Colors.blue, Colors.lightBlueAccent, Colors.cyan],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: 15),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-        ),
-        onPressed: () {
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) {
-            return HomePage();
-          }));
-        },
-        child: Text('Check out',
-            style: TextStyle(fontSize: 18, color: Colors.white)),
       ),
     );
   }

@@ -1,0 +1,46 @@
+import 'package:flutter/material.dart';
+
+class BuildTextField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final bool isPercentage;
+  final bool isStrikethrough;
+
+  const BuildTextField({
+    super.key,
+    required this.controller,
+    required this.label,
+    this.isPercentage = false,
+    this.isStrikethrough = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.grey.shade600),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade400),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade400),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey.shade600, width: 2),
+        ),
+        suffixText: isPercentage ? "%" : null,
+      ),
+      style: TextStyle(
+        color: Colors.grey.shade800,
+        decoration:
+            isStrikethrough ? TextDecoration.lineThrough : TextDecoration.none,
+      ),
+      keyboardType: TextInputType.number,
+    );
+  }
+}

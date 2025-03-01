@@ -2,6 +2,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/screens/info.dart';
 import 'package:graduation_project/screens/register.dart';
 
@@ -16,8 +17,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
 
   final TextEditingController _passwordController = TextEditingController();
-
-  bool _isPasswordHidden = true;
 
   String? _emailError;
 
@@ -61,18 +60,18 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 20),
-          inputField(
-            'Enter Your Email',
-            Icons.email_outlined,
-            _emailController,
-            false,
+          CustomInputField(
+            controller: _emailController,
+            hint: 'Enter Your Email',
+            icon: Icons.email_outlined,
+            isPassword: false,
             errorText: _emailError,
           ),
-          inputField(
-            'Enter Your Password',
-            Icons.lock_outline,
-            _passwordController,
-            true,
+          CustomInputField(
+            controller: _passwordController,
+            hint: 'Enter Your Password',
+            icon: Icons.lock_outline,
+            isPassword: true,
             errorText: _passwordError,
           ),
           Padding(
@@ -168,42 +167,6 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget inputField(String hint, IconData icon,
-      TextEditingController controller, bool isPassword,
-      {String? errorText}) {
-    return Padding(
-      padding: const EdgeInsets.all(12),
-      child: TextField(
-        controller: controller,
-        obscureText: isPassword ? _isPasswordHidden : false,
-        decoration: InputDecoration(
-          prefixIcon: Icon(icon, color: Colors.grey[600]),
-          suffixIcon: isPassword
-              ? IconButton(
-                  icon: Icon(
-                    _isPasswordHidden ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey[600],
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordHidden = !_isPasswordHidden;
-                    });
-                  },
-                )
-              : null,
-          hintText: hint,
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.8),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.black12),
-          ),
-          errorText: errorText,
-        ),
       ),
     );
   }
