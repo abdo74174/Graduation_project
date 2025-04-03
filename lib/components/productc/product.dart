@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
 
 class ProductCard extends StatelessWidget {
-  final Product product;
+  final ProductModel product;
   final void Function() onTap;
   const ProductCard({super.key, required this.product, required this.onTap});
 
@@ -27,12 +27,16 @@ class ProductCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
-                    product.imageUrl,
+                    product.image,
                     height: 140,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        Icon(Icons.broken_image, size: 80, color: Colors.grey),
+                    errorBuilder:
+                        (context, error, stackTrace) => Icon(
+                          Icons.broken_image,
+                          size: 80,
+                          color: Colors.grey,
+                        ),
                   ),
                 ),
                 SizedBox(height: 8),

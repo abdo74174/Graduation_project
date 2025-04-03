@@ -1,17 +1,51 @@
+// ignore_for_file: unused_import
+
+import 'dart:typed_data';
+
+import 'package:graduation_project/Models/subcateoery_model.dart';
+
+import 'product_model.dart';
+
 class Category {
-  final int id;
+  final int categoryId;
   final String name;
-  late final String imageUrl;
-  final String? Desc;
+  final String image;
+  final String description;
+  final List<SubCategory> subCategories;
+  final List<ProductModel> products;
+  static const String defaultImage = "assets/images/bone1.jpg";
+  Category({
+    required this.categoryId,
+    required this.name,
+    this.image = defaultImage,
+    required this.description,
+    required this.subCategories,
+    required this.products,
+  });
 
-  Category(
-      {required this.id, required this.name, String? imageUrl, this.Desc}) {
-    this.imageUrl = imageUrl ?? "assets/images/ct-scan (1) 1.jpg";
-  }
+  // factory Category.fromJson(Map<String, dynamic> json) {
+  //   return Category(
+  //     categoryId: json['categoryId'],
+  //     name: json['name'],
+  //     image: Uint8List.fromList(List<int>.from(json['image'])),
+  //     description: json['description'],
+  //     subCategories: (json['subCategories'] as List)
+  //         .map((e) => SubCategory.fromJson(e))
+  //         .toList(),
+  //     products: (json['products'] as List)
+  //         .map((e) => ProductModel.fromJson(e))
+  //         .toList(),
+  //   );
+  // }
 
-  // // Convert JSON to Category object
-  // factory Category.fromJson(Map<String, dynamic> json) => _$CategoryFromJson(json);
-
-  // // Convert Category object to JSON
-  // Map<String, dynamic> toJson() => _$CategoryToJson(this);
+  // Map<String, dynamic> toJson() {
+  //   return {
+  //     'categoryId': categoryId,
+  //     'name': name,
+  //     'image': image,
+  //     'description': description,
+  //     'subCategories': subCategories.map((e) => e.toJson()).toList(),
+  //     'products': products.map((e) => e.toJson()).toList(),
+  //   };
+  // }
 }

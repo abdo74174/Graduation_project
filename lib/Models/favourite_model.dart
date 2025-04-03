@@ -3,7 +3,7 @@ import 'package:graduation_project/Models/product_model.dart';
 class Favorite {
   final int id;
   final int userId;
-  final Product product;
+  final ProductModel product;
 
   Favorite({required this.id, required this.userId, required this.product});
 

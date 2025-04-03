@@ -7,11 +7,12 @@ class CategoryView extends StatelessWidget {
   final Category category;
   final VoidCallback onTap;
   final Color borderColor;
-  const CategoryView(
-      {super.key,
-      required this.category,
-      required this.onTap,
-      required this.borderColor});
+  const CategoryView({
+    super.key,
+    required this.category,
+    required this.onTap,
+    required this.borderColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -28,14 +29,13 @@ class CategoryView extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: borderColor, width: 2),
                 image: DecorationImage(
-                    image: AssetImage(category.imageUrl), fit: BoxFit.fill),
+                  image: AssetImage(category.image),
+                  fit: BoxFit.fill,
+                ),
               ),
             ),
             SizedBox(height: 5),
-            Text(
-              category.name,
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            Text(category.name, style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
       ),

@@ -1,28 +1,87 @@
-enum UserRole { buyer, seller, both }
+import 'dart:typed_data';
+import 'package:graduation_project/Models/contact_us_model.dart';
+import 'product_model.dart';
 
-// @JsonSerializable()
-class UserModel {
+class User {
   final int id;
-  final String name;
+  final String? name;
   final String email;
-  final String phone;
-  final String password;
-  final String address;
-  final UserRole role;
-  final String? profileImage;
+  final String? password;
+  final String? confirmPassword;
+  final String? resetToken;
+  final DateTime? resetTokenExpires;
+  final int phone;
+  final String? medicalSpecialist;
+  final String? address;
+  final Uint8List? profileImage;
+  final DateTime createdAt;
+  final String role;
+  final List<ProductModel> products;
+  final List<ContactUs> contactUsMessages;
 
-  UserModel({
+  User({
     required this.id,
-    required this.name,
+    this.name,
     required this.email,
+    this.password,
+    this.confirmPassword,
+    this.resetToken,
+    this.resetTokenExpires,
     required this.phone,
-    required this.password,
-    required this.address,
-    this.role = UserRole.both,
+    this.medicalSpecialist,
+    this.address,
     this.profileImage,
+    required this.createdAt,
+    required this.role,
+    required this.products,
+    required this.contactUsMessages,
   });
-}
 
-//   factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
-//   Map<String, dynamic> toJson() => _$UserModelToJson(this);
-// }
+  // factory User.fromJson(Map<String, dynamic> json) {
+  //   return User(
+  //     id: json['id'],
+  //     name: json['name'],
+  //     email: json['email'],
+  //     password: json['password'],
+  //     confirmPassword: json['confirmPassword'],
+  //     resetToken: json['resetToken'],
+  //     resetTokenExpires: json['resetTokenExpires'] != null
+  //         ? DateTime.parse(json['resetTokenExpires'])
+  //         : null,
+  //     phone: json['phone'],
+  //     medicalSpecialist: json['medicalSpecialist'],
+  //     address: json['address'],
+  //     profileImage: json['profileImage'] != null
+  //         ? Uint8List.fromList(List<int>.from(json['profileImage']))
+  //         : null,
+  //     createdAt: DateTime.parse(json['createdAt']),
+  //     role: json['role'],
+  //     products: (json['products'] as List)
+  //         .map((e) => ProductModel.fromJson(e))
+  //         .toList(),
+  //     contactUsMessages: (json['contactUs'] as List)
+  //         .map((e) => ContactUs.fromJson(e))
+  //         .toList(),
+  //   );
+  // }
+
+  // Map<String, dynamic> toJson() {
+  //   return {
+  //     'id': id,
+  //     'name': name,
+  //     'email': email,
+  //     'password': password,
+  //     'confirmPassword': confirmPassword,
+  //     'resetToken': resetToken,
+  //     'resetTokenExpires': resetTokenExpires?.toIso8601String(),
+  //     'phone': phone,
+  //     'medicalSpecialist': medicalSpecialist,
+  //     'address': address,
+  //     'profileImage': profileImage,
+  //     'createdAt': createdAt.toIso8601String(),
+  //     'role': role,
+  //     'products': products.map((e) => e.toJson()).toList(),
+  //     'contactUs': contactUsMessages.map((e) => e.toJson()).toList(),
+  //   };
+  // }
+}

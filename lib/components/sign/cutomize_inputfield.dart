@@ -32,18 +32,24 @@ class _CustomInputFieldState extends State<CustomInputField> {
         obscureText: widget.isPassword ? _isPasswordHidden : false,
         decoration: InputDecoration(
           prefixIcon: Icon(widget.icon, color: Colors.grey[600]),
-          suffixIcon: widget.isPassword
-              ? IconButton(
-                  icon: Icon(
-                    _isPasswordHidden ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey[600],
-                  ),
-                  onPressed: () =>
-                      setState(() => _isPasswordHidden = !_isPasswordHidden),
-                )
-              : null,
+          suffixIcon:
+              widget.isPassword
+                  ? IconButton(
+                    icon: Icon(
+                      _isPasswordHidden
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey[600],
+                    ),
+                    onPressed:
+                        () => setState(
+                          () => _isPasswordHidden = !_isPasswordHidden,
+                        ),
+                  )
+                  : null,
           hintText: widget.hint,
           filled: true,
+          // ignore: deprecated_member_use
           fillColor: Colors.white.withOpacity(0.8),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),

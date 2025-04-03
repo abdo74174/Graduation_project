@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/homepage.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
@@ -14,15 +15,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   String? selectedSpecialty;
 
   final List<String> roles = ['Doctor', 'Merchant', 'MedicalTrader'];
-
-  final List<String> specialties = [
-    'General Internal Medicine',
-    'Cardiology',
-    'Gastroenterology & Hepatology',
-    'Nephrology & Urology',
-    'Endocrinology & Diabetes',
-    'Rheumatology & Immunology'
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -61,12 +53,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   selectedRole = newValue;
                 });
               },
-              items: roles.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+              items:
+                  roles.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
             ),
             SizedBox(height: 20),
             Text(
@@ -91,12 +84,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   selectedSpecialty = newValue;
                 });
               },
-              items: specialties.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+              items:
+                  specialties.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
             ),
             SizedBox(height: 20),
             Container(
@@ -106,7 +100,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   colors: [
                     Colors.blue[900]!,
                     Colors.blue[500]!,
-                    Colors.blue[300]!
+                    Colors.blue[300]!,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -122,9 +116,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   shadowColor: Colors.transparent,
                 ),
                 onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return HomePage();
-                  }));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return HomePage();
+                      },
+                    ),
+                  );
                 },
                 child: Text(
                   'Next',

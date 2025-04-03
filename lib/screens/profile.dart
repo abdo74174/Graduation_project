@@ -10,7 +10,6 @@ class ProfilePage extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Stacked Images
             Stack(
               alignment: Alignment.center,
               clipBehavior: Clip.none, // Allows overflow
@@ -22,12 +21,12 @@ class ProfilePage extends StatelessWidget {
                   decoration: const BoxDecoration(
                     image: DecorationImage(
                       image: AssetImage(
-                          "assets/images/various-medical-equipments-blue-backdrop 1.png"),
+                        "assets/images/various-medical-equipments-blue-backdrop 1.png",
+                      ),
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                // Circular Profile Image
                 const Positioned(
                   bottom: -80,
                   child: CircleAvatar(
@@ -43,8 +42,6 @@ class ProfilePage extends StatelessWidget {
             ),
 
             const SizedBox(height: 60),
-
-            // User Details
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Card(
@@ -59,13 +56,22 @@ class ProfilePage extends StatelessWidget {
                       _buildProfileField("Name", "Magdy Yaqoub", Icons.person),
                       const SizedBox(height: 20),
                       _buildProfileField(
-                          "Email", "MagdyYaqoub@gmail.com", Icons.email),
+                        "Email",
+                        "MagdyYaqoub@gmail.com",
+                        Icons.email,
+                      ),
                       const SizedBox(height: 20),
                       _buildProfileField(
-                          "Password", "************", Icons.lock),
+                        "Password",
+                        "************",
+                        Icons.lock,
+                      ),
                       const SizedBox(height: 20),
                       _buildProfileField(
-                          "Specialty", "Cardiologia", Icons.medical_services),
+                        "Specialty",
+                        "Cardiologia",
+                        Icons.medical_services,
+                      ),
                     ],
                   ),
                 ),
@@ -84,8 +90,10 @@ class ProfilePage extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -94,10 +102,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 child: const Text(
                   'Edit Profile',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -108,7 +113,6 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // Custom Widget to Reduce Repetition
   Widget _buildProfileField(String label, String value, IconData icon) {
     return TextFormField(
       initialValue: value,

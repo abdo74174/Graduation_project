@@ -1,17 +1,29 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/product_model.dart';
 
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/productc/product_images.dart';
 
 class ProductPage extends StatefulWidget {
-  const ProductPage({super.key});
-
+  const ProductPage({super.key, required this.product});
+  final ProductModel product;
   @override
   State<ProductPage> createState() => _ProductPageState();
 }
 
 class _ProductPageState extends State<ProductPage> {
+  double getDiscountedPrice(ProductModel product) {
+    double discountedPrice =
+        product.price - (product.price * product.discount / 100);
+
+    discountedPrice = (discountedPrice * 100).toInt() / 100;
+
+    return discountedPrice;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -37,7 +49,9 @@ class _ProductPageState extends State<ProductPage> {
                 child: Row(
                   children: [
                     Text(
-                      "Dental Chair",
+                      widget.product.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -47,18 +61,20 @@ class _ProductPageState extends State<ProductPage> {
                     Spacer(),
                     Container(
                       decoration: BoxDecoration(
-                          color: Color(pkColor.value),
-                          borderRadius: BorderRadius.circular(16)),
+                        color: Color(pkColor.value),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       width: 100,
                       height: 40,
                       child: Center(
-                          child: Text(
-                        " % On Sale ",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                        child: Text(
+                          " % On Sale ",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      )),
+                      ),
                     ),
                   ],
                 ),
@@ -69,8 +85,9 @@ class _ProductPageState extends State<ProductPage> {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                          color: Color(0xFFEDEDED),
-                          borderRadius: BorderRadius.circular(16)),
+                        color: Color(0xFFEDEDED),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       width: 100,
                       height: 40,
                       child: Padding(
@@ -102,8 +119,9 @@ class _ProductPageState extends State<ProductPage> {
                     SizedBox(width: 7),
                     Container(
                       decoration: BoxDecoration(
-                          color: Color(0xFFEDEDED),
-                          borderRadius: BorderRadius.circular(16)),
+                        color: Color(0xFFEDEDED),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                       width: 100,
                       height: 40,
                       child: Padding(
@@ -133,12 +151,7 @@ class _ProductPageState extends State<ProductPage> {
                       ),
                     ),
                     SizedBox(width: 8),
-                    Text(
-                      "12 reviews",
-                      style: TextStyle(
-                        color: Colors.grey,
-                      ),
-                    )
+                    Text("12 reviews", style: TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),
@@ -148,7 +161,7 @@ class _ProductPageState extends State<ProductPage> {
                 child: Text(
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
-                  "A dental chair is a specialized medical chair designed for patient comfort and dentist accessibility during oral treatments. It features an adjustable headrest, armrests, and reclining capabilities to provide a seamless dental experience.",
+                  widget.product.description,
                   style: TextStyle(fontSize: 16),
                 ),
               ),
@@ -159,24 +172,31 @@ class _ProductPageState extends State<ProductPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   "Product Related to Item : ",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
               SizedBox(
                 height: 300,
                 child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: products.length,
-                    itemBuilder: (context, index) {
-                      return ProductCard(
-                        product: products[index],
-                        onTap: () {},
-                      );
-                    }),
-              )
+                  scrollDirection: Axis.horizontal,
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    return ProductCard(
+                      product: products[index],
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return ProductPage(product: products[index]);
+                            },
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
           Positioned(
@@ -196,7 +216,7 @@ class _ProductPageState extends State<ProductPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          "\$777",
+                          "\$${widget.product.price}",
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -207,7 +227,7 @@ class _ProductPageState extends State<ProductPage> {
                           ),
                         ),
                         Text(
-                          "\$550",
+                          "\$${getDiscountedPrice(widget.product)}",
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -227,8 +247,10 @@ class _ProductPageState extends State<ProductPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
                       ),
                       child: Text(
                         "Add To Cart",

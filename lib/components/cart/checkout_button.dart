@@ -1,3 +1,5 @@
+// ignore_for_file: camel_case_types
+
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/homepage.dart';
 
@@ -19,19 +21,26 @@ class checkoutButton extends StatelessWidget {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           padding: EdgeInsets.symmetric(vertical: 15),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
           backgroundColor: Colors.transparent,
           shadowColor: Colors.transparent,
         ),
         onPressed: () {
-          Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) {
-            return HomePage();
-          }));
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) {
+                return HomePage();
+              },
+            ),
+          );
         },
-        child: Text('Check out',
-            style: TextStyle(fontSize: 18, color: Colors.white)),
+        child: Text(
+          'Check out',
+          style: TextStyle(fontSize: 18, color: Colors.white),
+        ),
       ),
     );
   }

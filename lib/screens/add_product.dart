@@ -5,11 +5,13 @@ import 'package:graduation_project/components/productc/build_text_field.dart';
 import 'package:graduation_project/components/productc/build_description_field.dart';
 import 'package:graduation_project/components/productc/build_drop_down.dart';
 import 'package:graduation_project/components/productc/pricing_section.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _AddProductScreenState createState() => _AddProductScreenState();
 }
 
@@ -25,9 +27,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? selectedSubCategory;
 
   List<String> productStatus = ["Available", "Out of Stock"];
-  List<String> productCategories = ["Medicine", "Equipment"];
-  List<String> productSubCategories = ["Dental", "Surgical"];
-
+  List<String> productCategories =
+      categories.map((category) => category.name).toList();
+  List<String> productSubCategories =
+      subCategories.map((sub) => sub.name).toList();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -97,6 +100,7 @@ class ImageUploadSection extends StatefulWidget {
   const ImageUploadSection({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _ImageUploadSectionState createState() => _ImageUploadSectionState();
 }
 

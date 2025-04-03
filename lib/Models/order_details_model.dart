@@ -3,7 +3,7 @@ import 'package:graduation_project/Models/product_model.dart';
 class OrderDetail {
   final int id;
   final int orderId;
-  final Product product;
+  final ProductModel product;
   final int quantity;
   final double totalPrice;
 

@@ -6,6 +6,7 @@ class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _RegisterFormState createState() => _RegisterFormState();
 }
 
@@ -49,8 +50,9 @@ class _RegisterFormState extends State<RegisterForm> {
     }
 
     if (email.isEmpty ||
-        !RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-            .hasMatch(email)) {
+        !RegExp(
+          r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+        ).hasMatch(email)) {
       setState(() => _emailError = 'Enter a valid email');
       return;
     }
@@ -71,6 +73,7 @@ class _RegisterFormState extends State<RegisterForm> {
     }
 
     // Proceed with registration logic
+    // ignore: avoid_print
     print("Registration Successful!");
   }
 
@@ -100,6 +103,7 @@ class _RegisterFormState extends State<RegisterForm> {
               'Create an account to start using the app',
               textAlign: TextAlign.center,
               style: TextStyle(
+                // ignore: deprecated_member_use
                 color: Colors.black.withOpacity(0.7),
                 fontSize: 16,
                 fontFamily: 'Oswald',
@@ -138,8 +142,10 @@ class _RegisterFormState extends State<RegisterForm> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3E84D7),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 40,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -148,24 +154,32 @@ class _RegisterFormState extends State<RegisterForm> {
               child: const Text(
                 'Register',
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Already have an account? ",
-                    style: TextStyle(fontSize: 14)),
+                const Text(
+                  "Already have an account? ",
+                  style: TextStyle(fontSize: 14),
+                ),
                 TextButton(
-                  onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage())),
-                  child: const Text('Login',
-                      style: TextStyle(color: Colors.blue, fontSize: 14)),
+                  onPressed:
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      ),
+                  child: const Text(
+                    'Login',
+                    style: TextStyle(color: Colors.blue, fontSize: 14),
+                  ),
                 ),
               ],
             ),
