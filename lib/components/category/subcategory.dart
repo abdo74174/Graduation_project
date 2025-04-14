@@ -7,7 +7,8 @@ class SubCategoryView extends StatelessWidget {
   final Color? borderColor;
 
   const SubCategoryView(
-      {super.key, required this.subCategory,
+      {super.key,
+      required this.subCategory,
       required this.onTap,
       required this.borderColor});
 

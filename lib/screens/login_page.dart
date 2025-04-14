@@ -1,10 +1,13 @@
 // ignore: must_be_immutable
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, non_constant_identifier_names
 
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/info.dart';
 import 'package:graduation_project/screens/register.dart';
+import 'package:graduation_project/services/Sign.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,19 +17,16 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController();
-
+  static final TextEditingController emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   String? _emailError;
 
   String? _passwordError;
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  void clear() {
+    emailController.clear();
+    _passwordController.clear();
   }
 
   @override
@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
           const SizedBox(height: 20),
           CustomInputField(
-            controller: _emailController,
+            controller: emailController,
             hint: 'Enter Your Email',
             icon: Icons.email_outlined,
             isPassword: false,
@@ -111,10 +111,25 @@ class _LoginPageState extends State<LoginPage> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-                    return RoleSelectionScreen();
-                  }));
+                onPressed: () async {
+                  _validateForm();
+
+                  if (_emailError != null || _passwordError != null) {
+                    return;
+                  }
+                  bool isLoggedIn = LoginSuccess();
+
+                  if (isLoggedIn) {
+                    // for clear controllers
+                    // clear();
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => RoleSelectionScreen(),
+                      ),
+                    );
+                    showSnackbar(context, "Login Sucesssssss");
+                  }
                 },
                 child: const Text(
                   'Login',
@@ -171,6 +186,17 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  bool LoginSuccess() {
+    _validateForm();
+    if (_emailError == null && _passwordError == null) {
+      USerService().login(
+          email: emailController.text, password: _passwordController.text);
+      return true;
+    }
+
+    return false;
+  }
+
   // ignore: unused_element
   void _validateForm() {
     setState(() {
@@ -178,7 +204,7 @@ class _LoginPageState extends State<LoginPage> {
       _passwordError = null;
     });
 
-    String email = _emailController.text;
+    String email = emailController.text;
     String password = _passwordController.text;
 
     if (email.isEmpty) {
@@ -202,8 +228,19 @@ class _LoginPageState extends State<LoginPage> {
       });
       return;
     }
-
-    //print("Email: $email");
-    /// print("Password: $password");
   }
+
+  // Future<User> fetchUser() async {
+  //   User user;
+  //   try {
+  //     user = await USerService()
+  //         .GetUser(Email: emailController.text); // Pass the user ID
+
+  //     return user;
+  //     print('User fetched: ${user.name}, ${user.email}');
+  //   } catch (e) {
+  //     print('Error: $e');
+  //   }
+  //     return new use;
+  // }
 }

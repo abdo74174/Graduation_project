@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 
 class ImageWidget extends StatefulWidget {
   const ImageWidget({super.key});
@@ -35,6 +36,7 @@ class _ImageWidgetState extends State<ImageWidget> {
               size: 40,
             ),
             onPressed: () {
+              showSnackbar(context, "Added To FAV Successfully");
               isFavourite = !isFavourite;
               setState(() {});
             },

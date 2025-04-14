@@ -37,51 +37,54 @@ class User {
     required this.contactUsMessages,
   });
 
-  // factory User.fromJson(Map<String, dynamic> json) {
-  //   return User(
-  //     id: json['id'],
-  //     name: json['name'],
-  //     email: json['email'],
-  //     password: json['password'],
-  //     confirmPassword: json['confirmPassword'],
-  //     resetToken: json['resetToken'],
-  //     resetTokenExpires: json['resetTokenExpires'] != null
-  //         ? DateTime.parse(json['resetTokenExpires'])
-  //         : null,
-  //     phone: json['phone'],
-  //     medicalSpecialist: json['medicalSpecialist'],
-  //     address: json['address'],
-  //     profileImage: json['profileImage'] != null
-  //         ? Uint8List.fromList(List<int>.from(json['profileImage']))
-  //         : null,
-  //     createdAt: DateTime.parse(json['createdAt']),
-  //     role: json['role'],
-  //     products: (json['products'] as List)
-  //         .map((e) => ProductModel.fromJson(e))
-  //         .toList(),
-  //     contactUsMessages: (json['contactUs'] as List)
-  //         .map((e) => ContactUs.fromJson(e))
-  //         .toList(),
-  //   );
-  // }
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+      password: json['password'],
+      confirmPassword: json['confirmPassword'],
+      resetToken: json['resetToken'],
+      resetTokenExpires: json['resetTokenExpires'] != null
+          ? DateTime.parse(json['resetTokenExpires'])
+          : null,
+      phone: json['phone'],
+      medicalSpecialist: json['medicalSpecialist'],
+      address: json['address'],
+      profileImage: json['profileImage'] != null
+          ? Uint8List.fromList(List<int>.from(json['profileImage']))
+          : null,
+      createdAt: DateTime.parse(json['createdAt']),
+      role: json['role'],
+      products: (json['products'] as List?)
+              ?.map((item) => ProductModel.fromJson(item))
+              .toList() ??
+          [],
+      contactUsMessages: (json['contactUsMessages'] as List?)
+              ?.map((item) => ContactUs.fromJson(item))
+              .toList() ??
+          [],
+    );
+  }
 
-  // Map<String, dynamic> toJson() {
-  //   return {
-  //     'id': id,
-  //     'name': name,
-  //     'email': email,
-  //     'password': password,
-  //     'confirmPassword': confirmPassword,
-  //     'resetToken': resetToken,
-  //     'resetTokenExpires': resetTokenExpires?.toIso8601String(),
-  //     'phone': phone,
-  //     'medicalSpecialist': medicalSpecialist,
-  //     'address': address,
-  //     'profileImage': profileImage,
-  //     'createdAt': createdAt.toIso8601String(),
-  //     'role': role,
-  //     'products': products.map((e) => e.toJson()).toList(),
-  //     'contactUs': contactUsMessages.map((e) => e.toJson()).toList(),
-  //   };
-  // }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'password': password,
+      'confirmPassword': confirmPassword,
+      'resetToken': resetToken,
+      'resetTokenExpires': resetTokenExpires?.toIso8601String(),
+      'phone': phone,
+      'medicalSpecialist': medicalSpecialist,
+      'address': address,
+      'profileImage': profileImage,
+      'createdAt': createdAt.toIso8601String(),
+      'role': role,
+      'products': products.map((product) => product.toJson()).toList(),
+      'contactUsMessages':
+          contactUsMessages.map((message) => message.toJson()).toList(),
+    };
+  }
 }

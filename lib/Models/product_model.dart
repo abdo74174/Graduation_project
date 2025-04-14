@@ -26,33 +26,33 @@ class ProductModel {
     this.image = defaultImage, // Set default image
   });
 
-  // factory ProductModel.fromJson(Map<String, dynamic> json) {
-  //   return ProductModel(
-  //     productId: json['productId'],
-  //     name: json['name'],
-  //     description: json['description'],
-  //     price: (json['price'] as num).toDouble(),
-  //     isNew: json['isNew'],
-  //     discount: (json['discount'] as num).toDouble(),
-  //     subCategoryId: json['subCategoryId'],
-  //     categoryId: json['categoryId'],
-  //     userId: json['userId'],
-  //     image: json['image'] ?? defaultImage, // Use provided image or default
-  //   );
-  // }
+  factory ProductModel.fromJson(Map<String, dynamic> json) {
+    return ProductModel(
+      productId: json['productId'],
+      name: json['name'],
+      description: json['description'],
+      price: (json['price'] as num).toDouble(),
+      isNew: json['isNew'],
+      discount: (json['discount'] as num).toDouble(),
+      subCategoryId: json['subCategoryId'],
+      categoryId: json['categoryId'],
+      userId: json['userId'],
+      image: json['image'] ?? defaultImage, // Use provided image or default
+    );
+  }
 
-  // Map<String, dynamic> toJson() {
-  //   return {
-  //     'productId': productId,
-  //     'name': name,
-  //     'description': description,
-  //     'price': price,
-  //     'isNew': isNew,
-  //     'discount': discount,
-  //     'subCategoryId': subCategoryId,
-  //     'categoryId': categoryId,
-  //     'userId': userId,
-  //     'image': image,
-  //   };
-  // }
+  Map<String, dynamic> toJson() {
+    return {
+      'productId': productId,
+      'name': name,
+      'description': description,
+      'price': price,
+      'isNew': isNew,
+      'discount': discount,
+      'subCategoryId': subCategoryId,
+      'categoryId': categoryId,
+      'userId': userId,
+      'image': image,
+    };
+  }
 }

@@ -47,18 +47,22 @@ class _ProductPageState extends State<ProductPage> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      widget.product.name,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF333333),
+                    // Wrap the product name in Expanded to allow wrapping
+                    Expanded(
+                      child: Text(
+                        widget.product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
+                        ),
                       ),
                     ),
-                    Spacer(),
+                    SizedBox(width: 8),
                     Container(
                       decoration: BoxDecoration(
                         color: Color(pkColor.value),
@@ -68,7 +72,7 @@ class _ProductPageState extends State<ProductPage> {
                       height: 40,
                       child: Center(
                         child: Text(
-                          " % On Sale ",
+                          "% On Sale",
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -176,23 +180,29 @@ class _ProductPageState extends State<ProductPage> {
                 ),
               ),
               SizedBox(
+                height: 20,
+              ),
+              SizedBox(
                 height: 300,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: products.length,
                   itemBuilder: (context, index) {
-                    return ProductCard(
-                      product: products[index],
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return ProductPage(product: products[index]);
-                            },
-                          ),
-                        );
-                      },
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      child: ProductCard(
+                        product: products[index],
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return ProductPage(product: products[index]);
+                              },
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
@@ -241,7 +251,9 @@ class _ProductPageState extends State<ProductPage> {
                     width: 200,
                     height: 60,
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        showSnackbar(context, "Added To Cart Successfully");
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(pkColor.value),
                         shape: RoundedRectangleBorder(

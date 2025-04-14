@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
 
@@ -404,3 +405,8 @@ final List<String> specialties = [
   'Endocrinology & Diabetes',
   'Rheumatology & Immunology',
 ];
+
+void showSnackbar(BuildContext context, String message) {
+  final snackBar = SnackBar(content: Text(message));
+  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+}

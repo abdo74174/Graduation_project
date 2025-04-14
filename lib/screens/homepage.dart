@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/components/category/Category_view.dart';
 import 'package:graduation_project/components/home_page/drawer.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/home_page/searchbar.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/screens/login_page.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 
 import 'package:graduation_project/screens/wishlist.dart';
+import 'package:graduation_project/services/sign.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,6 +22,14 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
+  @override
+  void initState() {
+    super.initState();
+
+    ///fetchUserData();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -26,13 +37,12 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: Builder(
-          builder:
-              (context) => IconButton(
-                icon: Icon(Icons.menu, color: Colors.black),
-                onPressed: () {
-                  Scaffold.of(context).openDrawer();
-                },
-              ),
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu, color: Colors.black),
+            onPressed: () {
+              Scaffold.of(context).openDrawer();
+            },
+          ),
         ),
         actions: [
           IconButton(
@@ -139,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                 itemCount: categories.length,
                 itemBuilder: (context, index) {
                   return CategoryView(
-                    borderColor: Color(0x00ffffff),
+                    borderColor: Color(0xff3B8FDA),
                     category: categories[index],
                     onTap: () {
                       Navigator.push(
@@ -163,7 +173,7 @@ class _HomePageState extends State<HomePage> {
               children: [
                 Text(
                   "Products",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
                 ),
               ],
             ),

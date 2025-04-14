@@ -13,21 +13,21 @@ class ContactUs {
     this.user,
   });
 
-  // factory ContactUs.fromJson(Map<String, dynamic> json) {
-  //   return ContactUs(
-  //     messageId: json['messageId'],
-  //     message: json['message'],
-  //     userId: json['userId'],
-  //     user: json['user'] != null ? User.fromJson(json['user']) : null,
-  //   );
-  // }
+  factory ContactUs.fromJson(Map<String, dynamic> json) {
+    return ContactUs(
+      messageId: json['messageId'],
+      message: json['message'],
+      userId: json['userId'],
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
+    );
+  }
 
-  // Map<String, dynamic> toJson() {
-  //   return {
-  //     'messageId': messageId,
-  //     'message': message,
-  //     'userId': userId,
-  //     'user': user?.toJson(),
-  //   };
-  // }
+  Map<String, dynamic> toJson() {
+    return {
+      'messageId': messageId,
+      'message': message,
+      'userId': userId,
+      'user': user?.toJson(),
+    };
+  }
 }

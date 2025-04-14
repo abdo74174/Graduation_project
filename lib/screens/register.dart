@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/screens/login_page.dart';
+import 'package:graduation_project/services/Sign.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -44,21 +45,30 @@ class _RegisterFormState extends State<RegisterForm> {
     String password = _passwordController.text;
     String confirmPassword = _confirmPasswordController.text;
 
+    // Username check
     if (username.isEmpty) {
       setState(() => _usernameError = 'Username cannot be empty');
       return;
     }
 
+    // Email check
     if (email.isEmpty ||
-        !RegExp(
-          r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-        ).hasMatch(email)) {
+        !RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+            .hasMatch(email)) {
       setState(() => _emailError = 'Enter a valid email');
       return;
     }
 
+    // Password check (must be at least 8 characters, one letter, one number, one special character)
     if (password.isEmpty) {
       setState(() => _passwordError = 'Password cannot be empty');
+      return;
+    }
+
+    if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$')
+        .hasMatch(password)) {
+      setState(() => _passwordError =
+          'Password must be at least 8 characters, include a letter, number, and symbol');
       return;
     }
 
@@ -71,10 +81,6 @@ class _RegisterFormState extends State<RegisterForm> {
       setState(() => _confirmPasswordError = 'Passwords do not match');
       return;
     }
-
-    // Proceed with registration logic
-    // ignore: avoid_print
-    print("Registration Successful!");
   }
 
   @override
@@ -150,7 +156,19 @@ class _RegisterFormState extends State<RegisterForm> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              onPressed: _validateForm,
+              onPressed: () {
+                // if(!_validateForm){
+
+                // }
+                if (Sign()) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginPage(),
+                    ),
+                  );
+                }
+              },
               child: const Text(
                 'Register',
                 style: TextStyle(
@@ -169,13 +187,12 @@ class _RegisterFormState extends State<RegisterForm> {
                   style: TextStyle(fontSize: 14),
                 ),
                 TextButton(
-                  onPressed:
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
-                      ),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginPage(),
+                    ),
+                  ),
                   child: const Text(
                     'Login',
                     style: TextStyle(color: Colors.blue, fontSize: 14),
@@ -187,5 +204,25 @@ class _RegisterFormState extends State<RegisterForm> {
         ),
       ),
     );
+  }
+
+  bool Sign() {
+    _validateForm();
+
+    if (_usernameError == null &&
+        _emailError == null &&
+        _passwordError == null &&
+        _confirmPasswordError == null) {
+      USerService().signup(
+        name: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+      );
+
+      return true;
+    }
+
+    return false;
   }
 }
