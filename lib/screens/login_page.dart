@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/screens/forget_password.dart';
 import 'package:graduation_project/screens/info.dart';
 import 'package:graduation_project/screens/register.dart';
 import 'package:graduation_project/services/Sign.dart';
@@ -79,10 +80,17 @@ class _LoginPageState extends State<LoginPage> {
             child: Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ForgotPasswordScreen(),
+                    ),
+                  );
+                },
                 child: const Text(
                   'Forget your password?',
-                  style: TextStyle(color: Colors.black54, fontSize: 14),
+                  style: TextStyle(color: pkColor, fontSize: 14),
                 ),
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/login_page.dart';
+import 'package:graduation_project/screens/register.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -13,30 +14,34 @@ class WelcomePage extends StatelessWidget {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: ListView(
             children: [
+              SizedBox(
+                height: 30,
+              ),
               Image.asset(
                 'assets/images/Emergency cardiopulmonary resuscitation.jpg',
                 width: imageSize,
                 height: imageSize,
               ),
               const SizedBox(height: 20),
-              RichText(
-                text: const TextSpan(
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                    color: Colors.black,
-                  ),
-                  children: [
-                    TextSpan(text: 'Equip'),
-                    TextSpan(
-                      text: 'Now',
-                      style: TextStyle(color: Colors.blue),
+              Center(
+                child: RichText(
+                  text: const TextSpan(
+                    style: TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Poppins',
+                      color: Colors.black,
                     ),
-                  ],
+                    children: [
+                      TextSpan(text: 'Equip'),
+                      TextSpan(
+                        text: 'Now',
+                        style: TextStyle(color: Colors.blue),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 10),
@@ -95,7 +100,12 @@ class WelcomePage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => RegisterForm()),
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(

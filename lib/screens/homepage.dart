@@ -10,7 +10,7 @@ import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 
-import 'package:graduation_project/screens/wishlist.dart';
+import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/services/sign.dart';
 
 class HomePage extends StatefulWidget {
@@ -51,7 +51,7 @@ class _HomePageState extends State<HomePage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) {
-                    return WishlistPage();
+                    return FavoritePage();
                   },
                 ),
               );
