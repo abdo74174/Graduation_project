@@ -9,6 +9,7 @@ import 'package:graduation_project/screens/forget_password.dart';
 import 'package:graduation_project/screens/info.dart';
 import 'package:graduation_project/screens/register.dart';
 import 'package:graduation_project/services/Sign.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,6 +21,12 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   static final TextEditingController emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  Future<void> saveLoginState(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isLoggedIn', true);
+    await prefs.setString('userId', userId); // optional: store user id
+  }
 
   String? _emailError;
 
@@ -130,6 +137,8 @@ class _LoginPageState extends State<LoginPage> {
                   if (isLoggedIn) {
                     // for clear controllers
                     // clear();
+
+                    await saveLoginState(emailController.text);
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
