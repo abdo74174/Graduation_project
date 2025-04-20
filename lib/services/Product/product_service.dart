@@ -49,6 +49,8 @@ class ProductService {
     required String status,
     required int categoryId,
     required int subCategoryId,
+    // ignore: non_constant_identifier_names
+    required int StockQuantity,
     required List<File> imageFiles,
   }) async {
     if (name.isEmpty || description.isEmpty || imageFiles.isEmpty) {
@@ -92,6 +94,7 @@ class ProductService {
         'Discount': discount,
         'CategoryId': categoryId,
         'SubCategoryId': subCategoryId,
+        'StockQuantity': StockQuantity,
         'Images': await Future.wait(imageFiles.map((file) async {
           String extension = path.extension(file.path).toLowerCase();
           return await MultipartFile.fromFile(file.path,

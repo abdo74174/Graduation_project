@@ -3,6 +3,7 @@ import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/productc/product_images.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 
 class ProductPage extends StatefulWidget {
@@ -279,6 +280,10 @@ class _ProductPageState extends State<ProductPage> {
                     height: 60,
                     child: ElevatedButton(
                       onPressed: () {
+                        CartService().addToCart(
+                          widget.product.productId,
+                          2,
+                        );
                         showSnackbar(context, "Added To Cart Successfully");
                       },
                       style: ElevatedButton.styleFrom(

@@ -54,6 +54,7 @@ class PricingSection extends StatelessWidget {
               SizedBox(width: 10),
               Expanded(
                   child: BuildTextField(
+                      readOnly: true,
                       label: "Compare at Price",
                       controller: comparePriceController,
                       isStrikethrough: true)),

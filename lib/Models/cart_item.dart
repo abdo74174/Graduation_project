@@ -2,32 +2,36 @@ import 'package:graduation_project/Models/product_model.dart';
 
 class CartItem {
   final int id;
-  final int userId;
-  final ProductModel product;
+  final int cartId;
+  final int productId;
   int quantity;
+  final ProductModel product;
 
   CartItem({
     required this.id,
-    required this.userId,
-    required this.product,
+    required this.cartId,
+    required this.productId,
     required this.quantity,
+    required this.product,
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) {
     return CartItem(
-      id: json['id'],
-      userId: json['userId'],
-      product: ProductModel.fromJson(json['product']),
-      quantity: json['quantity'],
+      id: json['id'] as int? ?? 0, // Make sure it uses the correct key
+      cartId: json['cartId'] as int? ?? 0,
+      productId: json['productId'] as int? ?? 0,
+      quantity: json['quantity'] as int? ?? 0,
+      product: json['product'] != null
+          ? ProductModel.fromJson(json['product'] as Map<String, dynamic>)
+          : ProductModel.empty(), // Fallback to an empty product if null
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'userId': userId,
-      'product': product.toJson(),
-      'quantity': quantity,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'cartId': cartId,
+        'productId': productId,
+        'quantity': quantity,
+        'product': product.toJson(),
+      };
 }

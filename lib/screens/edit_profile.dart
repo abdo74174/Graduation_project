@@ -28,8 +28,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   ];
   void fetchUserData() async {
     try {
-      final fetchedUser =
-          await USerService().fetchUserByEmail("test@gmail.com");
+      final fetchedUser = await USerService().fetchUserByEmail("m@gmail.com");
       if (fetchedUser != null) {
         setState(() {
           user = fetchedUser;
@@ -103,28 +102,28 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   _buildLabel("Email"),
                   _buildTextField(_emailController, Icons.email),
 
-                  _buildLabel("Password"),
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
-                      ),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                    ),
-                  ),
+                  // _buildLabel("Password"),
+                  // TextField(
+                  //   controller: _passwordController,
+                  //   obscureText: _obscurePassword,
+                  //   decoration: InputDecoration(
+                  //     suffixIcon: IconButton(
+                  //       icon: Icon(
+                  //         _obscurePassword
+                  //             ? Icons.visibility_off
+                  //             : Icons.visibility,
+                  //         color: Colors.grey,
+                  //       ),
+                  //       onPressed: () {
+                  //         setState(() {
+                  //           _obscurePassword = !_obscurePassword;
+                  //         });
+                  //       },
+                  //     ),
+                  //     border: OutlineInputBorder(
+                  //         borderRadius: BorderRadius.circular(10)),
+                  //   ),
+                  // ),
 
                   const SizedBox(height: 15),
                   _buildLabel("Category"),
@@ -171,7 +170,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           await USerService().updateUserProfile(
                             email: _emailController.text,
                             name: _nameController.text,
-                            password: _passwordController.text,
+                            // password: _passwordController.text,
                             medicalSpecialist: _selectedCategory ?? "",
                             profileImage: null,
                           );

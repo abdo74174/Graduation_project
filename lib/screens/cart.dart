@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/cart_item.dart';
+import 'package:graduation_project/Models/cart_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/services/Cart/car_service.dart';
+import 'package:graduation_project/services/Product/product_service.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -11,49 +14,52 @@ class ShoppingCartPage extends StatefulWidget {
 }
 
 class _ShoppingCartPageState extends State<ShoppingCartPage> {
-  List<CartItem> cartItems = [
-    CartItem(
-      id: 1,
-      userId: 123,
-      product: ProductModel(
-        productId: 1,
-        name: 'Smart Watch',
-        description: 'Electronics',
-        price: 55.00,
-        isNew: true,
-        discount: 10.0,
-        subCategoryId: 2,
-        categoryId: 1,
-        userId: 123,
-        images: ['http://example.com/image1.jpg'],
-      ),
-      quantity: 1,
-    ),
-    CartItem(
-      id: 2,
-      userId: 123,
-      product: ProductModel(
-        productId: 2,
-        name: 'Wireless Headphone',
-        description: 'Electronics',
-        price: 120.00,
-        isNew: true,
-        discount: 5.0,
-        subCategoryId: 3,
-        categoryId: 2,
-        userId: 123,
-        images: ['http://example.com/image2.jpg'],
-      ),
-      quantity: 1,
-    ),
-  ];
-
+  CartModel? cartModel;
+  Map<int, ProductModel> productMap = {};
   final TextEditingController discountController = TextEditingController();
   double discountPercent = 0.0;
   String appliedCode = '';
 
-  double get subtotal => cartItems.fold(
-      0, (sum, item) => sum + item.product.price * item.quantity);
+  @override
+  void initState() {
+    super.initState();
+    _loadEverything();
+  }
+
+  Future<void> _loadEverything() async {
+    try {
+      final products = await ProductService().fetchAllProducts();
+      final cart = await CartService().getCart();
+
+      setState(() {
+        productMap = {for (var p in products) p.productId: p};
+        cartModel = cart;
+      });
+
+      if (cart.cartItems.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('🛒 السلة فاضية')),
+        );
+      }
+    } catch (e) {
+      print("Error loading cart: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading cart: $e')),
+      );
+
+      setState(() {
+        cartModel = CartModel(id: 0, userId: '', cartItems: []);
+      });
+    }
+  }
+
+  double get subtotal {
+    if (cartModel == null) return 0;
+    return cartModel!.cartItems.fold(0, (sum, item) {
+      final product = productMap[item.productId];
+      return sum + ((product?.price ?? 0) * item.quantity);
+    });
+  }
 
   double get total => subtotal * (1 - discountPercent);
 
@@ -78,22 +84,91 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
     }
   }
 
-  void _incrementQuantity(int index) {
+  void _incrementQuantity(int index) async {
     setState(() {
-      cartItems[index].quantity++;
+      cartModel!.cartItems[index].quantity++;
     });
+
+    final item = cartModel!.cartItems[index];
+    final success =
+        await CartService().updateCartItem(item.productId, item.quantity);
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('❌ Failed to update quantity')),
+      );
+    }
   }
 
-  void _decrementQuantity(int index) {
-    setState(() {
-      if (cartItems[index].quantity > 1) {
-        cartItems[index].quantity--;
+  void _decrementQuantity(int index) async {
+    if (cartModel!.cartItems[index].quantity > 1) {
+      setState(() {
+        cartModel!.cartItems[index].quantity--;
+      });
+
+      final item = cartModel!.cartItems[index];
+
+      print("+++++++++++++++++++++++++++++++++++++");
+      print(item.productId);
+      print(item.quantity);
+
+      print("+++++++++++++++++++++++++++++++++++++");
+      final success =
+          await CartService().updateCartItem(item.productId, item.quantity);
+
+      if (!success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Failed to update quantity')),
+        );
       }
-    });
+    }
+  }
+
+  void _confirmRemoveItem(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Remove Item'),
+          content: const Text('Are you sure you want to remove this item?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                // Call the API to delete the item
+                final productId = cartModel!.cartItems[index].product.productId;
+                await CartService().deleteFromCart(productId);
+
+                // Remove from UI
+                setState(() {
+                  cartModel!.cartItems.removeAt(index);
+                });
+
+                Navigator.pop(context); // Close the dialog
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Item removed')),
+                );
+              },
+              child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (cartModel == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xffF6F6F6),
       appBar: AppBar(
@@ -109,9 +184,24 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView.builder(
-          itemCount: cartItems.length,
+          itemCount: cartModel!.cartItems.length,
           itemBuilder: (context, index) {
-            final item = cartItems[index];
+            final cartItem = cartModel!.cartItems[index];
+            final product = productMap[cartItem.productId] ??
+                ProductModel(
+                  productId: -1,
+                  name: 'Unknown Product',
+                  description: 'This product is no longer available.',
+                  price: 0.0,
+                  images: ['https://via.placeholder.com/150'],
+                  discount: 0,
+                  categoryId: 0,
+                  subCategoryId: 0,
+                  userId: 0,
+                  isNew: false,
+                  StockQuantity: 0,
+                );
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: Container(
@@ -125,8 +215,8 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        "assets/images/offer.avif",
+                      child: Image.network(
+                        product.images.first,
                         width: 60,
                         height: 60,
                         fit: BoxFit.cover,
@@ -137,11 +227,11 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(item.product.name,
+                          Text(product.name,
                               style: const TextStyle(
                                   fontWeight: FontWeight.bold, fontSize: 16)),
                           const SizedBox(height: 4),
-                          Text(item.product.description,
+                          Text(product.description,
                               style: const TextStyle(color: Colors.grey)),
                           const SizedBox(height: 8),
                           Row(
@@ -152,7 +242,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Text('${item.quantity}',
+                                child: Text('${cartItem.quantity}',
                                     style: const TextStyle(fontSize: 16)),
                               ),
                               _quantityButton(
@@ -166,19 +256,17 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                     Column(
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            _confirmRemoveItem(index);
-                          },
+                          onTap: () => _confirmRemoveItem(index),
                           child: const Icon(Icons.delete_outline,
                               color: Colors.red),
                         ),
                         const SizedBox(height: 16),
                         Text(
-                            '\$${(item.product.price * item.quantity).toStringAsFixed(2)}',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
+                          '\$${(product.price * cartItem.quantity).toStringAsFixed(2)}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ],
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -186,76 +274,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
           },
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black12, blurRadius: 10, offset: Offset(0, -2))
-          ],
-          borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20), topRight: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: discountController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter Discount Code',
-                      filled: true,
-                      fillColor: Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: _applyDiscount,
-                  child: Text('Apply',
-                      style: TextStyle(
-                          color: pkColor, fontWeight: FontWeight.bold)),
-                )
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildPriceRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
-            if (discountPercent > 0)
-              _buildPriceRow('Discount (${(discountPercent * 100).toInt()}%)',
-                  '-\$${(subtotal * discountPercent).toStringAsFixed(2)}'),
-            const SizedBox(height: 8),
-            _buildPriceRow('Total', '\$${total.toStringAsFixed(2)}',
-                isBold: true),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: pkColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Checkout',
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
-              ),
-            ),
-          ],
-        ),
-      ),
+      bottomNavigationBar: _buildBottomBar(),
     );
   }
 
@@ -276,55 +295,91 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
     );
   }
 
+  Widget _buildBottomBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black12, blurRadius: 10, offset: Offset(0, -2))
+        ],
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: discountController,
+                  decoration: InputDecoration(
+                    hintText: 'Enter Discount Code',
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              TextButton(
+                onPressed: _applyDiscount,
+                child: Text('Apply',
+                    style:
+                        TextStyle(color: pkColor, fontWeight: FontWeight.bold)),
+              )
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildPriceRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
+          if (discountPercent > 0)
+            _buildPriceRow('Discount (${(discountPercent * 100).toInt()}%)',
+                '-\$${(subtotal * discountPercent).toStringAsFixed(2)}'),
+          const SizedBox(height: 8),
+          _buildPriceRow('Total', '\$${total.toStringAsFixed(2)}',
+              isBold: true),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                // Handle checkout logic here
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: pkColor,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text(
+                'Proceed to Checkout',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPriceRow(String label, String value, {bool isBold = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label,
             style: TextStyle(
-                fontSize: 16,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
         Text(value,
             style: TextStyle(
-                fontSize: 16,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal)),
       ],
-    );
-  }
-
-  void _confirmRemoveItem(int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Remove Item'),
-          content: const Text(
-              'Are you sure you want to remove this item from your cart?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  cartItems.removeAt(index);
-                });
-                Navigator.of(context).pop(); // Close dialog
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Item removed from cart')),
-                );
-              },
-              child: const Text(
-                'Remove',
-                style: TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
     );
   }
 }

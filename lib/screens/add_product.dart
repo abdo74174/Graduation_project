@@ -24,6 +24,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _comparePriceController = TextEditingController();
+  final TextEditingController _StockQuantity = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
@@ -132,6 +133,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       });
                     },
             ),
+            BuildTextField(
+                controller: _StockQuantity, label: "Product Quantity"),
             SizedBox(height: 20),
             ImageUploadSection(
               imageFiles: _imageFiles,
@@ -157,6 +160,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         double.tryParse(_comparePriceController.text) ?? 0.0,
                     discount: double.tryParse(_discountController.text) ?? 0.0,
                     status: selectedStatus!,
+                    StockQuantity: int.tryParse(_StockQuantity.text) ?? 1,
                     categoryId: getCategoryIdByName(selectedCategory),
                     subCategoryId: getSubCategoryIdByName(selectedSubCategory),
                     imageFiles: _imageFiles,

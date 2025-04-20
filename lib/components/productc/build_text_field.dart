@@ -5,8 +5,10 @@ class BuildTextField extends StatelessWidget {
   final String label;
   final bool isPercentage;
   final bool isStrikethrough;
-
+  // ignore: prefer_typing_uninitialized_variables
+  final readOnly;
   const BuildTextField({
+    this.readOnly = false,
     super.key,
     required this.controller,
     required this.label,
@@ -17,6 +19,7 @@ class BuildTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
+      readOnly: readOnly,
       controller: controller,
       decoration: InputDecoration(
         labelText: label,

@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
+import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/sign.dart';
 import 'edit_profile.dart';
 
@@ -22,12 +24,11 @@ class _ProfilePageState extends State<ProfilePage> {
   void fetchUserData() async {
     try {
       final fetchedUser =
-          await USerService().fetchUserByEmail("test@gmail.com");
+          await USerService().fetchUserByEmail("abdo@gmail.com");
       if (fetchedUser != null) {
         setState(() {
           user = fetchedUser;
         });
-        print("User fetched: ${user!.name}");
       } else {
         print("User not found");
       }

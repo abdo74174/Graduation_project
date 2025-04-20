@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
-import 'package:graduation_project/Models/user_model.dart'; // مهم للـ HttpClientAdapter
+import 'package:graduation_project/Models/user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // مهم للـ HttpClientAdapter
 
 class USerService {
   final Dio dio;
@@ -91,20 +92,19 @@ class USerService {
     }
   }
 
-  // User login
-  Future<void> login({
+  Future<bool> login({
     required String email,
     required String password,
   }) async {
-    const String url = '/User/signIn'; // Use relative URL
+    const String url = '/User/signIn'; // relative path
 
     final formData = FormData.fromMap({
-      'Email': email,
-      'Password': password,
+      'email': email,
+      'password': password,
     });
 
     try {
-      Response response = await dio.post(
+      final response = await dio.post(
         url,
         data: formData,
         options: Options(
@@ -112,17 +112,43 @@ class USerService {
         ),
       );
 
+      print(
+          "===================================================================");
+      print(response.data.toString());
+      print(
+          "__+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+      print(response.data.runtimeType);
+
       if (response.statusCode == 200) {
         print('SignIn success: ${response.data}');
+
+        // 👇 استخراج التوكن (حسب شكل الـ response)
+        final token = response.data['token']; // غيرها حسب السيرفر بيرجع إيه
+
+        if (token != null && token is String) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', token);
+          print("0000000000000000000000000000000000000000000000000000");
+          print('Token saved to SharedPreferences: $token');
+          print("0000000000000000000000000000000000000000000000000000");
+        } else {
+          print('Token not found in response!');
+          return false;
+        }
+
+        return true;
       } else {
         print('SignIn failed: ${response.statusCode} - ${response.data}');
+        return false;
       }
-    } catch (e) {
-      print('SignIn error: $e');
     } on DioException catch (e) {
       final errorMessage =
           e.response?.data['errors'] ?? e.response?.data ?? "SignIn failed";
       print("SignIn error: $errorMessage");
+      return false;
+    } catch (e) {
+      print('Unexpected login error: $e');
+      return false;
     }
   }
 
@@ -156,7 +182,7 @@ class USerService {
   Future<void> updateUserProfile({
     required String email,
     required String name,
-    required String password,
+    // required String password,
     required String medicalSpecialist,
     File? profileImage,
   }) async {
@@ -164,7 +190,7 @@ class USerService {
       final formData = FormData.fromMap({
         'Email': email,
         'Name': name,
-        'Password': password,
+        // 'Password': password,
         'MedicalSpecialist': medicalSpecialist,
         if (profileImage != null)
           'profileImage': await MultipartFile.fromFile(profileImage.path,
@@ -181,7 +207,9 @@ class USerService {
 
       print("✅ Update successful: ${response.data}");
     } on DioException catch (e) {
-      print("❌ Update error: $e");
+      print("❌ Update error: ${e.message}");
+      print("Status Code: ${e.response?.statusCode}");
+      print("Response Data: ${e.response?.data}");
     }
   }
 }
