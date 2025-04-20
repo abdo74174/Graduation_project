@@ -16,6 +16,7 @@ class CartItem extends StatelessWidget {
     required this.oldPrice,
     required this.quantity,
     required this.onQuantityChanged,
+    required product,
   });
 
   @override

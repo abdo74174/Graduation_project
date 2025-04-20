@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/category_model.dart';
+import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/components/category/Category_view.dart';
 import 'package:graduation_project/components/home_page/drawer.dart';
@@ -11,7 +13,10 @@ import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 
 import 'package:graduation_project/screens/favourite_page.dart';
+import 'package:graduation_project/services/Product/category_service.dart';
+import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/sign.dart';
+import 'package:graduation_project/testing/test.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,12 +26,22 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  @override
+  List<CategoryModel> categories = [];
+  List<ProductModel> products = [];
   @override
   void initState() {
     super.initState();
+    CategoryService().fetchAllCategories().then((fetchedCategories) {
+      setState(() {
+        categories = fetchedCategories;
+      });
+    });
 
-    ///fetchUserData();
+    ProductService().fetchAllProducts().then((fetchedProducts) {
+      setState(() {
+        products = fetchedProducts;
+      });
+    });
   }
 
   @override
@@ -64,7 +79,7 @@ class _HomePageState extends State<HomePage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) {
-                    return CartPage();
+                    return ShoppingCartPage();
                   },
                 ),
               );
@@ -78,140 +93,145 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       drawer: const DrawerHome(),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: ListView(
-          children: [
-            const CustomizeSearchBar(),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              height: 200,
-              child: Stack(
-                fit: StackFit.expand,
+      body: categories.isEmpty
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: ListView(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
-                      border: Border.all(width: 1.0),
+                  const CustomizeSearchBar(),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 200,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(width: 1.0),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.asset(
+                              "assets/images/offer.avif",
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: Image.asset(
-                        "assets/images/offer.avif",
-                        fit: BoxFit.cover,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return CategoryScreen();
+                              },
+                            ),
+                          );
+                        },
+                        child: Text(
+                          "Categories",
+                          style: TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return CategoryScreen();
+                              },
+                            ),
+                          );
+                        },
+                        child: Text("View all", style: TextStyle(fontSize: 18)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    height: 180,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: categories.length,
+                      itemBuilder: (context, index) {
+                        return CategoryView(
+                          borderColor: Color(0xff3B8FDA),
+                          category: categories[index],
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return CategoryScreen(id: index);
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+
+                  //     CategoryView(  category: categories,),
+                  SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Products",
+                        style: TextStyle(
+                            fontSize: 25, fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      height: 550,
+                      child: GridView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: BouncingScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 1.5,
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                        ),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          return ProductCard(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return ProductPage(
+                                        product: products[index]);
+                                  },
+                                ),
+                              );
+                            },
+                            product: products[index],
+                          );
+                        },
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return CategoryScreen();
-                        },
-                      ),
-                    );
-                  },
-                  child: Text(
-                    "Categories",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return CategoryScreen();
-                        },
-                      ),
-                    );
-                  },
-                  child: Text("View all", style: TextStyle(fontSize: 18)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 180,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: categories.length,
-                itemBuilder: (context, index) {
-                  return CategoryView(
-                    borderColor: Color(0xff3B8FDA),
-                    category: categories[index],
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) {
-                            return CategoryScreen(id: index);
-                          },
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-
-            //     CategoryView(  category: categories,),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Products",
-                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            Padding(
-              padding: EdgeInsets.all(8.0),
-              child: SizedBox(
-                height: 550,
-                child: GridView.builder(
-                  scrollDirection: Axis.horizontal,
-                  physics: BouncingScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 1.5,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    return ProductCard(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return ProductPage(product: products[index]);
-                            },
-                          ),
-                        );
-                      },
-                      product: products[index],
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

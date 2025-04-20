@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 
 class ImageWidget extends StatefulWidget {
-  const ImageWidget({super.key});
+  const ImageWidget({super.key, required this.image});
+  final String image;
 
   @override
   State<ImageWidget> createState() => _ImageWidgetState();
@@ -10,25 +11,31 @@ class ImageWidget extends StatefulWidget {
 
 class _ImageWidgetState extends State<ImageWidget> {
   bool isFavourite = false;
+
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
 
-    return Stack(children: [
-      SizedBox(
-        width: screenWidth,
-        height: 400,
-        child: Image.asset(
-          "assets/images/photo_1_2025-02-05_02-18-53.jpg",
-          fit: BoxFit.cover,
+    return Stack(
+      children: [
+        SizedBox(
+          width: screenWidth,
+          height: 400,
+          child: Image.network(
+            widget.image.isNotEmpty
+                ? widget.image
+                : 'https://via.placeholder.com/400',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              print("Error loading image: $error");
+              return Image.asset("assets/images/heart 1.jpg",
+                  fit: BoxFit.cover);
+            },
+          ),
         ),
-      ),
-      Positioned(
-        left: 350,
-        top: 40,
-        child: SizedBox(
-          width: 40,
-          height: 40,
+        Positioned(
+          right: 16,
+          top: 40,
           child: IconButton(
             icon: Icon(
               Icons.favorite,
@@ -37,14 +44,14 @@ class _ImageWidgetState extends State<ImageWidget> {
             ),
             onPressed: () {
               showSnackbar(context, "Added To FAV Successfully");
-              isFavourite = !isFavourite;
-              setState(() {});
+              setState(() {
+                isFavourite = !isFavourite;
+              });
             },
           ),
         ),
-      ),
-      Positioned(
-          left: 25,
+        Positioned(
+          left: 16,
           top: 40,
           child: Container(
             width: 40,
@@ -54,11 +61,14 @@ class _ImageWidgetState extends State<ImageWidget> {
               color: Colors.grey[200],
             ),
             child: IconButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                icon: Icon(Icons.arrow_back)),
-          ))
-    ]);
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: Icon(Icons.arrow_back),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

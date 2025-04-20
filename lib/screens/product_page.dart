@@ -1,15 +1,14 @@
-// ignore_for_file: deprecated_member_use
-
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
-
-import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/productc/product_images.dart';
+import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/services/Product/product_service.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, required this.product});
   final ProductModel product;
+
   @override
   State<ProductPage> createState() => _ProductPageState();
 }
@@ -18,10 +17,20 @@ class _ProductPageState extends State<ProductPage> {
   double getDiscountedPrice(ProductModel product) {
     double discountedPrice =
         product.price - (product.price * product.discount / 100);
-
     discountedPrice = (discountedPrice * 100).toInt() / 100;
-
     return discountedPrice;
+  }
+
+  List<ProductModel> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    ProductService().fetchAllProducts().then((fetchedProducts) {
+      setState(() {
+        products = fetchedProducts;
+      });
+    });
   }
 
   @override
@@ -34,22 +43,26 @@ class _ProductPageState extends State<ProductPage> {
           ListView(
             padding: EdgeInsets.only(bottom: 120),
             children: [
+              // Product images carousel
               SizedBox(
                 height: 400,
                 child: PageView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 4,
+                  itemCount: widget.product.images.length,
                   itemBuilder: (context, index) {
-                    return ImageWidget();
+                    final fullImageUrl = widget.product.images[index];
+                    return ImageWidget(
+                        image: fullImageUrl); // Custom widget to display image
                   },
                 ),
               ),
+
+              // Product Name and Sale Badge
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Wrap the product name in Expanded to allow wrapping
                     Expanded(
                       child: Text(
                         widget.product.name,
@@ -65,7 +78,7 @@ class _ProductPageState extends State<ProductPage> {
                     SizedBox(width: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: Color(pkColor.value),
+                        color: pkColor, // Sale Badge Color
                         borderRadius: BorderRadius.circular(16),
                       ),
                       width: 100,
@@ -83,6 +96,8 @@ class _ProductPageState extends State<ProductPage> {
                   ],
                 ),
               ),
+
+              // Rating and Review Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -137,7 +152,8 @@ class _ProductPageState extends State<ProductPage> {
                               padding: EdgeInsets.all(4),
                               child: Icon(
                                 Icons.thumb_up,
-                                color: Color(pkColor.value),
+                                // color: Color(0xFF008000), // Green Color
+                                color: pkColor, // Green Color
                                 size: 25,
                               ),
                             ),
@@ -159,29 +175,35 @@ class _ProductPageState extends State<ProductPage> {
                   ],
                 ),
               ),
-              SizedBox(height: 10),
+
+              // Product Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
                   widget.product.description,
                   style: TextStyle(fontSize: 16),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(height: 10),
+
+              // Divider
               Divider(color: Colors.grey, thickness: .5),
-              SizedBox(height: 10),
+
+              // Related Products
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  "Product Related to Item : ",
+                  "Products Related to This Item:",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
+
               SizedBox(
                 height: 20,
               ),
+
+              // Horizontal List of Related Products
               SizedBox(
                 height: 300,
                 child: ListView.builder(
@@ -209,6 +231,8 @@ class _ProductPageState extends State<ProductPage> {
               ),
             ],
           ),
+
+          // Bottom Bar with Add to Cart Button
           Positioned(
             bottom: 0,
             left: 0,
@@ -220,6 +244,7 @@ class _ProductPageState extends State<ProductPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Price and Discounted Price
                   Flexible(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -247,6 +272,8 @@ class _ProductPageState extends State<ProductPage> {
                       ],
                     ),
                   ),
+
+                  // Add to Cart Button
                   SizedBox(
                     width: 200,
                     height: 60,
@@ -255,7 +282,7 @@ class _ProductPageState extends State<ProductPage> {
                         showSnackbar(context, "Added To Cart Successfully");
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(pkColor.value),
+                        backgroundColor: pkColor, // Green color for the button
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -280,6 +307,12 @@ class _ProductPageState extends State<ProductPage> {
           ),
         ],
       ),
+    );
+  }
+
+  void showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

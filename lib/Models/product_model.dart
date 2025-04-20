@@ -7,11 +7,8 @@ class ProductModel {
   final double discount;
   final int subCategoryId;
   final int categoryId;
-  final String image;
   final int userId;
-
-  // Default Image URL
-  static const String defaultImage = "assets/images/ct-scan (1) 1.jpg";
+  final List<String> images; // URLs of images
 
   ProductModel({
     required this.productId,
@@ -23,7 +20,7 @@ class ProductModel {
     required this.subCategoryId,
     required this.categoryId,
     required this.userId,
-    this.image = defaultImage, // Set default image
+    required this.images,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -37,7 +34,7 @@ class ProductModel {
       subCategoryId: json['subCategoryId'],
       categoryId: json['categoryId'],
       userId: json['userId'],
-      image: json['image'] ?? defaultImage, // Use provided image or default
+      images: List<String>.from(json['imageUrls'] ?? []),
     );
   }
 
@@ -52,7 +49,7 @@ class ProductModel {
       'subCategoryId': subCategoryId,
       'categoryId': categoryId,
       'userId': userId,
-      'image': image,
+      'images': images,
     };
   }
 }

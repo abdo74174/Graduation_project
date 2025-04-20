@@ -1,5 +1,10 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/category_model.dart';
+import 'package:graduation_project/Models/subcateoery_model.dart';
+import 'package:graduation_project/services/Product/category_service.dart';
+import 'package:graduation_project/services/Product/subcategory_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:graduation_project/components/productc/build_text_field.dart';
 import 'package:graduation_project/components/productc/build_description_field.dart';
@@ -24,33 +29,55 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   final List<File> _imageFiles = [];
   final ImagePicker _picker = ImagePicker();
-
   String? selectedStatus;
   String? selectedCategory;
   String? selectedSubCategory;
+  final String userId = "4";
 
-  final String userId = "4"; // Replace with actual user ID
+  List<CategoryModel> _categories = [];
+  List<SubCategory> _subcategories = [];
+  List<String> productCategories = [];
+  List<String> productSubCategories = [];
 
-  List<String> productStatus = ["Available", "Out of Stock"];
-  List<String> productCategories =
-      categories.map((category) => category.name).toList();
-  List<String> productSubCategories =
-      subCategories.map((sub) => sub.name).toList();
+  List<String> productStatus = ["Used", "New"];
 
-  Future<void> _pickImages() async {
-    final List<XFile>? pickedFiles = await _picker.pickMultiImage();
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+  @override
+  void initState() {
+    super.initState();
+
+    CategoryService().fetchAllCategories().then((fetchedCategories) {
       setState(() {
-        _imageFiles.addAll(pickedFiles.map((xfile) => File(xfile.path)));
+        _categories = fetchedCategories;
+        productCategories =
+            fetchedCategories.map((cat) => cat.name).toSet().toList();
       });
-    }
-  }
+    });
 
-  void _removeImage(File image) {
-    setState(() {
-      _imageFiles.remove(image);
+    SubCategoryService().fetchAllSubCategories().then((fetchedSubCategories) {
+      setState(() {
+        _subcategories = fetchedSubCategories;
+        productSubCategories =
+            fetchedSubCategories.map((cat) => cat.name).toSet().toList();
+        print("----------------------------------------------------------");
+        print(fetchedSubCategories);
+        print("----------------------------------------------------------");
+      });
     });
   }
+
+  // void updateSubCategories(String? categoryName) {
+  //   final selectedCat = _categories.firstWhere(
+  //     (category) => category.name == categoryName,
+  //     orElse: () => CategoryModel(
+  //         name: 'none',
+  //         categoryId: 0,
+  //         subCategories: [],
+  //         description: '',
+  //         products: []),
+  //   );
+  //   productSubCategories =
+  //       selectedCat.subCategories.map((sub) => sub.name).toList();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +112,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
               onChanged: (value) {
                 setState(() {
                   selectedCategory = value;
+                  selectedSubCategory = null;
+                  // updateSubCategories(value);
                 });
               },
             ),
@@ -92,12 +121,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
             BuildDropdown(
               label: "Product SubCategory",
               options: productSubCategories,
-              selectedValue: selectedSubCategory,
-              onChanged: (value) {
-                setState(() {
-                  selectedSubCategory = value;
-                });
-              },
+              selectedValue: productSubCategories.contains(selectedSubCategory)
+                  ? selectedSubCategory
+                  : null,
+              onChanged: productSubCategories.isEmpty
+                  ? null
+                  : (value) {
+                      setState(() {
+                        selectedSubCategory = value;
+                      });
+                    },
             ),
             SizedBox(height: 20),
             ImageUploadSection(
@@ -143,18 +176,39 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   int getCategoryIdByName(String? name) {
-    final category = categories.firstWhere((c) => c.name == name);
+    final category = _categories.firstWhere(
+      (c) => c.name == name,
+      orElse: () => throw Exception("Category not found"),
+    );
     return category.categoryId;
   }
 
   int getSubCategoryIdByName(String? name) {
-    final sub = subCategories.firstWhere((s) => s.name == name);
-    return sub.subCategoryId;
+    final subCategory = _subcategories.firstWhere(
+      (s) => s.name == name,
+      orElse: () => throw Exception("Subcategory not found"),
+    );
+    return subCategory.subCategoryId;
   }
 
   void showSnackbar(BuildContext context, String message) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _pickImages() async {
+    final List<XFile>? pickedFiles = await _picker.pickMultiImage();
+    if (pickedFiles != null && pickedFiles.isNotEmpty) {
+      setState(() {
+        _imageFiles.addAll(pickedFiles.map((xfile) => File(xfile.path)));
+      });
+    }
+  }
+
+  void _removeImage(File image) {
+    setState(() {
+      _imageFiles.remove(image);
+    });
   }
 }
 
@@ -199,8 +253,9 @@ class ImageUploadSection extends StatelessWidget {
                 height: 100,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children:
-                      imageFiles.map((file) => _buildImageItem(file)).toList(),
+                  children: imageFiles
+                      .map((file) => _buildImageItem(context, file))
+                      .toList(),
                 ),
               ),
             ),
@@ -210,29 +265,37 @@ class ImageUploadSection extends StatelessWidget {
     );
   }
 
-  Widget _buildImageItem(File imageFile) {
-    return Container(
-      width: 80,
-      height: 80,
-      margin: EdgeInsets.only(right: 10),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(10),
-        color: Colors.grey.shade200,
-        image: DecorationImage(image: FileImage(imageFile), fit: BoxFit.cover),
-      ),
-      child: Positioned(
-        right: 0,
-        top: 0,
-        child: GestureDetector(
-          onTap: () => onRemove(imageFile),
-          child: Container(
-            padding: EdgeInsets.all(4),
-            color: Colors.black.withOpacity(0.5),
-            child: Icon(Icons.remove, color: Colors.white, size: 18),
+  Widget _buildImageItem(BuildContext context, File imageFile) {
+    return Stack(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          margin: EdgeInsets.only(right: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.shade300),
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.grey.shade200,
+            image:
+                DecorationImage(image: FileImage(imageFile), fit: BoxFit.cover),
           ),
         ),
-      ),
+        Positioned(
+          right: 0,
+          top: 0,
+          child: GestureDetector(
+            onTap: () => onRemove(imageFile),
+            child: Container(
+              padding: EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.close, color: Colors.white, size: 18),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

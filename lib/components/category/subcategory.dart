@@ -41,8 +41,8 @@ class SubCategoryView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 child: AspectRatio(
                   aspectRatio: 1, // Ensures square shape
-                  child: Image.asset(
-                    "assets/images/eye-exam 1.jpg",
+                  child: Image.network(
+                    subCategory.image,
                     fit: BoxFit.cover, // Fill without distortion
                   ),
                 ),

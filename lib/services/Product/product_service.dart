@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart' show DefaultHttpClientAdapter;
+import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/product_model.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:path/path.dart' as path;
 
 class ProductService {
@@ -8,7 +11,7 @@ class ProductService {
 
   ProductService()
       : dio = Dio(BaseOptions(
-          baseUrl: 'https://10.0.2.2:7273/api/',
+          baseUrl: baseUri,
         )) {
     (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate =
         (HttpClient client) {
@@ -16,6 +19,24 @@ class ProductService {
           (X509Certificate cert, String host, int port) => true;
       return client;
     };
+  }
+
+  Future<List<ProductModel>> fetchAllProducts() async {
+    try {
+      Response response = await dio.get('Product');
+
+      if (response.statusCode == 200) {
+        List data = response.data;
+        List<ProductModel> products =
+            data.map((item) => ProductModel.fromJson(item)).toList();
+
+        return products;
+      } else {
+        throw Exception("Failed to load products");
+      }
+    } catch (e) {
+      throw Exception("API error: $e");
+    }
   }
 
   Future<void> addProduct({
