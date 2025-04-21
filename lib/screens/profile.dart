@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/sign.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -23,8 +24,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   void fetchUserData() async {
     try {
-      final fetchedUser =
-          await USerService().fetchUserByEmail("abdo@gmail.com");
+      // Get email from SharedPreferences
+      final String email = await _getEmail();
+
+      if (email.isEmpty) {
+        print("No email found in SharedPreferences");
+        return;
+      }
+
+      // Fetch user data using the email from SharedPreferences
+      final fetchedUser = await USerService().fetchUserByEmail(email);
+
       if (fetchedUser != null) {
         setState(() {
           user = fetchedUser;
@@ -35,6 +45,12 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print("Error fetching user: $e");
     }
+  }
+
+  Future<String> _getEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('email') ??
+        ''; // Fetches the email from SharedPreferences
   }
 
   @override

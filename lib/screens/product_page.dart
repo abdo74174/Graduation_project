@@ -53,6 +53,7 @@ class _ProductPageState extends State<ProductPage> {
                   itemBuilder: (context, index) {
                     final fullImageUrl = widget.product.images[index];
                     return ImageWidget(
+                        productId: widget.product.productId,
                         image: fullImageUrl); // Custom widget to display image
                   },
                 ),

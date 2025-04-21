@@ -1,12 +1,24 @@
 import 'package:graduation_project/Models/product_model.dart';
 
-class Favorite {
+class Favourite {
   final int id;
-  final int userId;
+  final String userId;
+  final int productId;
   final ProductModel product;
 
-  Favorite({required this.id, required this.userId, required this.product});
+  Favourite({
+    required this.id,
+    required this.userId,
+    required this.productId,
+    required this.product,
+  });
 
-  // factory Favorite.fromJson(Map<String, dynamic> json) => _$FavoriteFromJson(json);
-  // Map<String, dynamic> toJson() => _$FavoriteToJson(this);
+  factory Favourite.fromJson(Map<String, dynamic> json) {
+    return Favourite(
+      id: json['id'],
+      userId: json['userId'],
+      productId: json['productId'],
+      product: ProductModel.fromJson(json['product']),
+    );
+  }
 }
