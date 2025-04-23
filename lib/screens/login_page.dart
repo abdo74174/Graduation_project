@@ -21,14 +21,13 @@ class _LoginPageState extends State<LoginPage> {
   String? _emailError;
   String? _passwordError;
 
-  Future<void> saveLoginState(
-      String token, String userId, String email, String username) async {
+  Future<void> saveLoginState(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isLoggedIn', true);
     await prefs.setString('token', token);
-    await prefs.setString('userId', userId); // Save user ID
-    await prefs.setString('email', email); // Save email
-    await prefs.setString('username', username); // Save username
+    // await prefs.setString('userId', userId); // Save user ID
+    // await prefs.setString('email', email); // Save email
+    // await prefs.setString('username', username); // Save username
   }
 
   void _validateForm() {
@@ -154,12 +153,12 @@ class _LoginPageState extends State<LoginPage> {
                     if (success) {
                       final prefs = await SharedPreferences.getInstance();
                       final token = prefs.getString('token') ?? '';
-                      final userId = prefs.getString('userId') ?? '';
-                      final email = prefs.getString('email') ?? '';
-                      final username = prefs.getString('username') ?? '';
+                      // final userId = prefs.getString('userId') ?? '';
+                      // final email = prefs.getString('email') ?? '';
+                      // final username = prefs.getString('username') ?? '';
 
                       // Save additional user data in SharedPreferences
-                      await saveLoginState(token, userId, email, username);
+                      await saveLoginState(token);
 
                       Navigator.pushReplacement(
                         // ignore: use_build_context_synchronously

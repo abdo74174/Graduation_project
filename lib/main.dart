@@ -1,14 +1,16 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:graduation_project/components/setting/ThemeNotifier.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/splash_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Override the HTTP client to allow invalid certificates for development purposes
+  // Ignore SSL errors in debug mode only
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }
@@ -16,7 +18,12 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-  runApp(MedicalApp(isLoggedIn: isLoggedIn));
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeNotifier(),
+      child: MedicalApp(isLoggedIn: isLoggedIn),
+    ),
+  );
 }
 
 class MyHttpOverrides extends HttpOverrides {
@@ -36,8 +43,11 @@ class MedicalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: themeNotifier.isDarkMode ? ThemeData.dark() : ThemeData.light(),
       home: isLoggedIn ? const HomePage() : const WelcomePage(),
     );
   }

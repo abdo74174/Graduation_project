@@ -22,38 +22,32 @@ class CategoryScreen extends StatefulWidget {
 class _CategoryScreenState extends State<CategoryScreen> {
   int? selectedCategoryId;
   int? selectedSubCategoryId;
-  List<CategoryModel> categories = []; // Typed categories list
-  List<SubCategory> subcategories = []; // Correctly typed list of SubCategory
-  List<ProductModel> products = []; // List of products
+  List<CategoryModel> categories = [];
+  List<SubCategory> subcategories = [];
+  List<ProductModel> products = [];
 
   @override
   void initState() {
     super.initState();
 
-    // Fetch categories
     CategoryService().fetchAllCategories().then((fetchedCategories) {
       setState(() {
         categories = fetchedCategories;
       });
     });
 
-    // Fetch subcategories
     SubCategoryService().fetchAllSubCategories().then((fetchedSubCategories) {
       setState(() {
-        subcategories = fetchedSubCategories; // Properly typed list
+        subcategories = fetchedSubCategories;
       });
     });
 
-    // Fetch products (assume this function is available)
     ProductService().fetchAllProducts().then((fetchedProducts) {
       setState(() {
         products = fetchedProducts;
       });
     });
 
-    setState(() {});
-
-    // Set the selected category ID if available from the widget
     if (widget.id != null) {
       selectedCategoryId = widget.id! + 1;
     }
@@ -61,14 +55,14 @@ class _CategoryScreenState extends State<CategoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Filter subcategories based on the selected category
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     List<SubCategory> filteredSubCategories = selectedCategoryId == null
         ? []
         : subcategories
             .where((sub) => sub.categoryId == selectedCategoryId)
             .toList();
 
-    // Filter products based on the selected subcategory
     List<ProductModel> filteredProducts = selectedSubCategoryId == null
         ? []
         : products
@@ -76,12 +70,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
             .toList();
 
     return Scaffold(
-      backgroundColor: Color(0xffFFFFFF),
+      backgroundColor: isDark ? Colors.black : Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: Color(0xffFFFFFF),
+        backgroundColor: isDark ? Colors.black : Color(0xFFF5F5F5),
         title: Text(
           "Categories",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : Color(0xFF1A1A1A)),
         ),
         centerTitle: true,
       ),
@@ -90,7 +87,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
           : SingleChildScrollView(
               child: Column(
                 children: [
-                  // Categories List
                   SizedBox(
                     height: 170,
                     width: double.infinity,
@@ -102,33 +98,33 @@ class _CategoryScreenState extends State<CategoryScreen> {
                           borderColor:
                               categories[index].categoryId == selectedCategoryId
                                   ? Colors.blue
-                                  : Colors.black,
+                                  : isDark
+                                      ? Colors.white
+                                      : Colors.black,
                           category: categories[index],
                           onTap: () {
                             setState(() {
                               selectedCategoryId = categories[index].categoryId;
-                              selectedSubCategoryId =
-                                  null; // Reset selected subcategory
+                              selectedSubCategoryId = null;
                             });
                           },
                         );
                       },
                     ),
                   ),
-
-                  Divider(color: Colors.grey, thickness: .5),
-
+                  Divider(
+                      color: isDark ? Colors.white : Colors.grey,
+                      thickness: 0.5),
                   Center(
                     child: Text(
                       "SubCategory",
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Color(0xFF1A1A1A)),
                     ),
                   ),
-
                   SizedBox(height: 10),
-
-                  // SubCategories List
                   if (filteredSubCategories.isNotEmpty)
                     SizedBox(
                       height: 170,
@@ -141,7 +137,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                 filteredSubCategories[index].subCategoryId ==
                                         selectedSubCategoryId
                                     ? Colors.blue
-                                    : Colors.black,
+                                    : isDark
+                                        ? Colors.white
+                                        : Colors.black,
                             subCategory: filteredSubCategories[index],
                             onTap: () {
                               setState(() {
@@ -153,10 +151,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         },
                       ),
                     ),
-
                   SizedBox(height: 10),
-
-                  // Products Grid
                   SizedBox(
                     height: 520,
                     child: filteredProducts.isNotEmpty

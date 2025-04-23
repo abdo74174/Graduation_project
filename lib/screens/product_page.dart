@@ -36,8 +36,17 @@ class _ProductPageState extends State<ProductPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Adjust colors based on dark mode or light mode
+    Color backgroundColor = isDark ? Color(0xFF333333) : Color(0xFFF8F9FA);
+    Color textColor = isDark ? Colors.white : Color(0xFF333333);
+    Color priceColor = isDark ? Colors.white : Colors.black;
+    Color saleBadgeColor = isDark ? pkColor.withOpacity(0.7) : pkColor;
+    Color dividerColor = isDark ? Colors.white30 : Colors.grey;
+
     return Scaffold(
-      backgroundColor: Color(0xFFF8F9FA),
+      backgroundColor: backgroundColor,
       appBar: null,
       body: Stack(
         children: [
@@ -73,14 +82,14 @@ class _ProductPageState extends State<ProductPage> {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF333333),
+                          color: textColor,
                         ),
                       ),
                     ),
                     SizedBox(width: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: pkColor, // Sale Badge Color
+                        color: saleBadgeColor, // Sale Badge Color
                         borderRadius: BorderRadius.circular(16),
                       ),
                       width: 100,
@@ -130,7 +139,7 @@ class _ProductPageState extends State<ProductPage> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Color(0xFF333333),
+                                color: textColor,
                               ),
                             ),
                           ],
@@ -154,7 +163,6 @@ class _ProductPageState extends State<ProductPage> {
                               padding: EdgeInsets.all(4),
                               child: Icon(
                                 Icons.thumb_up,
-                                // color: Color(0xFF008000), // Green Color
                                 color: pkColor, // Green Color
                                 size: 25,
                               ),
@@ -165,7 +173,7 @@ class _ProductPageState extends State<ProductPage> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Color(0xFF333333),
+                                color: textColor,
                               ),
                             ),
                           ],
@@ -183,21 +191,24 @@ class _ProductPageState extends State<ProductPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   widget.product.description,
-                  style: TextStyle(fontSize: 16),
+                  style: TextStyle(fontSize: 16, color: textColor),
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
 
               // Divider
-              Divider(color: Colors.grey, thickness: .5),
+              Divider(color: dividerColor, thickness: .5),
 
               // Related Products
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   "Products Related to This Item:",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: textColor),
                 ),
               ),
 
@@ -257,7 +268,7 @@ class _ProductPageState extends State<ProductPage> {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey,
+                            color: Colors.black,
                             decoration: TextDecoration.lineThrough,
                             decorationColor: Colors.red,
                             decorationThickness: 2,
@@ -268,7 +279,7 @@ class _ProductPageState extends State<ProductPage> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: isDark ? Colors.grey : Colors.black,
                           ),
                         ),
                       ],

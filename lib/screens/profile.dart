@@ -25,15 +25,17 @@ class _ProfilePageState extends State<ProfilePage> {
   void fetchUserData() async {
     try {
       // Get email from SharedPreferences
-      final String email = await _getEmail();
+      // final String email = await _getEmail();
 
-      if (email.isEmpty) {
-        print("No email found in SharedPreferences");
-        return;
-      }
+      // if (email.isEmpty) {
+      //   print("No email found in SharedPreferences");
+      //   return;
+      // }
 
       // Fetch user data using the email from SharedPreferences
-      final fetchedUser = await USerService().fetchUserByEmail(email);
+      final fetchedUser =
+          await USerService().fetchUserByEmail("test@gmail.com");
+      print(fetchedUser);
 
       if (fetchedUser != null) {
         setState(() {
@@ -47,11 +49,11 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  Future<String> _getEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('email') ??
-        ''; // Fetches the email from SharedPreferences
-  }
+  // Future<String> _getEmail() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString('email') ??
+  //       ''; // Fetches the email from SharedPreferences
+  // }
 
   @override
   Widget build(BuildContext context) {

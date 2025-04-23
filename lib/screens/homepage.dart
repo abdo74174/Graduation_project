@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
-import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/components/category/Category_view.dart';
 import 'package:graduation_project/components/home_page/drawer.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/home_page/searchbar.dart';
-import 'package:graduation_project/core/constants/constant.dart';
-import 'package:graduation_project/screens/login_page.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/product_page.dart';
-import 'package:graduation_project/screens/cart.dart';
-import 'package:graduation_project/screens/categories_page.dart';
-
-import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/services/Product/category_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
-import 'package:graduation_project/services/sign.dart';
-import 'package:graduation_project/testing/test.dart';
+import 'package:graduation_project/screens/favourite_page.dart';
+import 'package:graduation_project/screens/cart.dart';
+import 'package:graduation_project/screens/categories_page.dart';
+import 'package:graduation_project/screens/chat_app.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -28,32 +24,71 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<CategoryModel> categories = [];
   List<ProductModel> products = [];
+
+  bool isLoading = true; // To track loading state
+
   @override
   void initState() {
     super.initState();
-    CategoryService().fetchAllCategories().then((fetchedCategories) {
+    _loadCategories();
+    _loadProducts();
+  }
+
+  // Fetch categories from the API
+  Future<void> _loadCategories() async {
+    try {
+      final fetchedCategories = await CategoryService().fetchAllCategories();
       setState(() {
         categories = fetchedCategories;
+        isLoading = false;
+        print("-------------------------------------------------------");
+        print("Fetched categories: ${categories.length}");
       });
-    });
+    } catch (e) {
+      print("Failed to fetch categories from API, using dummy data. Error: $e");
+      setState(() {
+        categories = dummyCategories; // Using dummy data here
+        isLoading = false;
+        print("-------------------------------------------------------");
+        print("Using dummy categories: ${categories.length}");
+      });
+    }
+  }
 
-    ProductService().fetchAllProducts().then((fetchedProducts) {
+  // Fetch products from the API
+  Future<void> _loadProducts() async {
+    try {
+      final fetchedProducts = await ProductService().fetchAllProducts();
       setState(() {
         products = fetchedProducts;
+        isLoading = false;
+        print("-------------------------------------------------------");
+        print("Fetched products: ${products.length}");
       });
-    });
+    } catch (e) {
+      print("Failed to fetch products from API, using dummy data. Error: $e");
+      setState(() {
+        products = dummyProducts; // Using dummy data here
+        isLoading = false;
+        print("-------------------------------------------------------");
+        print("Using dummy products: ${products.length}");
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark ? Colors.black : Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? Colors.black : Color(0xFFF5F5F5),
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu, color: Colors.black),
+            icon: Icon(Icons.menu,
+                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
@@ -64,36 +99,34 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return FavoritePage();
-                  },
-                ),
+                MaterialPageRoute(builder: (context) => FavoritePage()),
               );
             },
-            icon: Icon(Icons.favorite_border_outlined, color: Colors.black),
+            icon: Icon(Icons.favorite_border_outlined,
+                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
           ),
           IconButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) {
-                    return ShoppingCartPage();
-                  },
-                ),
+                MaterialPageRoute(builder: (context) => ShoppingCartPage()),
               );
             },
-            icon: Icon(Icons.shopping_cart_outlined, color: Colors.black),
+            icon: Icon(Icons.shopping_cart_outlined,
+                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
           ),
           IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_none, color: Colors.black),
+            onPressed: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => ChatScreen()));
+            },
+            icon: Icon(Icons.notifications_none,
+                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
           ),
         ],
       ),
       drawer: const DrawerHome(),
-      body: categories.isEmpty
+      body: isLoading
           ? Center(child: CircularProgressIndicator())
           : Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -114,10 +147,8 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8.0),
-                            child: Image.asset(
-                              "assets/images/offer.avif",
-                              fit: BoxFit.cover,
-                            ),
+                            child: Image.asset("assets/images/offer.avif",
+                                fit: BoxFit.cover),
                           ),
                         ),
                       ],
@@ -132,16 +163,15 @@ class _HomePageState extends State<HomePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) {
-                                return CategoryScreen();
-                              },
-                            ),
+                                builder: (context) => CategoryScreen()),
                           );
                         },
                         child: Text(
                           "Categories",
                           style: TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold),
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.white : Color(0xFF1A1A1A)),
                         ),
                       ),
                       GestureDetector(
@@ -149,13 +179,15 @@ class _HomePageState extends State<HomePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) {
-                                return CategoryScreen();
-                              },
-                            ),
+                                builder: (context) => CategoryScreen()),
                           );
                         },
-                        child: Text("View all", style: TextStyle(fontSize: 18)),
+                        child: Text(
+                          "View all",
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                        ),
                       ),
                     ],
                   ),
@@ -167,24 +199,21 @@ class _HomePageState extends State<HomePage> {
                       itemCount: categories.length,
                       itemBuilder: (context, index) {
                         return CategoryView(
-                          borderColor: Color(0xff3B8FDA),
+                          borderColor:
+                              isDark ? Colors.white : Color(0xFF3B8FDA),
                           category: categories[index],
                           onTap: () {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) {
-                                  return CategoryScreen(id: index);
-                                },
-                              ),
+                                  builder: (context) =>
+                                      CategoryScreen(id: index)),
                             );
                           },
                         );
                       },
                     ),
                   ),
-
-                  //     CategoryView(  category: categories,),
                   SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -192,7 +221,9 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         "Products",
                         style: TextStyle(
-                            fontSize: 25, fontWeight: FontWeight.bold),
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Color(0xFF1A1A1A)),
                       ),
                     ],
                   ),

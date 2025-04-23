@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:graduation_project/screens/login_page.dart';
+import 'package:graduation_project/screens/setting_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/screens/add_product.dart';
 import 'package:graduation_project/screens/contact_us.dart';
@@ -110,7 +111,10 @@ class _DrawerHomeState extends State<DrawerHome> {
             leading: const Icon(FontAwesomeIcons.cog),
             title: const Text('Settings'),
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
             },
           ),
           ListTile(
