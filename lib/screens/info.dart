@@ -1,8 +1,8 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/USer/sign.dart';
+import 'package:graduation_project/services/Server/server_status_service.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -16,8 +16,21 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   String? selectedSpecialty;
 
   final List<String> roles = ['Doctor', 'Merchant', 'MedicalTrader'];
+  bool _serverOnline = true;
 
-  // create your service once
+  final ServerStatusService _statusService = ServerStatusService();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkServer();
+  }
+
+  Future<void> _checkServer() async {
+    final online = await _statusService.checkAndUpdateServerStatus();
+    if (!mounted) return;
+    setState(() => _serverOnline = online);
+  }
 
   void _onNextPressed() async {
     if (selectedRole == null || selectedSpecialty == null) {
@@ -26,21 +39,34 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       );
       return;
     }
-    final success = await USerService().updateRoleAndSpecialist(
-      email: 'test@gmail.com',
-      role: selectedRole,
-      medicalSpecialist: selectedSpecialty,
-    );
 
-    if (success) {
-      const SnackBar(content: Text('Success to update profile'));
+    if (_serverOnline) {
+      final success = await USerService().updateRoleAndSpecialist(
+        email: 'test@gmail.com',
+        role: selectedRole,
+        medicalSpecialist: selectedSpecialty,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomePage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to update profile')),
+        );
+      }
+    } else {
+      // OFFLINE MODE: Just navigate forward
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Server offline — continuing offline')),
+      );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomePage()),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update profile')),
       );
     }
   }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "653167376608",
+    "project_id": "medbridge-11d7e",
+    "storage_bucket": "medbridge-11d7e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:653167376608:android:ffd6c9318c9c164b987885",
+        "android_client_info": {
+          "package_name": "com.example.graduation_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQl86yhCjyarTS-rtQf3vkXNchra7L3ag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,7 +1,4 @@
-// ignore_for_file: avoid_print
-
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
@@ -28,8 +25,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<CategoryModel> categories = [];
   List<ProductModel> products = [];
-
   bool isLoading = true; // To track loading state
+  bool isOffline = false; // Simulate offline status
 
   @override
   void initState() {
@@ -38,58 +35,66 @@ class _HomePageState extends State<HomePage> {
     _loadProducts();
   }
 
-// Fetch categories from the API with timeout
+  // Simulate fetching categories with timeout or offline status
   Future<void> _loadCategories() async {
     try {
-      // Creating a Future that completes after 15 seconds or the API call finishes first
-      final result = await Future.any([
-        CategoryService().fetchAllCategories(), // API call
-        Future.delayed(Duration(seconds: 15),
-            () => throw TimeoutException('Timeout')) // Timeout after 15 seconds
-      ]);
+      if (isOffline) {
+        // Simulating offline behavior by loading dummy data
+        setState(() {
+          categories = dummyCategories;
+          isLoading = false;
+        });
+        print("Offline mode: Using dummy categories.");
+      } else {
+        final result = await Future.any([
+          CategoryService().fetchAllCategories(),
+          Future.delayed(
+              Duration(seconds: 15), () => throw TimeoutException('Timeout')),
+        ]);
 
-      setState(() {
-        categories = result;
-        isLoading = false;
-        print("-------------------------------------------------------");
+        setState(() {
+          categories = result;
+          isLoading = false;
+        });
         print("Fetched categories: ${categories.length}");
-      });
+      }
     } catch (e) {
-      // Fallback to dummy data if there was an error or timeout
-      print("Failed to fetch categories from API, using dummy data. Error: $e");
+      print("Error fetching categories: $e");
       setState(() {
-        categories = dummyCategories; // Using dummy data here
+        categories = dummyCategories; // Use dummy data as a fallback
         isLoading = false;
-        print("-------------------------------------------------------");
-        print("Using dummy categories: ${categories.length}");
       });
     }
   }
 
-  // Fetch products from the API with timeout
+  // Simulate fetching products with timeout or offline status
   Future<void> _loadProducts() async {
     try {
-      // Creating a Future that completes after 15 seconds or the API call finishes first
-      final result = await Future.any([
-        ProductService().fetchAllProducts(), // API call
-        Future.delayed(Duration(seconds: 15),
-            () => throw TimeoutException('Timeout')) // Timeout after 15 seconds
-      ]);
+      if (isOffline) {
+        // Simulating offline behavior by loading dummy data
+        setState(() {
+          products = dummyProducts;
+          isLoading = false;
+        });
+        print("Offline mode: Using dummy products.");
+      } else {
+        final result = await Future.any([
+          ProductService().fetchAllProducts(),
+          Future.delayed(
+              Duration(seconds: 15), () => throw TimeoutException('Timeout')),
+        ]);
 
-      setState(() {
-        products = result;
-        isLoading = false;
-        print("-------------------------------------------------------");
+        setState(() {
+          products = result;
+          isLoading = false;
+        });
         print("Fetched products: ${products.length}");
-      });
+      }
     } catch (e) {
-      // Fallback to dummy data if there was an error or timeout
-      print("Failed to fetch products from API, using dummy data. Error: $e");
+      print("Error fetching products: $e");
       setState(() {
-        products = dummyProducts; // Using dummy data here
+        products = dummyProducts; // Use dummy data as a fallback
         isLoading = false;
-        print("-------------------------------------------------------");
-        print("Using dummy products: ${products.length}");
       });
     }
   }
@@ -187,9 +192,10 @@ class _HomePageState extends State<HomePage> {
                         child: Text(
                           "Categories",
                           style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Color(0xFF1A1A1A),
+                          ),
                         ),
                       ),
                       GestureDetector(
@@ -203,8 +209,9 @@ class _HomePageState extends State<HomePage> {
                         child: Text(
                           "View all",
                           style: TextStyle(
-                              fontSize: 18,
-                              color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                            fontSize: 18,
+                            color: isDark ? Colors.white : Color(0xFF1A1A1A),
+                          ),
                         ),
                       ),
                     ],
@@ -224,8 +231,8 @@ class _HomePageState extends State<HomePage> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      CategoryScreen(id: index)),
+                                builder: (context) => CategoryScreen(id: index),
+                              ),
                             );
                           },
                         );
@@ -239,9 +246,10 @@ class _HomePageState extends State<HomePage> {
                       Text(
                         "Products",
                         style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Color(0xFF1A1A1A),
+                        ),
                       ),
                     ],
                   ),

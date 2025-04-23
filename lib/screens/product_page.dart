@@ -24,23 +24,47 @@ class _ProductPageState extends State<ProductPage> {
   }
 
   List<ProductModel> products = [];
-
+  bool _isLoading = true;
+  bool _showDummy = false;
   @override
   void initState() {
     super.initState();
-
-    ProductService().fetchAllProducts().then((fetchedProducts) {
-      setState(() {
-        products = fetchedProducts;
-      });
+    loadProducts();
+    // Start 7-second timer regardless of initial load status
+    Future.delayed(Duration(seconds: 7), () {
+      if (mounted && products.isEmpty) {
+        setState(() {
+          _showDummy = true;
+          _isLoading = false;
+        });
+      }
     });
+  }
+
+  Future<void> loadProducts() async {
+    try {
+      final fetchedProducts = await ProductService().fetchAllProducts();
+      if (mounted) {
+        setState(() {
+          products = fetchedProducts;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print("⚠️ Error loading products: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          // Don't set products here, let the timer handle it
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Adjust colors based on dark mode or light mode
     Color backgroundColor = isDark ? Color(0xFF333333) : Color(0xFFF8F9FA);
     Color textColor = isDark ? Colors.white : Color(0xFF333333);
     Color priceColor = isDark ? Colors.white : Colors.black;
@@ -58,19 +82,21 @@ class _ProductPageState extends State<ProductPage> {
               // Product images carousel
               SizedBox(
                 height: 400,
-                child: PageView.builder(
+                child: // In ProductPage's build method
+                    PageView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: widget.product.images.length,
+                  itemCount: widget.product.images.isEmpty
+                      ? 1
+                      : widget.product.images.length,
                   itemBuilder: (context, index) {
-                    final fullImageUrl = widget.product.images[index];
-                    print("============================");
-                    print(widget.product.images.isEmpty);
-                    print(widget.product.images);
-                    print(defaultProductImage.isEmpty);
-                    print("============================");
+                    final fullImageUrl = widget.product.images.isEmpty
+                        ? defaultProductImage // Use default if no images
+                        : widget.product.images[index];
+
                     return ImageWidget(
-                        productId: widget.product.productId,
-                        image: fullImageUrl); // Custom widget to display image
+                      productId: widget.product.productId,
+                      image: fullImageUrl,
+                    );
                   },
                 ),
               ),
@@ -224,30 +250,60 @@ class _ProductPageState extends State<ProductPage> {
               ),
 
               // Horizontal List of Related Products
+              // Horizontal List of Related Products
               SizedBox(
                 height: 300,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
-                      child: ProductCard(
-                        product: products[index],
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) {
-                                return ProductPage(product: products[index]);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : _showDummy || products.isEmpty
+                        ? ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: dummyProducts.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 15),
+                                child: ProductCard(
+                                  product: dummyProducts[index],
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return ProductPage(
+                                              product: dummyProducts[index]);
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: products.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 15),
+                                child: ProductCard(
+                                  product: products[index],
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return ProductPage(
+                                              product: products[index]);
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
               ),
             ],
           ),

@@ -1,19 +1,36 @@
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/components/setting/ThemeNotifier.dart';
+import 'package:graduation_project/firebase_options.dart';
 import 'package:graduation_project/screens/homepage.dart';
+import 'package:graduation_project/screens/login_page.dart';
 import 'package:graduation_project/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
+
+import 'package:graduation_project/services/notifications/notification_service.dart';
+import 'package:graduation_project/background/server_check.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await AndroidAlarmManager.initialize();
+  await NotificationService.init();
 
-  // Ignore SSL errors in debug mode only
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }
+
+  await AndroidAlarmManager.periodic(
+    const Duration(seconds: 20),
+    123,
+    hourlyServerCheck,
+    wakeup: true,
+    exact: true,
+  );
 
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
@@ -44,11 +61,10 @@ class MedicalApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: themeNotifier.isDarkMode ? ThemeData.dark() : ThemeData.light(),
-      home: isLoggedIn ? const HomePage() : const WelcomePage(),
+      home: isLoggedIn ? const HomePage() : const LoginPage(),
     );
   }
 }

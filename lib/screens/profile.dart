@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,6 +17,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   User? user;
+  bool _isServerOnline = true; // Assuming the server is online initially
 
   @override
   void initState() {
@@ -22,38 +25,56 @@ class _ProfilePageState extends State<ProfilePage> {
     fetchUserData();
   }
 
+  // Method to fetch user data
   void fetchUserData() async {
     try {
-      // Get email from SharedPreferences
-      // final String email = await _getEmail();
+      // Check server status (you can replace this with actual server check logic)
+      final serverStatus = await checkServerStatus();
+      setState(() {
+        _isServerOnline = serverStatus;
+      });
 
-      // if (email.isEmpty) {
-      //   print("No email found in SharedPreferences");
-      //   return;
-      // }
-
-      // Fetch user data using the email from SharedPreferences
-      final fetchedUser =
-          await USerService().fetchUserByEmail("test@gmail.com");
-      print(fetchedUser);
-
-      if (fetchedUser != null) {
-        setState(() {
-          user = fetchedUser;
-        });
+      // If server is online, fetch real data, otherwise fetch from dummy data
+      if (_isServerOnline) {
+        final fetchedUser =
+            await USerService().fetchUserByEmail("test@gmail.com");
+        if (fetchedUser != null) {
+          setState(() {
+            user = fetchedUser;
+          });
+        } else {
+          print("User not found");
+        }
       } else {
-        print("User not found");
+        // If server is offline, use dummy data
+        final dummyUser =
+            dummyUsers.firstWhere((u) => u.email == "test@gmail.com",
+                orElse: () => User(
+                      id: 1,
+                      email: 'test@gmail.com',
+                      phone: 1233,
+                      createdAt:
+                          Timestamp.fromMillisecondsSinceEpoch(1618317040000)
+                              .toDate(), // Dummy timestamp
+                      role: 'Doctor',
+                      products: [],
+                      contactUsMessages: [],
+                    ));
+        setState(() {
+          user = dummyUser;
+        });
       }
     } catch (e) {
       print("Error fetching user: $e");
     }
   }
 
-  // Future<String> _getEmail() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString('email') ??
-  //       ''; // Fetches the email from SharedPreferences
-  // }
+  // Simulate a server status check (replace with actual check logic)
+  Future<bool> checkServerStatus() async {
+    // Replace this with actual server check logic
+    return Future.delayed(
+        const Duration(seconds: 2), () => false); // Simulating server offline
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         child: Column(
                           children: [
                             _buildProfileField(
-                                "Name", user!.name ?? "", Icons.person),
+                                "Name", user!.name ?? "user", Icons.person),
                             const SizedBox(height: 20),
                             _buildProfileField(
                                 "Email", user!.email, Icons.email),
@@ -157,6 +178,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Profile field widget
   Widget _buildProfileField(String label, String value, IconData icon) {
     return TextFormField(
       initialValue: value,

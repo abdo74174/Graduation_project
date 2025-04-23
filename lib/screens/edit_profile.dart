@@ -26,17 +26,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
     "Orthopedics",
     "General"
   ];
+
+  // This function fetches user data from the server
   void fetchUserData() async {
     try {
       final fetchedUser = await USerService().fetchUserByEmail("m@gmail.com");
       if (fetchedUser != null) {
         setState(() {
           user = fetchedUser;
-          _nameController.text = user?.name ?? "";
-          _emailController.text = user?.email ?? "";
-          _passwordController.text = user?.password ?? "";
+          _nameController.text = user?.name ?? "user";
+          _emailController.text = user?.email ?? "user@gmail.com";
+          _passwordController.text =
+              user?.password ?? "423m4po523h5o25oi52io[5]";
 
-          // ✅ تأكد إن القيمة موجودة قبل تعيينها
+          // Ensure the value exists before assigning it
           _selectedCategory = _categories.contains(user?.medicalSpecialist)
               ? user?.medicalSpecialist
               : null;
@@ -49,10 +52,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
+  // This method is responsible for showing dummy data after 10 seconds
+  void showDummyData() async {
+    await Future.delayed(const Duration(milliseconds: 20));
+    if (mounted) {
+      setState(() {
+        _nameController.text = "John Doe";
+        _emailController.text = "johndoe@example.com";
+        _passwordController.text = "********";
+        _selectedCategory = _categories[0]; // Default to the first category
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    fetchUserData();
+    fetchUserData(); // Fetch user data when the page is loaded
+    showDummyData(); // Show dummy data after 10 seconds
   }
 
   @override
@@ -79,121 +96,94 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         centerTitle: true,
       ),
-      body: user == null
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: ListView(
-                children: [
-                  const SizedBox(height: 10),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: ListView(
+          children: [
+            const SizedBox(height: 10),
 
-                  // Avatar
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey.shade200,
-                    backgroundImage:
-                        const AssetImage("assets/images/doctor 1.png"),
-                  ),
-                  const SizedBox(height: 20),
+            // Avatar
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: Colors.grey.shade200,
+              backgroundImage: const AssetImage("assets/images/doctor 1.png"),
+            ),
+            const SizedBox(height: 20),
 
-                  _buildLabel("User Name"),
-                  _buildTextField(_nameController, Icons.person),
+            _buildLabel("User Name"),
+            _buildTextField(_nameController, Icons.person),
 
-                  _buildLabel("Email"),
-                  _buildTextField(_emailController, Icons.email),
+            _buildLabel("Email"),
+            _buildTextField(_emailController, Icons.email),
 
-                  // _buildLabel("Password"),
-                  // TextField(
-                  //   controller: _passwordController,
-                  //   obscureText: _obscurePassword,
-                  //   decoration: InputDecoration(
-                  //     suffixIcon: IconButton(
-                  //       icon: Icon(
-                  //         _obscurePassword
-                  //             ? Icons.visibility_off
-                  //             : Icons.visibility,
-                  //         color: Colors.grey,
-                  //       ),
-                  //       onPressed: () {
-                  //         setState(() {
-                  //           _obscurePassword = !_obscurePassword;
-                  //         });
-                  //       },
-                  //     ),
-                  //     border: OutlineInputBorder(
-                  //         borderRadius: BorderRadius.circular(10)),
-                  //   ),
-                  // ),
+            const SizedBox(height: 15),
+            _buildLabel("Category"),
 
-                  const SizedBox(height: 15),
-                  _buildLabel("Category"),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                prefixIcon:
+                    const Icon(Icons.medical_services, color: Colors.grey),
+              ),
+              value: _selectedCategory,
+              hint: const Text("Select your Category"),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedCategory = newValue;
+                });
+              },
+              items: _categories
+                  .map((category) => DropdownMenuItem(
+                        value: category,
+                        child: Text(category),
+                      ))
+                  .toList(),
+            ),
 
-                  DropdownButtonFormField<String>(
-                    decoration: InputDecoration(
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10)),
-                      prefixIcon: const Icon(Icons.medical_services,
-                          color: Colors.grey),
-                    ),
-                    value: _selectedCategory,
-                    hint: const Text("Select your Category"),
-                    onChanged: (newValue) {
-                      setState(() {
-                        _selectedCategory = newValue;
-                      });
-                    },
-                    items: _categories
-                        .map((category) => DropdownMenuItem(
-                              value: category,
-                              child: Text(category),
-                            ))
-                        .toList(),
-                  ),
+            const SizedBox(height: 25),
 
-                  const SizedBox(height: 25),
+            // Save Button
+            Container(
+              width: double.infinity,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Colors.blue, Colors.indigo],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: TextButton(
+                onPressed: () async {
+                  try {
+                    await USerService().updateUserProfile(
+                      email: _emailController.text,
+                      name: _nameController.text,
+                      medicalSpecialist: _selectedCategory ?? "",
+                      profileImage: null,
+                    );
 
-                  // Save Button
-                  Container(
-                    width: double.infinity,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Colors.blue, Colors.indigo],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: TextButton(
-                      onPressed: () async {
-                        try {
-                          await USerService().updateUserProfile(
-                            email: _emailController.text,
-                            name: _nameController.text,
-                            // password: _passwordController.text,
-                            medicalSpecialist: _selectedCategory ?? "",
-                            profileImage: null,
-                          );
+                    if (!mounted) return;
 
-                          if (!mounted) return;
+                    showSnackbar(context, "Updated Successfully");
+                  } catch (e) {
+                    if (!mounted) return;
 
-                          showSnackbar(context, "Updated Successfully");
-                        } catch (e) {
-                          if (!mounted) return;
-
-                          showSnackbar(context, "Update Failed");
-                          print("❌ Caught Error: $e");
-                        }
-                      },
-                      child: const Text(
-                        "Save changes",
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ],
+                    showSnackbar(context, "Update Failed");
+                    print("❌ Caught Error: $e");
+                  }
+                },
+                child: const Text(
+                  "Save changes",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
               ),
             ),
+          ],
+        ),
+      ),
     );
   }
 

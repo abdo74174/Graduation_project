@@ -1,14 +1,14 @@
 import 'package:graduation_project/Models/product_model.dart';
 
 class SubCategory {
+  static const String defaultSubCategoryImage = "assets/images/subCategory.jpg";
+
   final int subCategoryId;
   final String name;
   final String description;
   final String image;
   final int categoryId;
   final List<ProductModel> products;
-
-  static const String defaultImage = "assets/images/bone1.jpg";
 
   SubCategory({
     required this.subCategoryId,
@@ -26,7 +26,7 @@ class SubCategory {
       description: json['description'],
       image: (json['imageUrl']?.isNotEmpty ?? false)
           ? json['imageUrl']
-          : defaultImage,
+          : defaultSubCategoryImage,
       categoryId: json['categoryId'],
       products: (json['products'] as List<dynamic>?)
               ?.map((e) => ProductModel.fromJson(e))

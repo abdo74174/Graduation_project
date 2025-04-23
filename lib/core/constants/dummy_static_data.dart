@@ -9,6 +9,7 @@ import 'package:graduation_project/Models/user_model.dart';
 
 const String defaultProductImage = "assets/images/equip2.png";
 const String defaultCategoryImage = "assets/images/category.jpg";
+const String defaultSubCategoryImage = "assets/images/category.jpg";
 // Dummy Products
 final dummyProducts = [
   ProductModel(
@@ -65,12 +66,14 @@ final dummyCart = CartModel(
 );
 
 // Dummy Subcategories
+
+// Dummy Subcategories
 final dummySubCategories = [
   SubCategory(
     subCategoryId: 1,
     name: "Monitors",
     description: "Monitoring devices",
-    image: SubCategory.defaultImage,
+    image: defaultSubCategoryImage,
     categoryId: 1,
     products: [dummyProducts[0]],
   ),
@@ -78,7 +81,7 @@ final dummySubCategories = [
     subCategoryId: 2,
     name: "Thermometers",
     description: "Body temperature measurement tools",
-    image: SubCategory.defaultImage,
+    image: SubCategory.defaultSubCategoryImage,
     categoryId: 1,
     products: [dummyProducts[1]],
   ),
@@ -101,7 +104,6 @@ final dummyCategories = [
     products: [],
   ),
 ];
-
 // Dummy Favourites
 final dummyFavourites = [
   Favourite(
@@ -124,7 +126,7 @@ final dummyUsers = [
     id: 1,
     name: "Dr. Sarah",
     email: "user@gmail.com",
-    password: null,
+    password: "user",
     confirmPassword: null,
     resetToken: null,
     resetTokenExpires: null,

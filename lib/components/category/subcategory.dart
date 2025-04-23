@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 
 class SubCategoryView extends StatelessWidget {
   final SubCategory subCategory;
   final VoidCallback onTap;
   final Color? borderColor;
 
-  const SubCategoryView(
-      {super.key,
-      required this.subCategory,
-      required this.onTap,
-      required this.borderColor});
+  const SubCategoryView({
+    super.key,
+    required this.subCategory,
+    required this.onTap,
+    required this.borderColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +31,6 @@ class SubCategoryView extends StatelessWidget {
                 border: Border.all(color: borderColor!, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    // ignore: deprecated_member_use
                     color: Colors.black.withOpacity(0.2),
                     blurRadius: 5,
                     spreadRadius: 2,
@@ -40,11 +41,21 @@ class SubCategoryView extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: AspectRatio(
-                  aspectRatio: 1, // Ensures square shape
-                  child: Image.network(
-                    subCategory.image,
-                    fit: BoxFit.cover, // Fill without distortion
-                  ),
+                  aspectRatio: 1,
+                  child: subCategory.image.startsWith('https')
+                      ? Image.network(
+                          subCategory.image,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Image.asset(
+                            defaultSubCategoryImage,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Image.asset(
+                          subCategory.image,
+                          fit: BoxFit.cover,
+                        ),
                 ),
               ),
             ),

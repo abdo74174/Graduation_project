@@ -3,8 +3,10 @@ import 'package:graduation_project/Models/cart_item.dart';
 import 'package:graduation_project/Models/cart_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
+import 'package:graduation_project/services/Server/server_status_service.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -27,29 +29,33 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
   }
 
   Future<void> _loadEverything() async {
-    try {
-      final products = await ProductService().fetchAllProducts();
-      final cart = await CartService().getCart();
+    final serverStatusService = ServerStatusService();
+    final isOnline = await serverStatusService.checkAndUpdateServerStatus();
 
-      setState(() {
-        productMap = {for (var p in products) p.productId: p};
-        cartModel = cart;
-      });
+    if (isOnline) {
+      try {
+        final products = await ProductService().fetchAllProducts();
+        final cart = await CartService().getCart();
 
-      if (cart.cartItems.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('🛒 السلة فاضية')),
-        );
+        setState(() {
+          productMap = {for (var p in products) p.productId: p};
+          cartModel = cart;
+        });
+      } catch (_) {
+        setState(() {
+          cartModel = dummyCart;
+          productMap = {for (var p in dummyProducts) p.productId: p};
+        });
       }
-    } catch (e) {
-      print("Error loading cart: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading cart: $e')),
-      );
-
+    } else {
       setState(() {
-        cartModel = CartModel(id: 0, userId: '', cartItems: []);
+        cartModel = dummyCart;
+        productMap = {for (var p in dummyProducts) p.productId: p};
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You are offline. Showing dummy cart data.')),
+      );
     }
   }
 
@@ -70,17 +76,11 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
         discountPercent = 0.10;
         appliedCode = enteredCode;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Discount applied: 10% OFF')),
-      );
     } else {
       setState(() {
         discountPercent = 0.0;
         appliedCode = '';
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid code')),
-      );
     }
   }
 
@@ -90,14 +90,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
     });
 
     final item = cartModel!.cartItems[index];
-    final success =
-        await CartService().updateCartItem(item.productId, item.quantity);
-
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('❌ Failed to update quantity')),
-      );
-    }
+    await CartService().updateCartItem(item.productId, item.quantity);
   }
 
   void _decrementQuantity(int index) async {
@@ -107,20 +100,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       });
 
       final item = cartModel!.cartItems[index];
-
-      print("+++++++++++++++++++++++++++++++++++++");
-      print(item.productId);
-      print(item.quantity);
-
-      print("+++++++++++++++++++++++++++++++++++++");
-      final success =
-          await CartService().updateCartItem(item.productId, item.quantity);
-
-      if (!success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('❌ Failed to update quantity')),
-        );
-      }
+      await CartService().updateCartItem(item.productId, item.quantity);
     }
   }
 
@@ -138,20 +118,14 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             ),
             TextButton(
               onPressed: () async {
-                // Call the API to delete the item
-                final productId = cartModel!.cartItems[index].product.productId;
+                final productId = cartModel!.cartItems[index].productId;
                 await CartService().deleteFromCart(productId);
 
-                // Remove from UI
                 setState(() {
                   cartModel!.cartItems.removeAt(index);
                 });
 
-                Navigator.pop(context); // Close the dialog
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Item removed')),
-                );
+                Navigator.pop(context);
               },
               child: const Text('Remove', style: TextStyle(color: Colors.red)),
             ),
@@ -215,12 +189,19 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        product.images.first,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      ),
+                      child: product.images.isNotEmpty
+                          ? Image.network(
+                              product.images[0],
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.asset(
+                              defaultProductImage,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                            ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(

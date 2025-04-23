@@ -1,14 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/screens/login_page.dart';
-
 import 'package:graduation_project/services/USer/sign.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _RegisterFormState createState() => _RegisterFormState();
 }
 
@@ -46,41 +46,124 @@ class _RegisterFormState extends State<RegisterForm> {
     String password = _passwordController.text;
     String confirmPassword = _confirmPasswordController.text;
 
-    // Username check
     if (username.isEmpty) {
-      setState(() => _usernameError = 'Username cannot be empty');
-      return;
-    }
-
-    // Email check
-    if (email.isEmpty ||
-        !RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-            .hasMatch(email)) {
-      setState(() => _emailError = 'Enter a valid email');
-      return;
-    }
-
-    // Password check (must be at least 8 characters, one letter, one number, one special character)
-    if (password.isEmpty) {
-      setState(() => _passwordError = 'Password cannot be empty');
-      return;
-    }
-
-    if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$')
+      _usernameError = 'Username cannot be empty';
+    } else if (email.isEmpty ||
+        !RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(email)) {
+      _emailError = 'Enter a valid email';
+    } else if (password.isEmpty) {
+      _passwordError = 'Password cannot be empty';
+    } else if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$')
         .hasMatch(password)) {
-      setState(() => _passwordError =
-          'Password must be at least 8 characters, include a letter, number, and symbol');
-      return;
+      _passwordError =
+          'Password must be at least 8 characters,\ninclude a letter, number, and symbol';
+    } else if (confirmPassword.isEmpty) {
+      _confirmPasswordError = 'Please confirm your password';
+    } else if (password != confirmPassword) {
+      _confirmPasswordError = 'Passwords do not match';
     }
+  }
 
-    if (confirmPassword.isEmpty) {
-      setState(() => _confirmPasswordError = 'Please confirm your password');
-      return;
-    }
+  Future<void> _register() async {
+    _validateForm();
 
-    if (password != confirmPassword) {
-      setState(() => _confirmPasswordError = 'Passwords do not match');
-      return;
+    if (_usernameError == null &&
+        _emailError == null &&
+        _passwordError == null &&
+        _confirmPasswordError == null) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("Please wait..."),
+            ],
+          ),
+        ),
+      );
+
+      try {
+        UserCredential userCredential =
+            await FirebaseAuth.instance.createUserWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        User? user = userCredential.user;
+
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({
+            'uid': user.uid,
+            'username': _usernameController.text.trim(),
+            'email': user.email,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+          await USerService().signup(
+            name: _usernameController.text.trim(),
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            confirmPassword: _confirmPasswordController.text,
+          );
+
+          if (mounted) {
+            Navigator.of(context).pop(); // Dismiss loading dialog
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Account created successfully! Please login.'),
+                backgroundColor: Colors.green,
+              ),
+            );
+
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+          }
+        }
+      } on FirebaseAuthException catch (e) {
+        Navigator.of(context).pop(); // Dismiss loading dialog
+
+        String errorMessage;
+        if (e.code == 'email-already-in-use') {
+          errorMessage = 'This email is already in use.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'The email address is invalid.';
+        } else if (e.code == 'weak-password') {
+          errorMessage = 'The password is too weak.';
+        } else {
+          errorMessage = 'Registration failed: ${e.message}';
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        Navigator.of(context).pop(); // Dismiss loading dialog
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Registration failed: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } else {
+      setState(() {}); // Trigger UI update to show errors
     }
   }
 
@@ -110,7 +193,6 @@ class _RegisterFormState extends State<RegisterForm> {
               'Create an account to start using the app',
               textAlign: TextAlign.center,
               style: TextStyle(
-                // ignore: deprecated_member_use
                 color: Colors.black.withOpacity(0.7),
                 fontSize: 16,
                 fontFamily: 'Oswald',
@@ -149,27 +231,13 @@ class _RegisterFormState extends State<RegisterForm> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3E84D7),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12,
-                  horizontal: 40,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 40),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              onPressed: () {
-                // if(!_validateForm){
-
-                // }
-                if (Sign()) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginPage(),
-                    ),
-                  );
-                }
-              },
+              onPressed: _register,
               child: const Text(
                 'Register',
                 style: TextStyle(
@@ -183,21 +251,15 @@ class _RegisterFormState extends State<RegisterForm> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
-                  "Already have an account? ",
-                  style: TextStyle(fontSize: 14),
-                ),
+                const Text("Already have an account? ",
+                    style: TextStyle(fontSize: 14)),
                 TextButton(
-                  onPressed: () => Navigator.push(
+                  onPressed: () => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const LoginPage(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
                   ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(color: Colors.blue, fontSize: 14),
-                  ),
+                  child: const Text('Login',
+                      style: TextStyle(color: Colors.blue, fontSize: 14)),
                 ),
               ],
             ),
@@ -205,25 +267,5 @@ class _RegisterFormState extends State<RegisterForm> {
         ),
       ),
     );
-  }
-
-  bool Sign() {
-    _validateForm();
-
-    if (_usernameError == null &&
-        _emailError == null &&
-        _passwordError == null &&
-        _confirmPasswordError == null) {
-      USerService().signup(
-        name: _usernameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text,
-      );
-
-      return true;
-    }
-
-    return false;
   }
 }

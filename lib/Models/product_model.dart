@@ -12,7 +12,7 @@ class ProductModel {
   final int userId;
   final int StockQuantity;
   final List<String> images; // URLs of images
-
+  static const String defaultProductImage = "assets/images/equip2.png";
   // Default image for product
 
   ProductModel({
@@ -41,7 +41,8 @@ class ProductModel {
       categoryId: json['categoryId'] ?? 0,
       StockQuantity: json['stockQuantity'] ?? 0, // lowercase!
       userId: json['userId'] ?? 0,
-      images: List<String>.from(json['imageUrls'] ?? []),
+      images: List<String>.from(
+          json['imageUrls'] ?? [defaultProductImage, defaultProductImage]),
     );
   }
 

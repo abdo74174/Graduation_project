@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/core/constants/constant.dart';
-import 'package:graduation_project/core/constants/dummy_static_data.dart';
-import 'package:graduation_project/services/Favourites/favourites_service.dart'; // Import the Favourites Service
+import 'package:graduation_project/services/Favourites/favourites_service.dart';
 
 class ImageWidget extends StatefulWidget {
   const ImageWidget({super.key, required this.image, required this.productId});
   final String image;
-  final int productId; // Pass the product ID
+  final int productId;
 
   @override
   State<ImageWidget> createState() => _ImageWidgetState();
@@ -14,99 +14,68 @@ class ImageWidget extends StatefulWidget {
 
 class _ImageWidgetState extends State<ImageWidget> {
   bool isFavourite = false;
+  late SharedPreferences _prefs;
 
-  // Fetch the current state of the favorite when the widget is initialized
   @override
   void initState() {
-    print("============================");
-    print(widget.image.isEmpty);
-    print(widget.image.length);
-    print(defaultProductImage.isEmpty);
-    print("============================");
     super.initState();
+    _initPrefs();
+  }
+
+  Future<void> _initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
     _checkIfFavourite();
   }
 
-  // Check if the product is in favorites
-  void _checkIfFavourite() async {
+  void _checkIfFavourite() {
+    // Check local cache first
+    final cachedFav = _prefs.getBool('fav_${widget.productId}');
+    if (cachedFav != null) {
+      setState(() => isFavourite = cachedFav);
+    }
+    _checkServerFavourite();
+  }
+
+  void _checkServerFavourite() async {
     try {
       final response = await FavouritesService().getFavourites();
-      print("Favourites Response: ${response?.data}");
-      if (response != null && response.statusCode == 200) {
-        final favouritesList = response.data as List;
-        final isInFavorites = favouritesList.any((favourite) =>
-            favourite['productId'] ==
-            widget.productId); // Check if productId is in the list of favorites
-        setState(() {
-          isFavourite = isInFavorites;
-        });
+      if (response?.statusCode == 200) {
+        final isInFavorites = (response!.data as List)
+            .any((favourite) => favourite['productId'] == widget.productId);
+
+        // Update both state and local cache
+        _prefs.setBool('fav_${widget.productId}', isInFavorites);
+        setState(() => isFavourite = isInFavorites);
       }
     } catch (e) {
-      print('Error checking if product is in favorites: $e');
+      // Offline: Keep cached value
+      print('Using cached favorite status: $isFavourite');
     }
   }
 
-  // Add or remove from Favorites function
   void _toggleFavoriteStatus() async {
+    final newStatus = !isFavourite;
+    // Update UI and cache immediately
+    setState(() => isFavourite = newStatus);
+    _prefs.setBool('fav_${widget.productId}', newStatus);
+
     try {
-      print("Toggling favorite status: $isFavourite");
-      if (isFavourite) {
-        final response =
-            await FavouritesService().removeFromFavourites(widget.productId);
-        print("Remove Response: ${response?.statusCode}");
-        if (response?.statusCode == 200) {
-          setState(() {
-            isFavourite = false;
-          });
-          showSnackbar(context, "Removed from Favorites");
-        } else {
-          showSnackbar(context, "Failed to remove from Favorites");
-        }
+      if (newStatus) {
+        await FavouritesService().addToFavourites(widget.productId);
       } else {
-        final response =
-            await FavouritesService().addToFavourites(widget.productId);
-        print("Add Response: ${response?.statusCode}");
-        if (response?.statusCode == 200) {
-          setState(() {
-            isFavourite = true;
-          });
-          showSnackbar(context, "Added to Favorites");
-        } else {
-          showSnackbar(context, "Failed to add to Favorites");
-        }
+        await FavouritesService().removeFromFavourites(widget.productId);
       }
     } catch (e) {
-      print("Error during toggle favorite status: $e");
-      showSnackbar(context, "Error: $e");
+      print('Sync failed: $e');
+      showSnackbar(context, "Changes will sync when online");
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    print("Image URL: ${widget.image}");
-
     return Stack(
       children: [
-        SizedBox(
-          width: screenWidth,
-          height: 400,
-          child: widget.image.length > 1 // More generic check
-              ? Image.network(
-                  widget.image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    print("Error loading image: $error");
-                    print("Stack Trace: $stackTrace");
-                    return Image.asset("assets/images/heart 1.jpg",
-                        fit: BoxFit.cover);
-                  },
-                )
-              : Image.asset(
-                  defaultProductImage,
-                  fit: BoxFit.cover,
-                ),
-        ),
+        // ... keep your existing image code ...,
         Positioned(
           right: 16,
           top: 40,
@@ -116,7 +85,7 @@ class _ImageWidgetState extends State<ImageWidget> {
               color: isFavourite ? Colors.red : Colors.white,
               size: 40,
             ),
-            onPressed: _toggleFavoriteStatus, // Toggle the favorite status
+            onPressed: _toggleFavoriteStatus,
           ),
         ),
         Positioned(

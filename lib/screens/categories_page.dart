@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
@@ -6,10 +7,8 @@ import 'package:graduation_project/components/category/Category_view.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/category/subcategory.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/product_page.dart';
-import 'package:graduation_project/services/Product/category_service.dart';
-import 'package:graduation_project/services/Product/product_service.dart';
-import 'package:graduation_project/services/Product/subcategory_service.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key, this.id});
@@ -30,22 +29,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   void initState() {
     super.initState();
 
-    CategoryService().fetchAllCategories().then((fetchedCategories) {
-      setState(() {
-        categories = fetchedCategories;
-      });
-    });
-
-    SubCategoryService().fetchAllSubCategories().then((fetchedSubCategories) {
-      setState(() {
-        subcategories = fetchedSubCategories;
-      });
-    });
-
-    ProductService().fetchAllProducts().then((fetchedProducts) {
-      setState(() {
-        products = fetchedProducts;
-      });
+    // Using the dummy data instead of fetching from a service
+    setState(() {
+      categories = dummyCategories;
+      subcategories = dummySubCategories;
+      products = dummyProducts;
     });
 
     if (widget.id != null) {

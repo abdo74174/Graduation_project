@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/services/Favourites/favourites_service.dart';
+import 'package:graduation_project/services/Server/server_status_service.dart';
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -21,27 +24,45 @@ class _FavoritePageState extends State<FavoritePage> {
     fetchFavourites();
   }
 
-  // Fetch favourites from the API
+  // Fetch favourites from the API or use dummy data if offline
   Future<void> fetchFavourites() async {
-    try {
-      final response = await FavouritesService()
-          .getFavourites(); // Assume this returns a Response from Dio
-      if (response != null && response.statusCode == 200) {
-        final List<ProductModel> loaded = (response.data as List)
-            .map((json) => ProductModel.fromJson(json[
-                'product'])) // Assuming the response contains a 'product' field
-            .toList();
+    final serverStatusService = ServerStatusService();
+    final isOnline = await serverStatusService.checkAndUpdateServerStatus();
 
+    if (isOnline) {
+      try {
+        final response = await FavouritesService().getFavourites();
+        if (response != null && response.statusCode == 200) {
+          final List<ProductModel> loaded = (response.data as List)
+              .map((json) => ProductModel.fromJson(json['product']))
+              .toList();
+          setState(() {
+            favourites = loaded;
+            isLoading = false;
+          });
+        } else {
+          Fluttertoast.showToast(msg: "Failed to load favourites");
+          setState(() {
+            favourites = []; // Empty list in case of failure
+            isLoading = false;
+          });
+        }
+      } catch (e) {
+        Fluttertoast.showToast(msg: "Error loading favourites.");
         setState(() {
-          favourites = loaded;
+          favourites = []; // Empty list in case of error
           isLoading = false;
         });
-      } else {
-        Fluttertoast.showToast(msg: "Failed to load favourites");
       }
-    } catch (e) {
-      print('Error fetching favourites: $e');
-      Fluttertoast.showToast(msg: "Error loading favourites.");
+    } else {
+      // Use dummy data when offline
+      setState(() {
+        favourites = dummyProducts; // Assuming you have dummyProducts
+        isLoading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('You are offline. Showing dummy favourites.')),
+      );
     }
   }
 
@@ -58,19 +79,6 @@ class _FavoritePageState extends State<FavoritePage> {
       Fluttertoast.showToast(msg: "Failed to remove");
     }
   }
-
-  // Remove all favorites
-  // void _removeAllFavorites() async {
-  //   try {
-  //     await FavouritesService().();
-  //     setState(() {
-  //       favourites.clear(); // Clear local list
-  //     });
-  //     Fluttertoast.showToast(msg: "All favourites removed");
-  //   } catch (e) {
-  //     Fluttertoast.showToast(msg: "Failed to remove all favourites");
-  //   }
-  // }
 
   // Sort items based on price
   void _sortItems(bool ascending) {
@@ -126,76 +134,100 @@ class _FavoritePageState extends State<FavoritePage> {
                     ),
                     itemBuilder: (context, index) {
                       final item = favourites[index];
-                      return Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(2, 2),
+                      return GestureDetector(
+                        onTap: () {
+                          // Navigate to the product page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ProductPage(
+                                product: item,
+
+                                // Pass the product ID
+                              ),
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: Image.network(
-                                        item.images[
-                                            0], // Update to use the first image
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (context, error, _) =>
-                                            Image.asset(
-                                                'assets/images/placeholder.png'),
+                          );
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Stack(
+                                  children: [
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0),
+                                      child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: item.images.isNotEmpty
+                                              ? Image.network(
+                                                  item.images[0],
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (context, error,
+                                                          _) =>
+                                                      Image.asset(
+                                                          'assets/images/placeholder.png'),
+                                                )
+                                              : Image.asset(
+                                                  defaultProductImage,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder: (context, error,
+                                                          _) =>
+                                                      Image.asset(
+                                                          'assets/images/placeholder.png'),
+                                                )),
+                                    ),
+                                    Positioned(
+                                      top: 8,
+                                      right: 8,
+                                      child: GestureDetector(
+                                        onTap: () => _removeFavourite(index),
+                                        child: const Icon(Icons.favorite,
+                                            color: Colors.red),
                                       ),
                                     ),
-                                  ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: GestureDetector(
-                                      onTap: () => _removeFavourite(index),
-                                      child: const Icon(Icons.favorite,
-                                          color: Colors.red),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10.0, vertical: 6),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "₹${item.price}",
+                                      style: const TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10.0, vertical: 6),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.name,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    "₹${item.price}",
-                                    style: const TextStyle(
-                                        color: Colors.blue,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -207,7 +239,7 @@ class _FavoritePageState extends State<FavoritePage> {
         child: ElevatedButton(
           onPressed: () {},
           style: ElevatedButton.styleFrom(
-            backgroundColor: pkColor, // Red color for the button
+            backgroundColor: pkColor,
             padding: const EdgeInsets.symmetric(vertical: 15),
           ),
           child: const Text(
