@@ -7,6 +7,8 @@ import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
 import 'package:graduation_project/Models/user_model.dart';
 
+const String defaultProductImage = "assets/images/equip2.png";
+const String defaultCategoryImage = "assets/images/category.jpg";
 // Dummy Products
 final dummyProducts = [
   ProductModel(
@@ -20,7 +22,7 @@ final dummyProducts = [
     categoryId: 1,
     StockQuantity: 30,
     userId: 1,
-    images: ["https://via.placeholder.com/150"],
+    images: [],
   ),
   ProductModel(
     productId: 2,
@@ -33,7 +35,7 @@ final dummyProducts = [
     categoryId: 1,
     StockQuantity: 50,
     userId: 2,
-    images: ["https://via.placeholder.com/150"],
+    images: [],
   ),
 ];
 
@@ -87,7 +89,6 @@ final dummyCategories = [
   CategoryModel(
     categoryId: 1,
     name: "Medical Devices",
-    image: CategoryModel.defaultImage,
     description: "Tools for monitoring and diagnostics.",
     subCategories: dummySubCategories,
     products: dummyProducts,
@@ -95,7 +96,6 @@ final dummyCategories = [
   CategoryModel(
     categoryId: 2,
     name: "Physical Therapy",
-    image: CategoryModel.defaultImage,
     description: "Equipments for home physical treatment.",
     subCategories: [],
     products: [],

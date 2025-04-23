@@ -13,6 +13,8 @@ class ProductModel {
   final int StockQuantity;
   final List<String> images; // URLs of images
 
+  // Default image for product
+
   ProductModel({
     required this.productId,
     required this.name,
@@ -42,6 +44,7 @@ class ProductModel {
       images: List<String>.from(json['imageUrls'] ?? []),
     );
   }
+
   ProductModel.empty()
       : productId = 0,
         name = 'Unknown',
@@ -54,6 +57,7 @@ class ProductModel {
         categoryId = 0,
         userId = 0,
         images = [];
+
   Map<String, dynamic> toJson() {
     return {
       'productId': productId,

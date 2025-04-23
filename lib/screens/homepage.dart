@@ -1,3 +1,7 @@
+// ignore_for_file: avoid_print
+
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
@@ -34,17 +38,24 @@ class _HomePageState extends State<HomePage> {
     _loadProducts();
   }
 
-  // Fetch categories from the API
+// Fetch categories from the API with timeout
   Future<void> _loadCategories() async {
     try {
-      final fetchedCategories = await CategoryService().fetchAllCategories();
+      // Creating a Future that completes after 15 seconds or the API call finishes first
+      final result = await Future.any([
+        CategoryService().fetchAllCategories(), // API call
+        Future.delayed(Duration(seconds: 15),
+            () => throw TimeoutException('Timeout')) // Timeout after 15 seconds
+      ]);
+
       setState(() {
-        categories = fetchedCategories;
+        categories = result;
         isLoading = false;
         print("-------------------------------------------------------");
         print("Fetched categories: ${categories.length}");
       });
     } catch (e) {
+      // Fallback to dummy data if there was an error or timeout
       print("Failed to fetch categories from API, using dummy data. Error: $e");
       setState(() {
         categories = dummyCategories; // Using dummy data here
@@ -55,17 +66,24 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Fetch products from the API
+  // Fetch products from the API with timeout
   Future<void> _loadProducts() async {
     try {
-      final fetchedProducts = await ProductService().fetchAllProducts();
+      // Creating a Future that completes after 15 seconds or the API call finishes first
+      final result = await Future.any([
+        ProductService().fetchAllProducts(), // API call
+        Future.delayed(Duration(seconds: 15),
+            () => throw TimeoutException('Timeout')) // Timeout after 15 seconds
+      ]);
+
       setState(() {
-        products = fetchedProducts;
+        products = result;
         isLoading = false;
         print("-------------------------------------------------------");
         print("Fetched products: ${products.length}");
       });
     } catch (e) {
+      // Fallback to dummy data if there was an error or timeout
       print("Failed to fetch products from API, using dummy data. Error: $e");
       setState(() {
         products = dummyProducts; // Using dummy data here

@@ -16,20 +16,17 @@ class DrawerHome extends StatefulWidget {
 
 class _DrawerHomeState extends State<DrawerHome> {
   Future<void> _logout() async {
-    // Get the instance of SharedPreferences
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Remove authentication data (e.g., token, user info)
-    await prefs.remove(
-        'userToken'); // Remove the token or any key that stores user data
-    await prefs.remove('userName'); // Remove the username if stored
+    // Remove authentication data
+    await prefs.remove('isLoggedIn'); // Ensure to remove this key
+    await prefs.remove('userToken');
+    await prefs.remove('userName');
 
     // Navigate to the Login screen after logout
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-          builder: (context) =>
-              LoginPage()), // Make sure LoginScreen is the correct import
+      MaterialPageRoute(builder: (context) => LoginPage()),
       (Route<dynamic> route) => false, // This removes all routes in the stack
     );
   }

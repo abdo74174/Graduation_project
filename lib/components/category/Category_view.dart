@@ -1,13 +1,8 @@
-// ignore_for_file: file_names
-
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 
 class CategoryView extends StatelessWidget {
-  final CategoryModel category;
-  final VoidCallback onTap;
-  final Color borderColor;
   const CategoryView({
     super.key,
     required this.category,
@@ -15,27 +10,34 @@ class CategoryView extends StatelessWidget {
     required this.borderColor,
   });
 
+  final CategoryModel category;
+  final VoidCallback onTap;
+  final Color borderColor;
+
+  // This method checks if the image is a valid URL, base64, or an asset path.
   ImageProvider getImageProvider(String? image) {
     if (image == null || image.isEmpty) {
-      return const AssetImage("assets/images/Furniture.jpg");
+      // Default image in case category.image is null or empty
+      return const AssetImage("assets/images/category.jpg"); // Fallback image
     }
 
-    // check if it’s base64 image
+    // Check if it’s a base64 image
     if (image.startsWith('/9j/')) {
       try {
         return MemoryImage(base64Decode(image));
       } catch (e) {
-        return const AssetImage("assets/images/Furniture.jpg");
+        // Return fallback image in case of an error
+        return const AssetImage("assets/images/category.jpg");
       }
     }
 
-    // check if it's a valid URL
+    // Check if it's a valid URL
     if (Uri.tryParse(image)?.isAbsolute == true) {
       return NetworkImage(image);
     }
 
-    // fallback to asset image
-    return const AssetImage("assets/images/Furniture.jpg");
+    // If it's not a URL or base64, treat it as an asset image.
+    return AssetImage(image);
   }
 
   @override

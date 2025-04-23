@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 
 class _Dim {
   static const double cardWidth = 160;
@@ -61,23 +62,37 @@ class ProductCard extends StatelessWidget {
                       borderRadius: BorderRadius.vertical(
                         top: Radius.circular(_Dim.borderRadius),
                       ),
-                      child: Image.network(
-                        product.images.isNotEmpty
-                            ? product.images[0]
-                            : 'https://via.placeholder.com/150',
-                        height: _Dim.imageHeight,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (ctx, err, stack) => Container(
-                          height: _Dim.imageHeight,
-                          color: Colors.grey.shade200,
-                          child: Icon(
-                            Icons.broken_image,
-                            size: _Dim.imageHeight / 3,
-                            color: Color(0xff3B8FDA),
-                          ),
-                        ),
-                      )),
+                      child: product.images.isNotEmpty
+                          ? Image.network(
+                              product.images[0],
+                              height: _Dim.imageHeight,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, stack) => Container(
+                                height: _Dim.imageHeight,
+                                color: Colors.grey.shade200,
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: _Dim.imageHeight / 3,
+                                  color: Color(0xff3B8FDA),
+                                ),
+                              ),
+                            )
+                          : Image.asset(
+                              defaultProductImage,
+                              height: _Dim.imageHeight,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, err, stack) => Container(
+                                height: _Dim.imageHeight,
+                                color: Colors.grey.shade200,
+                                child: Icon(
+                                  Icons.broken_image,
+                                  size: _Dim.imageHeight / 3,
+                                  color: Color(0xff3B8FDA),
+                                ),
+                              ),
+                            )),
                   Positioned(
                     top: _Dim.paddingSmall,
                     right: _Dim.paddingSmall,

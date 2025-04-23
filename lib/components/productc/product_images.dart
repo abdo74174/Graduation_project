@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/services/Favourites/favourites_service.dart'; // Import the Favourites Service
 
 class ImageWidget extends StatefulWidget {
@@ -17,6 +18,11 @@ class _ImageWidgetState extends State<ImageWidget> {
   // Fetch the current state of the favorite when the widget is initialized
   @override
   void initState() {
+    print("============================");
+    print(widget.image.isEmpty);
+    print(widget.image.length);
+    print(defaultProductImage.isEmpty);
+    print("============================");
     super.initState();
     _checkIfFavourite();
   }
@@ -25,6 +31,7 @@ class _ImageWidgetState extends State<ImageWidget> {
   void _checkIfFavourite() async {
     try {
       final response = await FavouritesService().getFavourites();
+      print("Favourites Response: ${response?.data}");
       if (response != null && response.statusCode == 200) {
         final favouritesList = response.data as List;
         final isInFavorites = favouritesList.any((favourite) =>
@@ -42,26 +49,26 @@ class _ImageWidgetState extends State<ImageWidget> {
   // Add or remove from Favorites function
   void _toggleFavoriteStatus() async {
     try {
+      print("Toggling favorite status: $isFavourite");
       if (isFavourite) {
-        // Remove from Favorites
         final response =
             await FavouritesService().removeFromFavourites(widget.productId);
+        print("Remove Response: ${response?.statusCode}");
         if (response?.statusCode == 200) {
           setState(() {
-            isFavourite =
-                false; // Mark as not a favourite after successful removal
+            isFavourite = false;
           });
           showSnackbar(context, "Removed from Favorites");
         } else {
           showSnackbar(context, "Failed to remove from Favorites");
         }
       } else {
-        // Add to Favorites
         final response =
             await FavouritesService().addToFavourites(widget.productId);
+        print("Add Response: ${response?.statusCode}");
         if (response?.statusCode == 200) {
           setState(() {
-            isFavourite = true; // Mark as favourite after successful addition
+            isFavourite = true;
           });
           showSnackbar(context, "Added to Favorites");
         } else {
@@ -69,7 +76,7 @@ class _ImageWidgetState extends State<ImageWidget> {
         }
       }
     } catch (e) {
-      print(e);
+      print("Error during toggle favorite status: $e");
       showSnackbar(context, "Error: $e");
     }
   }
@@ -77,23 +84,28 @@ class _ImageWidgetState extends State<ImageWidget> {
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    print("Image URL: ${widget.image}");
 
     return Stack(
       children: [
         SizedBox(
           width: screenWidth,
           height: 400,
-          child: Image.network(
-            widget.image.isNotEmpty
-                ? widget.image
-                : 'https://via.placeholder.com/400',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              print("Error loading image: $error");
-              return Image.asset("assets/images/heart 1.jpg",
-                  fit: BoxFit.cover);
-            },
-          ),
+          child: widget.image.length > 1 // More generic check
+              ? Image.network(
+                  widget.image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    print("Error loading image: $error");
+                    print("Stack Trace: $stackTrace");
+                    return Image.asset("assets/images/heart 1.jpg",
+                        fit: BoxFit.cover);
+                  },
+                )
+              : Image.asset(
+                  defaultProductImage,
+                  fit: BoxFit.cover,
+                ),
         ),
         Positioned(
           right: 16,

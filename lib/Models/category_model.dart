@@ -1,4 +1,5 @@
 import 'package:graduation_project/Models/subcateoery_model.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 
 import 'product_model.dart';
 
@@ -9,8 +10,6 @@ class CategoryModel {
   final String description;
   final List<SubCategory> subCategories;
   final List<ProductModel> products;
-
-  static const String defaultImage = "assets/images/bone1.jpg";
 
   CategoryModel({
     required this.categoryId,
@@ -25,7 +24,8 @@ class CategoryModel {
     return CategoryModel(
       categoryId: json['categoryId'] ?? 0,
       name: json['name']?.toString() ?? "No name", // تعديل الحقل هنا
-      image: json['imageUrl']?.toString() ?? defaultImage, // تعديل الحقل هنا
+      image: json['imageUrl']?.toString() ??
+          defaultCategoryImage, // تعديل الحقل هنا
       description:
           json['description']?.toString() ?? "No description available",
       subCategories: (json['subCategories'] as List? ?? [])

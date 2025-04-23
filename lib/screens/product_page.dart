@@ -3,6 +3,7 @@ import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/productc/product_images.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 
@@ -27,6 +28,7 @@ class _ProductPageState extends State<ProductPage> {
   @override
   void initState() {
     super.initState();
+
     ProductService().fetchAllProducts().then((fetchedProducts) {
       setState(() {
         products = fetchedProducts;
@@ -61,6 +63,11 @@ class _ProductPageState extends State<ProductPage> {
                   itemCount: widget.product.images.length,
                   itemBuilder: (context, index) {
                     final fullImageUrl = widget.product.images[index];
+                    print("============================");
+                    print(widget.product.images.isEmpty);
+                    print(widget.product.images);
+                    print(defaultProductImage.isEmpty);
+                    print("============================");
                     return ImageWidget(
                         productId: widget.product.productId,
                         image: fullImageUrl); // Custom widget to display image

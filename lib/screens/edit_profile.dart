@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/profile.dart';
-import 'package:graduation_project/services/sign.dart';
+import 'package:graduation_project/services/USer/sign.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
