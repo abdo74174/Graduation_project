@@ -7,6 +7,7 @@ import 'package:graduation_project/components/home_page/drawer.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/home_page/searchbar.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/services/Product/category_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
@@ -140,7 +141,7 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             onPressed: () {
               Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => ChatScreen()));
+                  MaterialPageRoute(builder: (context) => DashboardScreen()));
             },
             icon: Icon(Icons.notifications_none,
                 color: isDark ? Colors.white : Color(0xFF1A1A1A)),

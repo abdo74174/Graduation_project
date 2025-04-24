@@ -51,6 +51,8 @@ dependencies:
   android_alarm_manager_plus: ^4.0.7
   flutter_local_notifications: ^19.1.0
   easy_localization: ^3.0.7+1
+  flutter_launcher_icons: ^0.14.3
+  fl_chart: ^0.71.0
 
 dev_dependencies:
   flutter_test:
@@ -105,3 +107,7 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/AppIcon.png"  # Path to your icon image
