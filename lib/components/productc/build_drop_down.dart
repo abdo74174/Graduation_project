@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart'; // Import for localization
 
 class BuildDropdown extends StatelessWidget {
   final List<String> options;
@@ -24,7 +25,7 @@ class BuildDropdown extends StatelessWidget {
       onChanged:
           onChanged ?? (value) {}, // Allow external handling of selection
       decoration: InputDecoration(
-        labelText: label,
+        labelText: label.tr(), // Use the label with localization
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey.shade400),

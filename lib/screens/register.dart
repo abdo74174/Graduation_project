@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/screens/login_page.dart';
 import 'package:graduation_project/services/USer/sign.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class RegisterForm extends StatefulWidget {
   const RegisterForm({super.key});
@@ -47,20 +48,19 @@ class _RegisterFormState extends State<RegisterForm> {
     String confirmPassword = _confirmPasswordController.text;
 
     if (username.isEmpty) {
-      _usernameError = 'Username cannot be empty';
+      _usernameError = 'username_error'.tr();
     } else if (email.isEmpty ||
         !RegExp(r"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$").hasMatch(email)) {
-      _emailError = 'Enter a valid email';
+      _emailError = 'email_error'.tr();
     } else if (password.isEmpty) {
-      _passwordError = 'Password cannot be empty';
+      _passwordError = 'password_error'.tr();
     } else if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$')
         .hasMatch(password)) {
-      _passwordError =
-          'Password must be at least 8 characters,\ninclude a letter, number, and symbol';
+      _passwordError = 'password_pattern_error'.tr();
     } else if (confirmPassword.isEmpty) {
-      _confirmPasswordError = 'Please confirm your password';
+      _confirmPasswordError = 'confirm_password_error'.tr();
     } else if (password != confirmPassword) {
-      _confirmPasswordError = 'Passwords do not match';
+      _confirmPasswordError = 'password_mismatch'.tr();
     }
   }
 
@@ -180,9 +180,9 @@ class _RegisterFormState extends State<RegisterForm> {
               height: 200,
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Register',
-              style: TextStyle(
+            Text(
+              'register'.tr(),
+              style: const TextStyle(
                 color: Color(0xFF3B8FDA),
                 fontSize: 30,
                 fontFamily: 'Oswald',
@@ -190,7 +190,7 @@ class _RegisterFormState extends State<RegisterForm> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Create an account to start using the app',
+              'create_account'.tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.black.withOpacity(0.7),
@@ -200,28 +200,28 @@ class _RegisterFormState extends State<RegisterForm> {
             ),
             const SizedBox(height: 20),
             CustomInputField(
-              hint: 'Enter Your Username',
+              hint: 'enter_username'.tr(),
               icon: Icons.person_outline,
               controller: _usernameController,
               isPassword: false,
               errorText: _usernameError,
             ),
             CustomInputField(
-              hint: 'Enter Your Email',
+              hint: 'enter_email'.tr(),
               icon: Icons.email_outlined,
               controller: _emailController,
               isPassword: false,
               errorText: _emailError,
             ),
             CustomInputField(
-              hint: 'Enter Your Password',
+              hint: 'enter_password'.tr(),
               icon: Icons.lock_outline,
               controller: _passwordController,
               isPassword: true,
               errorText: _passwordError,
             ),
             CustomInputField(
-              hint: 'Confirm Your Password',
+              hint: 'confirm_password'.tr(),
               icon: Icons.lock_outline,
               controller: _confirmPasswordController,
               isPassword: true,
@@ -238,9 +238,9 @@ class _RegisterFormState extends State<RegisterForm> {
                 ),
               ),
               onPressed: _register,
-              child: const Text(
-                'Register',
-                style: TextStyle(
+              child: Text(
+                'register_button'.tr(),
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -251,15 +251,15 @@ class _RegisterFormState extends State<RegisterForm> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text("Already have an account? ",
-                    style: TextStyle(fontSize: 14)),
+                Text("already_have_account".tr(),
+                    style: const TextStyle(fontSize: 14)),
                 TextButton(
                   onPressed: () => Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginPage()),
                   ),
-                  child: const Text('Login',
-                      style: TextStyle(color: Colors.blue, fontSize: 14)),
+                  child: Text('login'.tr(),
+                      style: const TextStyle(color: Colors.blue, fontSize: 14)),
                 ),
               ],
             ),

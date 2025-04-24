@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
@@ -28,7 +29,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
   @override
   void initState() {
     super.initState();
-
     // Using the dummy data instead of fetching from a service
     setState(() {
       categories = dummyCategories;
@@ -62,7 +62,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
       appBar: AppBar(
         backgroundColor: isDark ? Colors.black : Color(0xFFF5F5F5),
         title: Text(
-          "Categories",
+          "categories".tr(),
           style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -105,7 +105,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                       thickness: 0.5),
                   Center(
                     child: Text(
-                      "SubCategory",
+                      "subcategories".tr(),
                       style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -175,12 +175,12 @@ class _CategoryScreenState extends State<CategoryScreen> {
                         : selectedSubCategoryId == null
                             ? Center(
                                 child: Text(
-                                  "Choose a subcategory",
+                                  "choose_subcategory".tr(),
                                   style: TextStyle(
                                       color: Colors.blue, fontSize: 24),
                                 ),
                               )
-                            : Center(child: Text("No products available")),
+                            : Center(child: Text("no_products".tr())),
                   ),
                 ],
               ),

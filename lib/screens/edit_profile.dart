@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart'; // Import the easy_localization package
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/profile.dart';
@@ -52,24 +53,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  // This method is responsible for showing dummy data after 10 seconds
-  void showDummyData() async {
-    await Future.delayed(const Duration(milliseconds: 20));
-    if (mounted) {
-      setState(() {
-        _nameController.text = "John Doe";
-        _emailController.text = "johndoe@example.com";
-        _passwordController.text = "********";
-        _selectedCategory = _categories[0]; // Default to the first category
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     fetchUserData(); // Fetch user data when the page is loaded
-    showDummyData(); // Show dummy data after 10 seconds
   }
 
   @override
@@ -87,9 +74,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
             );
           },
         ),
-        title: const Text(
-          "Edit Profile",
-          style: TextStyle(
+        title: Text(
+          "edit_profile".tr(), // Use .tr() to get the localized string
+          style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
           ),
@@ -110,14 +97,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             const SizedBox(height: 20),
 
-            _buildLabel("User Name"),
+            _buildLabel("user_name".tr()), // Localize the label text
             _buildTextField(_nameController, Icons.person),
 
-            _buildLabel("Email"),
+            _buildLabel("email".tr()), // Localize the label text
             _buildTextField(_emailController, Icons.email),
 
             const SizedBox(height: 15),
-            _buildLabel("Category"),
+            _buildLabel("category".tr()), // Localize the label text
 
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
@@ -127,7 +114,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     const Icon(Icons.medical_services, color: Colors.grey),
               ),
               value: _selectedCategory,
-              hint: const Text("Select your Category"),
+              hint: Text("select_category".tr()), // Localize the hint text
               onChanged: (newValue) {
                 setState(() {
                   _selectedCategory = newValue;
@@ -167,17 +154,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                     if (!mounted) return;
 
-                    showSnackbar(context, "Updated Successfully");
+                    showSnackbar(
+                        context,
+                        "updated_successfully"
+                            .tr()); // Localize success message
                   } catch (e) {
                     if (!mounted) return;
 
-                    showSnackbar(context, "Update Failed");
+                    showSnackbar(context,
+                        "update_failed".tr()); // Localize failure message
                     print("❌ Caught Error: $e");
                   }
                 },
-                child: const Text(
-                  "Save changes",
-                  style: TextStyle(color: Colors.white, fontSize: 16),
+                child: Text(
+                  "save_changes".tr(), // Localize the button text
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
                 ),
               ),
             ),

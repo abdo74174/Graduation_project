@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({super.key});
@@ -19,38 +20,40 @@ class ForgotPasswordScreen extends StatelessWidget {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
                   ),
                 ],
               ),
               const SizedBox(height: 10),
-              const Text(
-                "Forgot Password",
-                style: TextStyle(
+              Text(
+                "Forgot Password".tr(),
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                "Remember & input your email or\nphone number below.",
+              Text(
+                "Remember & input your email or\nphone number below.".tr(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: Colors.black54,
                 ),
               ),
               const SizedBox(height: 30),
               Image.asset(
-                'assets/images/computer-security-with-login-password-padlock.jpg', // بدلي المسار حسب صورتك
+                'assets/images/computer-security-with-login-password-padlock.jpg', // Adjust the path based on your image
                 height: 160,
               ),
               const SizedBox(height: 40),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Email or Phone Number",
+                  "Email or Phone Number".tr(),
                   style: TextStyle(
                     fontSize: 14,
                     color: Colors.grey.shade700,
@@ -67,7 +70,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                       color: const Color.fromARGB(255, 255, 255, 255)),
                   color: Colors.white,
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.email_outlined, color: Colors.blue),
                     SizedBox(width: 8),
@@ -75,7 +78,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                       child: TextField(
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          hintText: "enter your email",
+                          hintText: "enter your email".tr(),
                         ),
                       ),
                     ),
@@ -88,7 +91,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Action
+                    // Action for resetting password
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0D6EFD),
@@ -97,9 +100,9 @@ class ForgotPasswordScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    "Reset Password",
-                    style: TextStyle(fontSize: 16),
+                  child: Text(
+                    "Reset Password".tr(),
+                    style: const TextStyle(fontSize: 16),
                   ),
                 ),
               ),

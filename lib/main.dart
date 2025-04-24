@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -10,15 +11,16 @@ import 'package:graduation_project/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-
 import 'package:graduation_project/services/notifications/notification_service.dart';
 import 'package:graduation_project/background/server_check.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await AndroidAlarmManager.initialize();
   await NotificationService.init();
+  await EasyLocalization.ensureInitialized();
 
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
@@ -34,11 +36,19 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+  final savedLocaleCode =
+      prefs.getString('locale') ?? 'en'; // Load saved locale
 
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeNotifier(),
-      child: MedicalApp(isLoggedIn: isLoggedIn),
+    EasyLocalization(
+      supportedLocales: const [Locale('en'), Locale('ar')],
+      path: 'assets/translations',
+      fallbackLocale: const Locale('en'),
+      startLocale: Locale(savedLocaleCode),
+      child: ChangeNotifierProvider(
+        create: (_) => ThemeNotifier(),
+        child: MedicalApp(isLoggedIn: isLoggedIn),
+      ),
     ),
   );
 }
@@ -61,9 +71,14 @@ class MedicalApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
+
     return MaterialApp(
+      title: 'Graduation Project',
       debugShowCheckedModeBanner: false,
       theme: themeNotifier.isDarkMode ? ThemeData.dark() : ThemeData.light(),
+      locale: context.locale,
+      supportedLocales: context.supportedLocales,
+      localizationsDelegates: context.localizationDelegates,
       home: isLoggedIn ? const HomePage() : const LoginPage(),
     );
   }

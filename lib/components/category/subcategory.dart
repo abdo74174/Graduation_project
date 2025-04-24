@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class SubCategoryView extends StatelessWidget {
   final SubCategory subCategory;
@@ -61,7 +62,7 @@ class SubCategoryView extends StatelessWidget {
             ),
             SizedBox(height: 5),
             Text(
-              subCategory.name,
+              subCategory.name.tr(), // Adding .tr() here for localization
               style: TextStyle(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),

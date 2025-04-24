@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CategoryView extends StatelessWidget {
   const CategoryView({
@@ -63,7 +64,7 @@ class CategoryView extends StatelessWidget {
             const SizedBox(height: 5),
             Flexible(
               child: Text(
-                category.name,
+                category.name.tr(), // Adding .tr() here for localization
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,

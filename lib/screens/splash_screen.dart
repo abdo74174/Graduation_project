@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/login_page.dart';
 import 'package:graduation_project/screens/register.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -16,28 +17,29 @@ class WelcomePage extends StatelessWidget {
           padding: const EdgeInsets.all(20.0),
           child: ListView(
             children: [
-              SizedBox(
-                height: 30,
-              ),
+              // Image Section
+              SizedBox(height: 30),
               Image.asset(
                 'assets/images/Emergency cardiopulmonary resuscitation.jpg',
                 width: imageSize,
                 height: imageSize,
               ),
               const SizedBox(height: 20),
+
+              // Title Section
               Center(
                 child: RichText(
-                  text: const TextSpan(
-                    style: TextStyle(
+                  text: TextSpan(
+                    style: const TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',
                       color: Colors.black,
                     ),
                     children: [
-                      TextSpan(text: 'Equip'),
+                      TextSpan(text: 'Equip'.tr()),
                       TextSpan(
-                        text: 'Now',
+                        text: 'Now'.tr(),
                         style: TextStyle(color: Colors.blue),
                       ),
                     ],
@@ -45,15 +47,20 @@ class WelcomePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Our vision: To make medical devices easily accessible with high quality, at the lowest cost, and in the shortest time!',
+
+              // Vision Statement
+              Text(
+                'Our vision: To make medical devices easily accessible with high quality, at the lowest cost, and in the shortest time!'
+                    .tr(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 18,
                   fontFamily: 'Poppins',
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Login Button
               SizedBox(
                 width: double.infinity,
                 child: Container(
@@ -84,9 +91,9 @@ class WelcomePage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
+                    child: Text(
+                      'Login'.tr(),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -97,6 +104,8 @@ class WelcomePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
+
+              // Register Button
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
@@ -113,9 +122,9 @@ class WelcomePage extends StatelessWidget {
                     ),
                     side: const BorderSide(color: Color(0xFF3E84D7)),
                   ),
-                  child: const Text(
-                    'Register',
-                    style: TextStyle(
+                  child: Text(
+                    'Register'.tr(),
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'Poppins',

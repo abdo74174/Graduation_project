@@ -10,6 +10,7 @@ import 'package:graduation_project/screens/forget_password.dart';
 import 'package:graduation_project/screens/register.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/USer/sign.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -58,9 +59,7 @@ class _LoginPageState extends State<LoginPage> {
         t.cancel();
         setState(() => _allowOfflineLogin = true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Offline mode enabled — you may now log in'),
-          ),
+          SnackBar(content: Text('offline_mode_enabled'.tr())),
         );
       } else {
         setState(() => _count--);
@@ -75,10 +74,10 @@ class _LoginPageState extends State<LoginPage> {
       final e = _emailCtrl.text.trim();
       final p = _passCtrl.text.trim();
       if (e.isEmpty)
-        _emailErr = 'Email cannot be empty';
+        _emailErr = 'email_empty'.tr();
       else if (!RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$').hasMatch(e))
-        _emailErr = 'Invalid email';
-      if (p.isEmpty) _passErr = 'Password cannot be empty';
+        _emailErr = 'email_invalid'.tr();
+      if (p.isEmpty) _passErr = 'password_empty'.tr();
     });
   }
 
@@ -98,9 +97,7 @@ class _LoginPageState extends State<LoginPage> {
         });
         _startCountdown();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Server is offline, starting offline countdown'),
-          ),
+          SnackBar(content: Text('server_offline_msg'.tr())),
         );
         return;
       }
@@ -148,12 +145,8 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
       );
     } else {
-      final msg = isDummyFail
-          ? 'Login failed (offline): incorrect dummy email or password\n\nDummy Credentials:\nEmail: $_dummyEmail\nPassword: $_dummyPassword'
-          : 'Login failed: wrong credentials';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      final msg = isDummyFail ? 'offline_login_fail'.tr() : 'login_fail'.tr();
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
 
@@ -176,14 +169,14 @@ class _LoginPageState extends State<LoginPage> {
               Image.asset('assets/images/laboratory.png',
                   width: 160, height: 160),
               const SizedBox(height: 24),
-              const Text('Login',
-                  style: TextStyle(fontSize: 28, color: pkColor)),
+              Text('login'.tr(),
+                  style: const TextStyle(fontSize: 28, color: pkColor)),
               const SizedBox(height: 8),
-              const Text('Login to continue using the app'),
+              Text('login_continue'.tr()),
               const SizedBox(height: 24),
               CustomInputField(
                 controller: _emailCtrl,
-                hint: 'Email',
+                hint: 'email'.tr(),
                 icon: Icons.email_outlined,
                 errorText: _emailErr,
                 isPassword: false,
@@ -191,7 +184,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
               CustomInputField(
                 controller: _passCtrl,
-                hint: 'Password',
+                hint: 'password'.tr(),
                 icon: Icons.lock_outline,
                 errorText: _passErr,
                 isPassword: true,
@@ -204,13 +197,13 @@ class _LoginPageState extends State<LoginPage> {
                     MaterialPageRoute(
                         builder: (_) => const ForgotPasswordScreen()),
                   ),
-                  child: const Text('Forgot password?'),
+                  child: Text('forgot_password'.tr()),
                 ),
               ),
               if (!_serverOnline) ...[
                 const SizedBox(height: 16),
-                const Text('Server offline, retrying in:',
-                    style: TextStyle(color: Colors.red)),
+                Text('server_offline_retrying'.tr(),
+                    style: const TextStyle(color: Colors.red)),
                 const SizedBox(height: 8),
                 Stack(
                   alignment: Alignment.center,
@@ -228,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Dummy Credentials:\nEmail: $_dummyEmail\nPassword: $_dummyPassword',
+                  '${'dummy_credentials'.tr()}\nEmail: $_dummyEmail\nPassword: $_dummyPassword',
                   style: const TextStyle(color: Colors.red),
                 ),
               ],
@@ -253,8 +246,8 @@ class _LoginPageState extends State<LoginPage> {
                           )
                         : Text(
                             _allowOfflineLogin && !_serverOnline
-                                ? 'Login (Offline)'
-                                : 'Login',
+                                ? 'login_offline'.tr()
+                                : 'login'.tr(),
                             style: const TextStyle(color: Colors.white),
                           ),
                   ),
@@ -263,13 +256,13 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don't have an account? "),
+                  Text('no_account'.tr()),
                   TextButton(
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => const RegisterForm()),
                     ),
-                    child: const Text('Register'),
+                    child: Text('register'.tr()),
                   ),
                 ],
               ),

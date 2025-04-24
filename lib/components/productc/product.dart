@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
@@ -22,6 +23,7 @@ class _Dim {
 class ProductCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback onTap;
+
   const ProductCard({super.key, required this.product, required this.onTap});
 
   @override
@@ -162,7 +164,7 @@ class ProductCard extends StatelessWidget {
                           backgroundColor: Colors.blueAccent,
                         ),
                         child: Text(
-                          "Buy",
+                          "Buy".tr(), // Here, we use `.tr()` for translation
                           style: TextStyle(
                             fontSize: _Dim.buttonFontSize,
                             color: Colors.white,

@@ -3,6 +3,7 @@ import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
   const RoleSelectionScreen({super.key});
@@ -35,7 +36,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   void _onNextPressed() async {
     if (selectedRole == null || selectedSpecialty == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select both role and specialty')),
+        SnackBar(content: Text('roleSelectionScreen.error'.tr())),
       );
       return;
     }
@@ -56,13 +57,13 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update profile')),
+          SnackBar(content: Text('roleSelectionScreen.updateError'.tr())),
         );
       }
     } else {
       // OFFLINE MODE: Just navigate forward
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Server offline — continuing offline')),
+        SnackBar(content: Text('roleSelectionScreen.offlineError'.tr())),
       );
       Navigator.pushReplacement(
         context,
@@ -75,7 +76,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('How Would You Like To Use the App?',
+        title: Text(
+            'roleSelectionScreen.title'.tr(), // Using .tr() for translation
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.blueAccent,
       ),
@@ -84,36 +86,44 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Select your Role',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                        blurRadius: 2, color: Colors.grey, offset: Offset(1, 1))
-                  ],
-                )),
+            Text(
+              'roleSelectionScreen.selectRole'
+                  .tr(), // Translated text for 'Select your Role'
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                      blurRadius: 2, color: Colors.grey, offset: Offset(1, 1))
+                ],
+              ),
+            ),
             DropdownButton<String>(
               value: selectedRole,
-              hint: const Text('Select Role'),
+              hint: Text('roleSelectionScreen.selectRoleHint'
+                  .tr()), // Translated text for hint
               onChanged: (v) => setState(() => selectedRole = v),
               items: roles
                   .map((r) => DropdownMenuItem(value: r, child: Text(r)))
                   .toList(),
             ),
             const SizedBox(height: 20),
-            const Text('What Is Your Medical Specialty?',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                        blurRadius: 2, color: Colors.grey, offset: Offset(1, 1))
-                  ],
-                )),
+            Text(
+              'roleSelectionScreen.selectSpecialty'
+                  .tr(), // Translated text for 'What Is Your Medical Specialty?'
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                shadows: [
+                  Shadow(
+                      blurRadius: 2, color: Colors.grey, offset: Offset(1, 1))
+                ],
+              ),
+            ),
             DropdownButton<String>(
               value: selectedSpecialty,
-              hint: const Text('Select Specialty'),
+              hint: Text('roleSelectionScreen.selectSpecialtyHint'
+                  .tr()), // Translated text for hint
               onChanged: (v) => setState(() => selectedSpecialty = v),
               items: specialties
                   .map((s) => DropdownMenuItem(value: s, child: Text(s)))
@@ -143,9 +153,9 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   shadowColor: Colors.transparent,
                 ),
                 onPressed: _onNextPressed,
-                child: const Text(
-                  'Next',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                child: Text(
+                  'roleSelectionScreen.next'.tr(), // Translated text for 'Next'
+                  style: const TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
             ),

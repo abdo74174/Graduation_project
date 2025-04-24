@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-
+import 'package:easy_localization/easy_localization.dart';
 
 class ContactUsPage extends StatelessWidget {
   const ContactUsPage({super.key});
@@ -16,9 +15,9 @@ class ContactUsPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          "Contact Us",
-          style: TextStyle(color: Colors.black),
+        title: Text(
+          'contact_us'.tr(),
+          style: const TextStyle(color: Colors.black),
         ),
         centerTitle: true,
       ),
@@ -42,7 +41,7 @@ class ContactUsPage extends StatelessWidget {
                   filled: true,
                   fillColor: Colors.grey.shade100,
                   prefixIcon: const Icon(Icons.person),
-                  hintText: 'Full name',
+                  hintText: 'full_name'.tr(),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
@@ -55,7 +54,7 @@ class ContactUsPage extends StatelessWidget {
                   filled: true,
                   fillColor: Colors.grey.shade100,
                   prefixIcon: const Icon(Icons.email),
-                  hintText: 'Email',
+                  hintText: 'email'.tr(),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
@@ -68,7 +67,7 @@ class ContactUsPage extends StatelessWidget {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.grey.shade100,
-                  hintText: 'Message',
+                  hintText: 'message'.tr(),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
@@ -98,14 +97,15 @@ class ContactUsPage extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 15),
                     ),
-                    child: const Text("Submit", style: TextStyle(fontSize: 16)),
+                    child: Text('submit'.tr(),
+                        style: const TextStyle(fontSize: 16)),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                "Contact Details",
-                style: TextStyle(
+              Text(
+                'contact_details'.tr(),
+                style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   shadows: [
@@ -117,33 +117,40 @@ class ContactUsPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 5),
-              const Text(
-                "Feel free to reach out to us anytime! We're always here to assist you and answer any questions you may have.",
+              Text(
+                'contact_message'.tr(),
                 style: TextStyle(
-                    color: Color(0xFF555720), fontWeight: FontWeight.bold),
+                  color: Color(0xFF555720),
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 10),
               ContactDetailRow(
                   icon: Icons.location_on,
-                  label: "Address",
-                  value: "Asyut, Egypt"),
+                  label: 'address'.tr(),
+                  value: 'location'.tr()),
               ContactDetailRow(
-                  icon: Icons.phone, label: "Phone", value: "01032204289"),
+                  icon: Icons.phone,
+                  label: 'phone'.tr(),
+                  value: 'phone_number'.tr()),
               ContactDetailRow(
-                  icon: Icons.email, label: "Email", value: "sm1234@gmail.com"),
+                  icon: Icons.email,
+                  label: 'email_contact'.tr(),
+                  value: 'email_value'.tr()),
               ContactDetailRow(
                   icon: Icons.access_time,
-                  label: "Availability",
-                  value: "Daily 09 am - 5 pm"),
+                  label: 'availability'.tr(),
+                  value: 'working_hours'.tr()),
               const SizedBox(height: 10),
               Divider(color: Colors.grey.shade400),
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Social Media:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    'social_media'.tr(),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(width: 10),
                   SocialMediaIcon(imagePath: 'assets/images/facebook.jpg'),
                   const SizedBox(width: 10),
@@ -168,7 +175,10 @@ class ContactDetailRow extends StatelessWidget {
   final String value;
 
   const ContactDetailRow(
-      {super.key, required this.icon, required this.label, required this.value});
+      {super.key,
+      required this.icon,
+      required this.label,
+      required this.value});
 
   @override
   Widget build(BuildContext context) {

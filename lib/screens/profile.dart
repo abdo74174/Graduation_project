@@ -7,6 +7,7 @@ import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_profile.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -126,17 +127,17 @@ class _ProfilePageState extends State<ProfilePage> {
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           children: [
-                            _buildProfileField(
-                                "Name", user!.name ?? "user", Icons.person),
+                            _buildProfileField("name".tr(),
+                                user!.name ?? "user", Icons.person),
                             const SizedBox(height: 20),
                             _buildProfileField(
-                                "Email", user!.email, Icons.email),
+                                "email".tr(), user!.email, Icons.email),
                             const SizedBox(height: 20),
                             _buildProfileField(
-                                "Password", "************", Icons.lock),
+                                "password".tr(), "************", Icons.lock),
                             const SizedBox(height: 20),
                             _buildProfileField(
-                                "Specialty",
+                                "specialty".tr(),
                                 user!.medicalSpecialist ?? "Unknown",
                                 Icons.medical_services),
                           ],
@@ -164,9 +165,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         backgroundColor: Colors.blue,
                         foregroundColor: Colors.white,
                       ),
-                      child: const Text(
-                        'Edit Profile',
-                        style: TextStyle(
+                      child: Text(
+                        'edit_profile'.tr(),
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),

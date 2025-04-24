@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/homepage.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class checkoutButton extends StatelessWidget {
   const checkoutButton({super.key});
@@ -12,7 +13,7 @@ class checkoutButton extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        gradient: LinearGradient(
+        gradient: const LinearGradient(
           colors: [Colors.blue, Colors.lightBlueAccent, Colors.cyan],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -20,7 +21,7 @@ class checkoutButton extends StatelessWidget {
       ),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          padding: EdgeInsets.symmetric(vertical: 15),
+          padding: const EdgeInsets.symmetric(vertical: 15),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),
@@ -32,14 +33,14 @@ class checkoutButton extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) {
-                return HomePage();
+                return const HomePage();
               },
             ),
           );
         },
         child: Text(
-          'Check out',
-          style: TextStyle(fontSize: 18, color: Colors.white),
+          'checkout'.tr(),
+          style: const TextStyle(fontSize: 18, color: Colors.white),
         ),
       ),
     );

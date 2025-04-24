@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CustomInputField extends StatefulWidget {
   final String hint;
@@ -32,22 +33,18 @@ class _CustomInputFieldState extends State<CustomInputField> {
         obscureText: widget.isPassword ? _isPasswordHidden : false,
         decoration: InputDecoration(
           prefixIcon: Icon(widget.icon, color: Colors.grey[600]),
-          suffixIcon:
-              widget.isPassword
-                  ? IconButton(
-                    icon: Icon(
-                      _isPasswordHidden
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.grey[600],
-                    ),
-                    onPressed:
-                        () => setState(
-                          () => _isPasswordHidden = !_isPasswordHidden,
-                        ),
-                  )
-                  : null,
-          hintText: widget.hint,
+          suffixIcon: widget.isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _isPasswordHidden ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey[600],
+                  ),
+                  onPressed: () => setState(
+                    () => _isPasswordHidden = !_isPasswordHidden,
+                  ),
+                )
+              : null,
+          hintText: widget.hint.tr(), // Using .tr() here for localization
           filled: true,
           // ignore: deprecated_member_use
           fillColor: Colors.white.withOpacity(0.8),

@@ -6,6 +6,7 @@ import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/services/Favourites/favourites_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
+import 'package:easy_localization/easy_localization.dart'; // Add this import
 
 class FavoritePage extends StatefulWidget {
   const FavoritePage({super.key});
@@ -61,7 +62,8 @@ class _FavoritePageState extends State<FavoritePage> {
         isLoading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You are offline. Showing dummy favourites.')),
+        SnackBar(
+            content: Text('You are offline. Showing dummy favourites.').tr()),
       );
     }
   }
@@ -74,9 +76,9 @@ class _FavoritePageState extends State<FavoritePage> {
       setState(() {
         favourites.removeAt(index);
       });
-      Fluttertoast.showToast(msg: "Removed from favourites");
+      Fluttertoast.showToast(msg: "Removed from favourites".tr());
     } catch (e) {
-      Fluttertoast.showToast(msg: "Failed to remove");
+      Fluttertoast.showToast(msg: "Failed to remove".tr());
     }
   }
 
@@ -93,8 +95,9 @@ class _FavoritePageState extends State<FavoritePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF134FAF),
-        title: const Text("Favorites",
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: Text("Favorites".tr(),
+            style: const TextStyle(
+                fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
         leading: PopupMenuButton<String>(
           icon: const Icon(Icons.sort, color: Colors.white),
@@ -105,14 +108,14 @@ class _FavoritePageState extends State<FavoritePage> {
               _sortItems(false);
             }
           },
-          itemBuilder: (BuildContext context) => const [
+          itemBuilder: (BuildContext context) => [
             PopupMenuItem(
               value: 'low_to_high',
-              child: Text('Price: Low to High'),
+              child: Text('Price: Low to High'.tr()),
             ),
             PopupMenuItem(
               value: 'high_to_low',
-              child: Text('Price: High to Low'),
+              child: Text('Price: High to Low'.tr()),
             ),
           ],
         ),
@@ -120,7 +123,7 @@ class _FavoritePageState extends State<FavoritePage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : favourites.isEmpty
-              ? const Center(child: Text("No favorites available."))
+              ? Center(child: Text('No favorites available'.tr()))
               : Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: GridView.builder(
@@ -242,9 +245,9 @@ class _FavoritePageState extends State<FavoritePage> {
             backgroundColor: pkColor,
             padding: const EdgeInsets.symmetric(vertical: 15),
           ),
-          child: const Text(
-            "Remove All Favorites",
-            style: TextStyle(
+          child: Text(
+            "Remove All Favorites".tr(),
+            style: const TextStyle(
                 fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           ),
         ),

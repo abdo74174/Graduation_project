@@ -6,6 +6,7 @@ import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, required this.product});
@@ -26,11 +27,11 @@ class _ProductPageState extends State<ProductPage> {
   List<ProductModel> products = [];
   bool _isLoading = true;
   bool _showDummy = false;
+
   @override
   void initState() {
     super.initState();
     loadProducts();
-    // Start 7-second timer regardless of initial load status
     Future.delayed(Duration(seconds: 7), () {
       if (mounted && products.isEmpty) {
         setState(() {
@@ -55,7 +56,6 @@ class _ProductPageState extends State<ProductPage> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          // Don't set products here, let the timer handle it
         });
       }
     }
@@ -64,7 +64,6 @@ class _ProductPageState extends State<ProductPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-
     Color backgroundColor = isDark ? Color(0xFF333333) : Color(0xFFF8F9FA);
     Color textColor = isDark ? Colors.white : Color(0xFF333333);
     Color priceColor = isDark ? Colors.white : Colors.black;
@@ -82,15 +81,14 @@ class _ProductPageState extends State<ProductPage> {
               // Product images carousel
               SizedBox(
                 height: 400,
-                child: // In ProductPage's build method
-                    PageView.builder(
+                child: PageView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: widget.product.images.isEmpty
                       ? 1
                       : widget.product.images.length,
                   itemBuilder: (context, index) {
                     final fullImageUrl = widget.product.images.isEmpty
-                        ? defaultProductImage // Use default if no images
+                        ? defaultProductImage
                         : widget.product.images[index];
 
                     return ImageWidget(
@@ -122,14 +120,14 @@ class _ProductPageState extends State<ProductPage> {
                     SizedBox(width: 8),
                     Container(
                       decoration: BoxDecoration(
-                        color: saleBadgeColor, // Sale Badge Color
+                        color: saleBadgeColor,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       width: 100,
                       height: 40,
                       child: Center(
                         child: Text(
-                          "% On Sale",
+                          tr('product_page.on_sale'),
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -196,7 +194,7 @@ class _ProductPageState extends State<ProductPage> {
                               padding: EdgeInsets.all(4),
                               child: Icon(
                                 Icons.thumb_up,
-                                color: pkColor, // Green Color
+                                color: pkColor,
                                 size: 25,
                               ),
                             ),
@@ -214,7 +212,8 @@ class _ProductPageState extends State<ProductPage> {
                       ),
                     ),
                     SizedBox(width: 8),
-                    Text("12 reviews", style: TextStyle(color: Colors.grey)),
+                    Text(tr('product_page.reviews'),
+                        style: TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),
@@ -237,7 +236,7 @@ class _ProductPageState extends State<ProductPage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
-                  "Products Related to This Item:",
+                  tr('product_page.related_products'),
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -245,11 +244,8 @@ class _ProductPageState extends State<ProductPage> {
                 ),
               ),
 
-              SizedBox(
-                height: 20,
-              ),
+              SizedBox(height: 20),
 
-              // Horizontal List of Related Products
               // Horizontal List of Related Products
               SizedBox(
                 height: 300,
@@ -359,10 +355,10 @@ class _ProductPageState extends State<ProductPage> {
                           widget.product.productId,
                           2,
                         );
-                        showSnackbar(context, "Added To Cart Successfully");
+                        showSnackbar(context, tr('product_page.add_to_cart'));
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: pkColor, // Green color for the button
+                        backgroundColor: pkColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -372,7 +368,7 @@ class _ProductPageState extends State<ProductPage> {
                         ),
                       ),
                       child: Text(
-                        "Add To Cart",
+                        tr('product_page.add_to_cart'),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -387,12 +383,6 @@ class _ProductPageState extends State<ProductPage> {
           ),
         ],
       ),
-    );
-  }
-
-  void showSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
     );
   }
 }

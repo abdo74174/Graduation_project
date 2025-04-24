@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart'; // Import for localization
 
 class CustomizeSearchBar extends StatelessWidget {
   const CustomizeSearchBar({super.key});
@@ -29,7 +30,8 @@ class CustomizeSearchBar extends StatelessWidget {
                   borderSide: BorderSide(color: Colors.black),
                   borderRadius: BorderRadius.circular(50.0),
                 ),
-                hintText: 'What do you Search for ?',
+                hintText:
+                    'What do you Search for ?'.tr(), // Localized hint text
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(left: 24),
                   child: Icon(

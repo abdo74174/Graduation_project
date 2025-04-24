@@ -14,6 +14,7 @@ import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 import 'package:graduation_project/screens/chat_app.dart';
+import 'package:easy_localization/easy_localization.dart'; // Add this import for easy_localization
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,7 +52,6 @@ class _HomePageState extends State<HomePage> {
           Future.delayed(
               Duration(seconds: 15), () => throw TimeoutException('Timeout')),
         ]);
-
         setState(() {
           categories = result;
           isLoading = false;
@@ -83,7 +83,6 @@ class _HomePageState extends State<HomePage> {
           Future.delayed(
               Duration(seconds: 15), () => throw TimeoutException('Timeout')),
         ]);
-
         setState(() {
           products = result;
           isLoading = false;
@@ -190,7 +189,7 @@ class _HomePageState extends State<HomePage> {
                           );
                         },
                         child: Text(
-                          "Categories",
+                          "Categories".tr(), // Using .tr() for localization
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -207,7 +206,7 @@ class _HomePageState extends State<HomePage> {
                           );
                         },
                         child: Text(
-                          "View all",
+                          "View all".tr(), // Using .tr() for localization
                           style: TextStyle(
                             fontSize: 18,
                             color: isDark ? Colors.white : Color(0xFF1A1A1A),
@@ -244,7 +243,7 @@ class _HomePageState extends State<HomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Products",
+                        "Products".tr(), // Using .tr() for localization
                         style: TextStyle(
                           fontSize: 25,
                           fontWeight: FontWeight.bold,

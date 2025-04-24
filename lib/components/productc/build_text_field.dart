@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart'; // Import for localization
 
 class BuildTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final bool isPercentage;
   final bool isStrikethrough;
-  // ignore: prefer_typing_uninitialized_variables
   final readOnly;
+
   const BuildTextField({
     this.readOnly = false,
     super.key,
@@ -22,7 +23,7 @@ class BuildTextField extends StatelessWidget {
       readOnly: readOnly,
       controller: controller,
       decoration: InputDecoration(
-        labelText: label,
+        labelText: label.tr(), // Use the label with localization
         labelStyle: TextStyle(color: Colors.grey.shade600),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

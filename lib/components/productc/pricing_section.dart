@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart'; // Import for localization
 import 'package:graduation_project/components/productc/build_text_field.dart';
 
 class PricingSection extends StatelessWidget {
@@ -22,7 +23,7 @@ class PricingSection extends StatelessWidget {
         foregroundColor: textColor,
         side: isOutlined ? BorderSide(color: Colors.black) : BorderSide.none,
       ),
-      child: Text(text),
+      child: Text(text.tr()), // Use .tr() for button text localization
     );
   }
 
@@ -43,37 +44,42 @@ class PricingSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Pricing",
+          Text("Pricing".tr(), // Use .tr() for section title localization
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           SizedBox(height: 10),
           Row(
             children: [
               Expanded(
                   child: BuildTextField(
-                      label: "Price", controller: priceController)),
+                      label: "Price".tr(), // Localize 'Price' label
+                      controller: priceController)),
               SizedBox(width: 10),
               Expanded(
                   child: BuildTextField(
                       readOnly: true,
-                      label: "Compare at Price",
+                      label: "Compare at Price"
+                          .tr(), // Localize 'Compare at Price' label
                       controller: comparePriceController,
                       isStrikethrough: true)),
             ],
           ),
           SizedBox(height: 10),
           BuildTextField(
-              label: "Discount",
+              label: "Discount".tr(), // Localize 'Discount' label
               controller: discountController,
               isPercentage: true),
           SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              _buildButton("Discard", Colors.white, Colors.black, true),
+              _buildButton("Discard".tr(), Colors.white, Colors.black,
+                  true), // Localize 'Discard' button
               SizedBox(width: 10),
-              _buildButton("Schedule", Colors.blue.shade100, Colors.black),
+              _buildButton("Schedule".tr(), Colors.blue.shade100,
+                  Colors.black), // Localize 'Schedule' button
               SizedBox(width: 10),
-              _buildButton("Add Product", Colors.blue, Colors.white),
+              _buildButton("Add Product".tr(), Colors.blue,
+                  Colors.white), // Localize 'Add Product' button
             ],
           )
         ],

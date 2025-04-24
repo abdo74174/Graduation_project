@@ -66,20 +66,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
   }
 
-  // void updateSubCategories(String? categoryName) {
-  //   final selectedCat = _categories.firstWhere(
-  //     (category) => category.name == categoryName,
-  //     orElse: () => CategoryModel(
-  //         name: 'none',
-  //         categoryId: 0,
-  //         subCategories: [],
-  //         description: '',
-  //         products: []),
-  //   );
-  //   productSubCategories =
-  //       selectedCat.subCategories.map((sub) => sub.name).toList();
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,7 +79,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 controller: _productNameController, label: "Product Name"),
             SizedBox(height: 10),
             BuildDescriptionField(
-                descriptionController: _descriptionController),
+                label: "", descriptionController: _descriptionController),
             SizedBox(height: 10),
             BuildDropdown(
               label: "Product Status",
@@ -114,7 +100,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 setState(() {
                   selectedCategory = value;
                   selectedSubCategory = null;
-                  // updateSubCategories(value);
                 });
               },
             ),

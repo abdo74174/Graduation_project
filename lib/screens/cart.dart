@@ -7,6 +7,7 @@ import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
+import 'package:easy_localization/easy_localization.dart'; // Import easy_localization
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -109,12 +110,12 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Remove Item'),
-          content: const Text('Are you sure you want to remove this item?'),
+          title: Text('remove_item'.tr()), // Using .tr() for localization
+          content: Text('remove_item_confirmation'.tr()), // Using .tr()
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text('cancel'.tr()), // Using .tr()
             ),
             TextButton(
               onPressed: () async {
@@ -127,7 +128,8 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
 
                 Navigator.pop(context);
               },
-              child: const Text('Remove', style: TextStyle(color: Colors.red)),
+              child: Text('remove'.tr(),
+                  style: TextStyle(color: Colors.red)), // Using .tr()
             ),
           ],
         );
@@ -147,8 +149,8 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       backgroundColor: const Color(0xffF6F6F6),
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('My Cart',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('my_cart'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold)), // Using .tr()
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -297,7 +299,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                 child: TextField(
                   controller: discountController,
                   decoration: InputDecoration(
-                    hintText: 'Enter Discount Code',
+                    hintText: 'enter_discount_code'.tr(), // Using .tr()
                     filled: true,
                     fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
@@ -312,19 +314,19 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
               const SizedBox(width: 8),
               TextButton(
                 onPressed: _applyDiscount,
-                child: Text('Apply',
+                child: Text('apply'.tr(), // Using .tr()
                     style:
                         TextStyle(color: pkColor, fontWeight: FontWeight.bold)),
               )
             ],
           ),
           const SizedBox(height: 12),
-          _buildPriceRow('Subtotal', '\$${subtotal.toStringAsFixed(2)}'),
+          _buildPriceRow('subtotal'.tr(), '\$${subtotal.toStringAsFixed(2)}'),
           if (discountPercent > 0)
-            _buildPriceRow('Discount (${(discountPercent * 100).toInt()}%)',
+            _buildPriceRow('discount'.tr(),
                 '-\$${(subtotal * discountPercent).toStringAsFixed(2)}'),
           const SizedBox(height: 8),
-          _buildPriceRow('Total', '\$${total.toStringAsFixed(2)}',
+          _buildPriceRow('total'.tr(), '\$${total.toStringAsFixed(2)}',
               isBold: true),
           const SizedBox(height: 16),
           SizedBox(
@@ -339,9 +341,10 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text(
-                'Proceed to Checkout',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              child: Text(
+                'proceed_to_checkout'.tr(), // Using .tr()
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
           ),

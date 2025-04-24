@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/services/Favourites/favourites_service.dart';
 
 class ImageWidget extends StatefulWidget {
-  const ImageWidget({super.key, required this.image, required this.productId});
+  const ImageWidget({
+    super.key,
+    required this.image,
+    required this.productId,
+  });
   final String image;
   final int productId;
 
@@ -15,6 +20,8 @@ class ImageWidget extends StatefulWidget {
 class _ImageWidgetState extends State<ImageWidget> {
   bool isFavourite = false;
   late SharedPreferences _prefs;
+  bool _isPrefsInitialized = false;
+  bool _isImageError = false;
 
   @override
   void initState() {
@@ -23,42 +30,51 @@ class _ImageWidgetState extends State<ImageWidget> {
   }
 
   Future<void> _initPrefs() async {
-    _prefs = await SharedPreferences.getInstance();
-    _checkIfFavourite();
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      if (mounted) {
+        setState(() => _isPrefsInitialized = true);
+        _checkIfFavourite();
+      }
+    } catch (e) {
+      print("Error initializing preferences: $e");
+      if (mounted) setState(() => _isPrefsInitialized = false);
+    }
   }
 
   void _checkIfFavourite() {
-    // Check local cache first
+    if (!_isPrefsInitialized) return;
+
     final cachedFav = _prefs.getBool('fav_${widget.productId}');
-    if (cachedFav != null) {
-      setState(() => isFavourite = cachedFav);
-    }
+    if (cachedFav != null && mounted) setState(() => isFavourite = cachedFav);
     _checkServerFavourite();
   }
 
   void _checkServerFavourite() async {
     try {
       final response = await FavouritesService().getFavourites();
-      if (response?.statusCode == 200) {
+      if (response?.statusCode == 200 && mounted) {
         final isInFavorites = (response!.data as List)
             .any((favourite) => favourite['productId'] == widget.productId);
 
-        // Update both state and local cache
-        _prefs.setBool('fav_${widget.productId}', isInFavorites);
-        setState(() => isFavourite = isInFavorites);
+        await _prefs.setBool('fav_${widget.productId}', isInFavorites);
+        if (mounted) setState(() => isFavourite = isInFavorites);
       }
     } catch (e) {
-      // Offline: Keep cached value
       print('Using cached favorite status: $isFavourite');
     }
   }
 
-  void _toggleFavoriteStatus() async {
+  void _toggleFavoriteStatus() {
+    if (!_isPrefsInitialized) return;
+
     final newStatus = !isFavourite;
-    // Update UI and cache immediately
     setState(() => isFavourite = newStatus);
     _prefs.setBool('fav_${widget.productId}', newStatus);
+    _syncWithServer(newStatus);
+  }
 
+  Future<void> _syncWithServer(bool newStatus) async {
     try {
       if (newStatus) {
         await FavouritesService().addToFavourites(widget.productId);
@@ -67,42 +83,117 @@ class _ImageWidgetState extends State<ImageWidget> {
       }
     } catch (e) {
       print('Sync failed: $e');
-      showSnackbar(context, "Changes will sync when online");
+      if (mounted) showSnackbar("Changes will sync when online");
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Stack(
       children: [
-        // ... keep your existing image code ...,
+        // Main Image
+        SizedBox(
+          width: screenWidth,
+          height: 400,
+          child: _isImageError
+              ? Image.asset(defaultProductImage, fit: BoxFit.cover)
+              : Image.network(
+                  widget.image,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) setState(() => _isImageError = true);
+                    });
+                    return Image.asset(defaultProductImage, fit: BoxFit.cover);
+                  },
+                ),
+        ),
+
+        // Favorite Icon with Border
         Positioned(
           right: 16,
           top: 40,
-          child: IconButton(
-            icon: Icon(
-              Icons.favorite,
-              color: isFavourite ? Colors.red : Colors.white,
-              size: 40,
+          child: Material(
+            // Use Material to get the ripple (ink splash) effect
+            color: Colors.transparent,
+            shape: CircleBorder(),
+            child: InkWell(
+              customBorder: CircleBorder(),
+              onTap: _toggleFavoriteStatus,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 250),
+                padding: EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Color(0xFFFFCDD2), // فاتح أحمر (light red)
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white, // crisp white border
+                    width: 3, // thicker border for contrast
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.5),
+                      blurRadius: 12,
+                      spreadRadius: 1,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.favorite,
+                  color: isFavourite ? Colors.redAccent : Colors.white,
+                  size: 32,
+                ),
+              ),
             ),
-            onPressed: _toggleFavoriteStatus,
           ),
         ),
+
+        // Back Button
         Positioned(
           left: 16,
           top: 40,
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey[200],
-            ),
-            child: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: Icon(Icons.arrow_back),
+          child: Material(
+            color: Colors.transparent,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => Navigator.pop(context),
+              splashColor: Colors.white24,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.all(8), // generous tap area
+                decoration: BoxDecoration(
+                  color:
+                      pkColor, // Teal-blue background :contentReference[oaicite:0]{index=0}
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors
+                        .white, // crisp white border for 3:1 contrast :contentReference[oaicite:1]{index=1}
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: pkColor,
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.arrow_back,
+                  size: 24,
+                  color: Colors
+                      .white, // white icon ensures 3:1 non-text contrast :contentReference[oaicite:2]{index=2}
+                ),
+              ),
             ),
           ),
         ),
@@ -110,9 +201,14 @@ class _ImageWidgetState extends State<ImageWidget> {
     );
   }
 
-  // Helper method to show snackbar
-  void showSnackbar(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+  void showSnackbar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 }

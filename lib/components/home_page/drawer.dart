@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/screens/add_product.dart';
 import 'package:graduation_project/screens/contact_us.dart';
 import 'package:graduation_project/screens/profile.dart';
+import 'package:easy_localization/easy_localization.dart'; // Add this import for localization
 
 class DrawerHome extends StatefulWidget {
   const DrawerHome({super.key});
@@ -19,7 +20,7 @@ class _DrawerHomeState extends State<DrawerHome> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Remove authentication data
-    await prefs.remove('isLoggedIn'); // Ensure to remove this key
+    await prefs.remove('isLoggedIn');
     await prefs.remove('userToken');
     await prefs.remove('userName');
 
@@ -27,7 +28,7 @@ class _DrawerHomeState extends State<DrawerHome> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
-      (Route<dynamic> route) => false, // This removes all routes in the stack
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -49,7 +50,7 @@ class _DrawerHomeState extends State<DrawerHome> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  "userName", // You might want to dynamically set the username here
+                  "userName", // This should dynamically display the logged-in user's name
                   style: TextStyle(color: Colors.white, fontSize: 20),
                 ),
               ],
@@ -57,7 +58,7 @@ class _DrawerHomeState extends State<DrawerHome> {
           ),
           ListTile(
             leading: const Icon(FontAwesomeIcons.edit),
-            title: const Text('Profile'),
+            title: Text('Profile'.tr()), // Localize here
             onTap: () {
               Navigator.push(
                 context,
@@ -71,7 +72,7 @@ class _DrawerHomeState extends State<DrawerHome> {
           ),
           ListTile(
             leading: const Icon(FontAwesomeIcons.edit),
-            title: const Text('Add New Product'),
+            title: Text('Add New Product'.tr()), // Localize here
             onTap: () {
               Navigator.push(
                 context,
@@ -85,14 +86,14 @@ class _DrawerHomeState extends State<DrawerHome> {
           ),
           ListTile(
             leading: const Icon(FontAwesomeIcons.solidBell),
-            title: const Text('Notification'),
+            title: Text('Notification'.tr()), // Localize here
             onTap: () {
               Navigator.pop(context);
             },
           ),
           ListTile(
             leading: const Icon(FontAwesomeIcons.phoneAlt),
-            title: const Text('Contact Us'),
+            title: Text('Contact Us'.tr()), // Localize here
             onTap: () {
               Navigator.push(
                 context,
@@ -106,7 +107,7 @@ class _DrawerHomeState extends State<DrawerHome> {
           ),
           ListTile(
             leading: const Icon(FontAwesomeIcons.cog),
-            title: const Text('Settings'),
+            title: Text('Settings'.tr()), // Localize here
             onTap: () {
               Navigator.push(
                 context,
@@ -116,9 +117,9 @@ class _DrawerHomeState extends State<DrawerHome> {
           ),
           ListTile(
             leading: const Icon(FontAwesomeIcons.signOutAlt),
-            title: const Text('Logout'),
+            title: Text('Logout'.tr()), // Localize here
             onTap: () {
-              _logout(); // Call the logout function
+              _logout();
             },
           ),
         ],
