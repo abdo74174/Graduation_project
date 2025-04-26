@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduation_project/components/setting/ThemeNotifier.dart';
 import 'package:graduation_project/firebase_options.dart';
 import 'package:graduation_project/screens/dashboard/customers_page.dart';
@@ -49,19 +50,25 @@ Future<void> main() async {
   // Load SharedPreferences to check if the user is logged in
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-  final savedLocaleCode =
-      prefs.getString('locale') ?? 'en'; // Load saved locale
+  final savedLocaleCode = prefs.getString('locale') ?? 'en';
 
-  // Run the app with EasyLocalization for internationalization
+  // Run the app with EasyLocalization and BlocProvider
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('ar')],
-      path: 'assets/translations', // Path to translations files
+      path: 'assets/translations',
       fallbackLocale: const Locale('en'),
       startLocale: Locale(savedLocaleCode),
-      child: ChangeNotifierProvider(
-        create: (_) => ThemeNotifier(),
-        child: MedicalApp(isLoggedIn: isLoggedIn),
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeNotifier()),
+        ],
+        child:
+            // BlocProvider(
+            //   create: (_) => AuthCubit(),
+            // child:
+            MedicalApp(isLoggedIn: isLoggedIn),
+        // ),
       ),
     ),
   );
@@ -85,7 +92,6 @@ class MedicalApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Theme notifier to manage light/dark mode
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
     return MaterialApp(
@@ -95,11 +101,7 @@ class MedicalApp extends StatelessWidget {
       locale: context.locale,
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
-
-      // Home page will be either HomePage or LoginPage based on the login state
       home: isLoggedIn ? const HomePage() : const LoginPage(),
-
-      // Define the routes for different pages in the app
       routes: {
         '/dashboard': (context) => DashboardScreen(),
         '/products': (context) => ProductsPage(),

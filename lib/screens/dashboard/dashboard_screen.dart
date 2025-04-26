@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'sales_overview_card.dart';
-import 'latest_products_card.dart';
-import 'stats_card.dart';
+import '../../components/dashboard/sales_overview_card.dart';
+import '../../components/dashboard/latest_products_card.dart';
+import '../../components/dashboard/stats_card.dart';
 
 class DashboardScreen extends StatelessWidget {
   final List<Map<String, dynamic>> stats = [

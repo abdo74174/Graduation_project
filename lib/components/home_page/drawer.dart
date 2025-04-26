@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:graduation_project/screens/chat/chat_page.dart';
 import 'package:graduation_project/screens/login_page.dart';
 import 'package:graduation_project/screens/setting_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,7 +89,14 @@ class _DrawerHomeState extends State<DrawerHome> {
             leading: const Icon(FontAwesomeIcons.solidBell),
             title: Text('Notification'.tr()), // Localize here
             onTap: () {
-              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    return ChatPage();
+                  },
+                ),
+              );
             },
           ),
           ListTile(

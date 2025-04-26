@@ -15,7 +15,7 @@ import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 import 'package:graduation_project/screens/chat_app.dart';
-import 'package:easy_localization/easy_localization.dart'; // Add this import for easy_localization
+import 'package:easy_localization/easy_localization.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,8 +27,11 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<CategoryModel> categories = [];
   List<ProductModel> products = [];
-  bool isLoading = true; // To track loading state
-  bool isOffline = false; // Simulate offline status
+  List<ProductModel> searchResults = [];
+  bool isLoading = true;
+  bool isOffline = false;
+
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -37,66 +40,91 @@ class _HomePageState extends State<HomePage> {
     _loadProducts();
   }
 
-  // Simulate fetching categories with timeout or offline status
   Future<void> _loadCategories() async {
     try {
       if (isOffline) {
-        // Simulating offline behavior by loading dummy data
         setState(() {
           categories = dummyCategories;
           isLoading = false;
         });
-        print("Offline mode: Using dummy categories.");
       } else {
         final result = await Future.any([
           CategoryService().fetchAllCategories(),
-          Future.delayed(
-              Duration(seconds: 15), () => throw TimeoutException('Timeout')),
+          Future.delayed(const Duration(seconds: 15),
+              () => throw TimeoutException('Timeout')),
         ]);
         setState(() {
           categories = result;
           isLoading = false;
         });
-        print("Fetched categories: ${categories.length}");
       }
     } catch (e) {
-      print("Error fetching categories: $e");
       setState(() {
-        categories = dummyCategories; // Use dummy data as a fallback
+        categories = dummyCategories;
         isLoading = false;
       });
     }
   }
 
-  // Simulate fetching products with timeout or offline status
   Future<void> _loadProducts() async {
     try {
       if (isOffline) {
-        // Simulating offline behavior by loading dummy data
         setState(() {
           products = dummyProducts;
           isLoading = false;
         });
-        print("Offline mode: Using dummy products.");
       } else {
-        final result = await Future.any([
-          ProductService().fetchAllProducts(),
-          Future.delayed(
-              Duration(seconds: 15), () => throw TimeoutException('Timeout')),
-        ]);
+        await Future.delayed(const Duration(seconds: 2));
         setState(() {
-          products = result;
+          products = dummyProducts;
           isLoading = false;
         });
-        print("Fetched products: ${products.length}");
       }
     } catch (e) {
       print("Error fetching products: $e");
       setState(() {
-        products = dummyProducts; // Use dummy data as a fallback
+        products = dummyProducts;
         isLoading = false;
       });
     }
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+
+      if (query.isEmpty) {
+        setState(() {
+          searchResults = [];
+        });
+      } else {
+        List<ProductModel> filtered = products.where((product) {
+          final nameMatch =
+              product.name!.toLowerCase().contains(query.toLowerCase());
+          final descMatch =
+              product.description!.toLowerCase().contains(query.toLowerCase());
+          return nameMatch || descMatch;
+        }).toList();
+
+        setState(() {
+          searchResults = filtered;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    setState(() {
+      searchResults = [];
+    });
   }
 
   @override
@@ -104,14 +132,14 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Color(0xFFF5F5F5),
+      backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.black : Color(0xFFF5F5F5),
+        backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
             icon: Icon(Icons.menu,
-                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
@@ -126,7 +154,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
             icon: Icon(Icons.favorite_border_outlined,
-                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
           ),
           IconButton(
             onPressed: () {
@@ -136,7 +164,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
             icon: Icon(Icons.shopping_cart_outlined,
-                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
           ),
           IconButton(
             onPressed: () {
@@ -144,149 +172,220 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(builder: (context) => DashboardScreen()));
             },
             icon: Icon(Icons.notifications_none,
-                color: isDark ? Colors.white : Color(0xFF1A1A1A)),
+                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
           ),
         ],
       ),
       drawer: const DrawerHome(),
       body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: ListView(
-                children: [
-                  const CustomizeSearchBar(),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 200,
-                    child: Stack(
-                      fit: StackFit.expand,
+          ? const Center(child: CircularProgressIndicator())
+          : GestureDetector(
+              onTap: _clearSearch, // هنا ضفنا لما يضغط في أي مكان، يمسح البحث
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Stack(
+                  children: [
+                    ListView(
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            border: Border.all(width: 1.0),
+                        CustomizeSearchBar(
+                          products: products,
+                          onChanged: _onSearchChanged,
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 200,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  border: Border.all(width: 1.0),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                  child: Image.asset("assets/images/offer.avif",
+                                      fit: BoxFit.cover),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8.0),
-                            child: Image.asset("assets/images/offer.avif",
-                                fit: BoxFit.cover),
+                        ),
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => CategoryScreen()),
+                                );
+                              },
+                              child: Text(
+                                "Categories".tr(),
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1A1A1A),
+                                ),
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => CategoryScreen()),
+                                );
+                              },
+                              child: Text(
+                                "View all".tr(),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: isDark
+                                      ? Colors.white
+                                      : const Color(0xFF1A1A1A),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          height: 180,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: categories.length,
+                            itemBuilder: (context, index) {
+                              return CategoryView(
+                                borderColor: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF3B8FDA),
+                                category: categories[index],
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          CategoryScreen(id: index),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "Products".tr(),
+                              style: TextStyle(
+                                fontSize: 25,
+                                fontWeight: FontWeight.bold,
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF1A1A1A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: SizedBox(
+                            height: 550,
+                            child: GridView.builder(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 1.5,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                              ),
+                              itemCount: products.length,
+                              itemBuilder: (context, index) {
+                                return ProductCard(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) {
+                                          return ProductPage(
+                                              product: products[index]);
+                                        },
+                                      ),
+                                    );
+                                  },
+                                  product: products[index],
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => CategoryScreen()),
-                          );
-                        },
-                        child: Text(
-                          "Categories".tr(), // Using .tr() for localization
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Color(0xFF1A1A1A),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => CategoryScreen()),
-                          );
-                        },
-                        child: Text(
-                          "View all".tr(), // Using .tr() for localization
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: isDark ? Colors.white : Color(0xFF1A1A1A),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    height: 180,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: categories.length,
-                      itemBuilder: (context, index) {
-                        return CategoryView(
-                          borderColor:
-                              isDark ? Colors.white : Color(0xFF3B8FDA),
-                          category: categories[index],
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => CategoryScreen(id: index),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Products".tr(), // Using .tr() for localization
-                        style: TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Color(0xFF1A1A1A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: SizedBox(
-                      height: 550,
-                      child: GridView.builder(
-                        scrollDirection: Axis.horizontal,
-                        physics: BouncingScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 1.5,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                        ),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          return ProductCard(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) {
-                                    return ProductPage(
-                                        product: products[index]);
-                                  },
+                    if (searchResults.isNotEmpty)
+                      Positioned.fill(
+                        top: 60,
+                        child: Material(
+                          color: Colors.black54,
+                          child: ListView(
+                            children: searchResults.map((product) {
+                              return ListTile(
+                                contentPadding: const EdgeInsets.all(10),
+                                leading: CircleAvatar(
+                                  backgroundImage: NetworkImage(
+                                    product.images.isNotEmpty
+                                        ? product.images[0]
+                                        : 'default_image_url',
+                                  ),
+                                  radius: 25,
                                 ),
+                                title: Text(
+                                  product.name,
+                                  style: const TextStyle(
+                                    color: Colors.blueAccent,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  product.description ?? '',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                                trailing: Text(
+                                  "\$${product.price.toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                                tileColor: Colors.white,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          ProductPage(product: product),
+                                    ),
+                                  );
+                                },
                               );
-                            },
-                            product: products[index],
-                          );
-                        },
+                            }).toList(),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
     );

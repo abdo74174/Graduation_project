@@ -6,7 +6,7 @@ import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
 
 const Color pkColor = Color(0xff3B8FDA);
-
+const String Kpmessages = "messages";
 final String baseUri = 'https://10.0.2.2:7273/api/';
 
 final List<String> specialties = [

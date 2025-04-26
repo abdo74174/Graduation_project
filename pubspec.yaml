@@ -53,6 +53,7 @@ dependencies:
   easy_localization: ^3.0.7+1
   flutter_launcher_icons: ^0.14.3
   fl_chart: ^0.71.0
+  flutter_bloc: ^9.1.0
 
 dev_dependencies:
   flutter_test:

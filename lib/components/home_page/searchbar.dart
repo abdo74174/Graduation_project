@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:easy_localization/easy_localization.dart'; // Import for localization
+import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/Models/product_model.dart';
 
 class CustomizeSearchBar extends StatelessWidget {
-  const CustomizeSearchBar({super.key});
+  const CustomizeSearchBar({
+    super.key,
+    required this.products,
+    required this.onChanged,
+  });
+
+  final List<ProductModel> products;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -12,14 +20,13 @@ class CustomizeSearchBar extends StatelessWidget {
           child: SizedBox(
             height: 50,
             child: TextFormField(
-              onChanged: (value) {
-                // Handle text changes here if needed
-              },
+              onChanged: onChanged,
               decoration: InputDecoration(
                 hintStyle: const TextStyle(
-                    fontFamily: "Inria Serif",
-                    fontWeight: FontWeight.normal,
-                    fontSize: 18),
+                  fontFamily: "Inria Serif",
+                  fontWeight: FontWeight.normal,
+                  fontSize: 18,
+                ),
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -30,8 +37,7 @@ class CustomizeSearchBar extends StatelessWidget {
                   borderSide: BorderSide(color: Colors.black),
                   borderRadius: BorderRadius.circular(50.0),
                 ),
-                hintText:
-                    'What do you Search for ?'.tr(), // Localized hint text
+                hintText: 'What do you Search for ?'.tr(),
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(left: 24),
                   child: Icon(
