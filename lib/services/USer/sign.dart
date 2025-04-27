@@ -14,7 +14,7 @@ class USerService {
           headers: {'Content-Type': 'application/json'},
         )) {
     // Configure the HTTP client to ignore certificate errors
-    (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate =
+    (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
         (HttpClient client) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) =>
@@ -159,8 +159,9 @@ class USerService {
   }) async {
     final Map<String, dynamic> payload = {};
     if (role != null) payload['role'] = role;
-    if (medicalSpecialist != null)
+    if (medicalSpecialist != null) {
       payload['medicalSpecialist'] = medicalSpecialist;
+    }
 
     try {
       final response = await dio.patch(

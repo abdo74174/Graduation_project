@@ -132,9 +132,9 @@ class _HomePageState extends State<HomePage> {
       } else {
         List<ProductModel> filtered = products.where((product) {
           final nameMatch =
-              product.name!.toLowerCase().contains(query.toLowerCase());
+              product.name.toLowerCase().contains(query.toLowerCase());
           final descMatch =
-              product.description!.toLowerCase().contains(query.toLowerCase());
+              product.description.toLowerCase().contains(query.toLowerCase());
           return nameMatch || descMatch;
         }).toList();
 

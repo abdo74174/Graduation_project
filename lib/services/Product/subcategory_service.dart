@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart' show DefaultHttpClientAdapter;
+import 'package:dio/io.dart' show IOHttpClientAdapter;
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
@@ -13,7 +13,7 @@ class SubCategoryService {
       : dio = Dio(BaseOptions(
           baseUrl: baseUri,
         )) {
-    (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate =
+    (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
         (HttpClient client) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class SalesOverviewCard extends StatelessWidget {
+  const SalesOverviewCard({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -26,15 +28,24 @@ class SalesOverviewCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         interval: 1,
-                        reservedSize: 40, 
+                        reservedSize: 40,
                         getTitlesWidget: (value, meta) {
-                          final months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
-                          if (value.toInt() >= 0 && value.toInt() < months.length) {
+                          final months = [
+                            "Jan",
+                            "Feb",
+                            "Mar",
+                            "Apr",
+                            "May",
+                            "Jun"
+                          ];
+                          if (value.toInt() >= 0 &&
+                              value.toInt() < months.length) {
                             return Padding(
                               padding: const EdgeInsets.only(top: 8.0),
                               child: Text(
                                 months[value.toInt()],
-                                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                style: const TextStyle(
+                                    fontSize: 14, color: Colors.black87),
                               ),
                             );
                           }
@@ -46,18 +57,21 @@ class SalesOverviewCard extends StatelessWidget {
                       sideTitles: SideTitles(
                         showTitles: true,
                         interval: 1000,
-                        reservedSize: 60, 
+                        reservedSize: 60,
                         getTitlesWidget: (value, meta) => Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: Text(
                             "\$${value.toInt()}",
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                            style: const TextStyle(
+                                fontSize: 14, color: Colors.black87),
                           ),
                         ),
                       ),
                     ),
-                    topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                    rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
+                    rightTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false)),
                   ),
                   gridData: const FlGridData(show: true),
                   borderData: FlBorderData(show: true),

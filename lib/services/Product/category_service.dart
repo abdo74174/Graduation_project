@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart' show DefaultHttpClientAdapter, IOHttpClientAdapter;
+import 'package:dio/io.dart' show IOHttpClientAdapter, IOHttpClientAdapter;
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
@@ -13,7 +13,7 @@ class CategoryService {
       : dio = Dio(BaseOptions(
           baseUrl: baseUri,
         )) {
-    (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate =
+    (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
         (HttpClient client) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
@@ -39,14 +39,14 @@ class CategoryService {
       }
     } catch (e) {
       // Enhanced error handling
-      if (e is DioError) {
+      if (e is DioException) {
         // DioError handling (for network issues, timeouts, etc.)
-        if (e.type == DioErrorType.connectionTimeout) {
+        if (e.type == DioExceptionType.connectionTimeout) {
           throw Exception("Connection Timeout. Please check your network.");
-        } else if (e.type == DioErrorType.receiveTimeout) {
+        } else if (e.type == DioExceptionType.receiveTimeout) {
           throw Exception(
               "Receive Timeout. The server is taking too long to respond.");
-        } else if (e.type == DioErrorType.unknown) {
+        } else if (e.type == DioExceptionType.unknown) {
           throw Exception("Network error: ${e.message}");
         } else {
           throw Exception("API error: $e");

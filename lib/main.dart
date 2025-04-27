@@ -63,7 +63,7 @@ Future<void> main() async {
       child: MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeNotifier()),
-          BlocProvider(create: (_) => UserCubit()), //
+          BlocProvider(create: (_) => UserCubit()),
         ],
         child: MedicalApp(isLoggedIn: isLoggedIn),
       ),

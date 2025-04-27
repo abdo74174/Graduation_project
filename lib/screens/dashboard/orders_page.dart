@@ -3,9 +3,17 @@ import 'package:flutter/material.dart';
 class OrdersPage extends StatelessWidget {
   // Sample data for orders
   final List<Map<String, String>> orders = [
-    {"orderId": "ORD123", "productName": "Air Compressing Therapy Device", "status": "Shipped"},
+    {
+      "orderId": "ORD123",
+      "productName": "Air Compressing Therapy Device",
+      "status": "Shipped"
+    },
     {"orderId": "ORD124", "productName": "AutoClave", "status": "Processing"},
-    {"orderId": "ORD125", "productName": "Anesthesia Machine", "status": "Delivered"},
+    {
+      "orderId": "ORD125",
+      "productName": "Anesthesia Machine",
+      "status": "Delivered"
+    },
     {"orderId": "ORD126", "productName": "Heart Monitor", "status": "Shipped"},
   ];
 
@@ -21,7 +29,8 @@ class OrdersPage extends StatelessWidget {
             final order = orders[index];
             return Card(
               margin: const EdgeInsets.only(bottom: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               elevation: 4,
               child: ListTile(
                 title: Text(order["productName"]!),
@@ -42,4 +51,3 @@ class OrdersPage extends StatelessWidget {
     );
   }
 }
-

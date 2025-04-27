@@ -188,7 +188,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _pickImages() async {
-    final List<XFile>? pickedFiles = await _picker.pickMultiImage();
+    final List<XFile> pickedFiles = await _picker.pickMultiImage();
     if (pickedFiles != null && pickedFiles.isNotEmpty) {
       setState(() {
         _imageFiles.addAll(pickedFiles.map((xfile) => File(xfile.path)));

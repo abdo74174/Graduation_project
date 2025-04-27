@@ -19,7 +19,7 @@ class CustomizeSearchBar extends StatefulWidget {
 class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
   late stt.SpeechToText _speech;
   bool _isListening = false;
-  TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
   String _lastWords = '';
 
   @override

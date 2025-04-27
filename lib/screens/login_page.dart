@@ -31,8 +31,8 @@ class _LoginPageState extends State<LoginPage> {
   int _count = 10;
   Timer? _timer;
 
-  String _dummyEmail = "user@gmail.com";
-  String _dummyPassword = "user";
+  final String _dummyEmail = "user@gmail.com";
+  final String _dummyPassword = "user";
 
   @override
   void initState() {
@@ -76,9 +76,9 @@ class _LoginPageState extends State<LoginPage> {
       _passErr = null;
       final e = _emailCtrl.text.trim();
       final p = _passCtrl.text.trim();
-      if (e.isEmpty)
+      if (e.isEmpty) {
         _emailErr = 'email_empty'.tr();
-      else if (!RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$').hasMatch(e))
+      } else if (!RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$').hasMatch(e))
         _emailErr = 'email_invalid'.tr();
       if (p.isEmpty) _passErr = 'password_empty'.tr();
     });

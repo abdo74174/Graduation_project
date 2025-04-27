@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
 class LatestProductsCard extends StatelessWidget {
+  const LatestProductsCard({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text("Latest Products", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const Text("Latest Products",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         const SizedBox(height: 12),
         ListView(
           shrinkWrap: true,

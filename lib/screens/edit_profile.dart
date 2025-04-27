@@ -15,7 +15,7 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  bool _obscurePassword = true;
+  final bool _obscurePassword = true;
   String? _selectedCategory;
 
   final TextEditingController _nameController = TextEditingController();
