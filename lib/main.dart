@@ -14,6 +14,7 @@ import 'package:graduation_project/screens/dashboard/revenue_page.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/login_page.dart';
 import 'package:graduation_project/screens/splash_screen.dart';
+import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
@@ -62,13 +63,9 @@ Future<void> main() async {
       child: MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeNotifier()),
+          BlocProvider(create: (_) => UserCubit()), //
         ],
-        child:
-            // BlocProvider(
-            //   create: (_) => AuthCubit(),
-            // child:
-            MedicalApp(isLoggedIn: isLoggedIn),
-        // ),
+        child: MedicalApp(isLoggedIn: isLoggedIn),
       ),
     ),
   );

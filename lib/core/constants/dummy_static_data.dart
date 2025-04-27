@@ -122,7 +122,7 @@ final dummyFavourites = [
 
 // Dummy Users
 final dummyUsers = [
-  User(
+  UserModel(
     id: 1,
     name: "Dr. Sarah",
     email: "user@gmail.com",
@@ -139,7 +139,7 @@ final dummyUsers = [
     products: [dummyProducts[0]],
     contactUsMessages: [],
   ),
-  User(
+  UserModel(
     id: 2,
     name: "PharmaPlus",
     email: "pharma@example.com",

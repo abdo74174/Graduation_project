@@ -16,6 +16,7 @@ import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 import 'package:graduation_project/screens/chat_app.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/services/Server/server_status_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -36,8 +37,26 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadCategories();
-    _loadProducts();
+    _initApp();
+  }
+
+  Future<void> _initApp() async {
+    await _checkOfflineStatus();
+    await _loadCategories();
+    await _loadProducts();
+  }
+
+  Future<void> _checkOfflineStatus() async {
+    final serverStatusService = ServerStatusService();
+    final online = await serverStatusService.checkAndUpdateServerStatus();
+    setState(() {
+      isOffline = !online;
+
+      print("+++++++online++++++++++++");
+      print(online);
+      print("+++++++isOffline++++++++++++");
+      print(isOffline);
+    });
   }
 
   Future<void> _loadCategories() async {
@@ -49,9 +68,12 @@ class _HomePageState extends State<HomePage> {
         });
       } else {
         final result = await Future.any([
-          CategoryService().fetchAllCategories(),
-          Future.delayed(const Duration(seconds: 15),
-              () => throw TimeoutException('Timeout')),
+          CategoryService()
+              .fetchAllCategories(), // Make sure this fetches data from the API
+          Future.delayed(
+              const Duration(seconds: 15),
+              () => throw TimeoutException(
+                  'Timeout')), // Timeout if it takes too long
         ]);
         setState(() {
           categories = result;
@@ -74,9 +96,17 @@ class _HomePageState extends State<HomePage> {
           isLoading = false;
         });
       } else {
-        await Future.delayed(const Duration(seconds: 2));
+        // Make sure you call the API to fetch products here instead of just delaying
+        final result = await Future.any([
+          ProductService()
+              .fetchAllProducts(), // Ensure this is the correct API call to fetch products
+          Future.delayed(
+              const Duration(seconds: 15),
+              () => throw TimeoutException(
+                  'Timeout')), // Timeout if it takes too long
+        ]);
         setState(() {
-          products = dummyProducts;
+          products = result;
           isLoading = false;
         });
       }
@@ -134,6 +164,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
       appBar: AppBar(
+        toolbarHeight: 40,
         backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
         elevation: 0,
         leading: Builder(
@@ -180,7 +211,7 @@ class _HomePageState extends State<HomePage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : GestureDetector(
-              onTap: _clearSearch, // هنا ضفنا لما يضغط في أي مكان، يمسح البحث
+              onTap: _clearSearch,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Stack(

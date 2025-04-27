@@ -2,7 +2,7 @@ import 'dart:typed_data';
 import 'package:graduation_project/Models/contact_us_model.dart';
 import 'product_model.dart';
 
-class User {
+class UserModel {
   final int id;
   final String? name;
   final String email;
@@ -19,7 +19,7 @@ class User {
   final List<ProductModel> products;
   final List<ContactUs> contactUsMessages;
 
-  User({
+  UserModel({
     required this.id,
     this.name,
     required this.email,
@@ -37,8 +37,8 @@ class User {
     required this.contactUsMessages,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
       id: json['id'],
       name: json['name'],
       email: json['email'],

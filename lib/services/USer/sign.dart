@@ -24,7 +24,7 @@ class USerService {
   }
 
   // Fetch user data by email
-  Future<User?> fetchUserByEmail(String email) async {
+  Future<UserModel?> fetchUserByEmail(String email) async {
     try {
       final encodedEmail = Uri.encodeComponent(email);
       final url =
@@ -35,7 +35,7 @@ class USerService {
 
       if (response.statusCode == 200) {
         print('User data: ${response.data}');
-        return User.fromJson(response.data);
+        return UserModel.fromJson(response.data);
       } else {
         print('Failed to fetch user. Status code: ${response.statusCode}');
         return null;

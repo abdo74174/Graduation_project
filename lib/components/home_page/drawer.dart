@@ -127,6 +127,8 @@ class _DrawerHomeState extends State<DrawerHome> {
             leading: const Icon(FontAwesomeIcons.signOutAlt),
             title: Text('Logout'.tr()), // Localize here
             onTap: () {
+              clearEmail();
+
               _logout();
             },
           ),
@@ -134,4 +136,9 @@ class _DrawerHomeState extends State<DrawerHome> {
       ),
     );
   }
+}
+
+Future<void> clearEmail() async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.remove('user_email'); // Remove the email key
 }

@@ -4,7 +4,7 @@ class ContactUs {
   final int messageId;
   final String message;
   final int userId;
-  final User? user;
+  final UserModel? user;
 
   ContactUs({
     required this.messageId,
@@ -18,7 +18,7 @@ class ContactUs {
       messageId: json['messageId'],
       message: json['message'],
       userId: json['userId'],
-      user: json['user'] != null ? User.fromJson(json['user']) : null,
+      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
     );
   }
 

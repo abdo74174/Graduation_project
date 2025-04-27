@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/info.dart';
+import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/core/constants/constant.dart';
@@ -107,24 +110,39 @@ class _LoginPageState extends State<LoginPage> {
     bool isDummyFail = false;
 
     if (_serverOnline) {
-      success = await USerService().login(
-        email: _emailCtrl.text.trim(),
-        password: _passCtrl.text.trim(),
-      );
+      try {
+        success = await USerService().login(
+          email: _emailCtrl.text.trim(),
+          password: _passCtrl.text.trim(),
+        );
+
+        if (success) {
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+            email: _emailCtrl.text.trim(),
+            password: _passCtrl.text.trim(),
+          );
+          // ignore: use_build_context_synchronously
+          context.read<UserCubit>().setEmail(_emailCtrl.text);
+          showSnackbar(context, "firebas SUcessssssssssssssss");
+        }
+      } catch (e) {
+        print('Error during server/Firebase login: $e');
+        success = false;
+      }
     } else {
       final inputEmail = _emailCtrl.text.trim().toLowerCase();
       final inputPassword = _passCtrl.text.trim();
 
-      User? dummmyUser;
+      UserModel? dummyUser;
       try {
-        dummmyUser = dummyUsers.firstWhere(
+        dummyUser = dummyUsers.firstWhere(
           (u) => u.email.toLowerCase() == inputEmail,
         );
       } catch (e) {
-        dummmyUser = null;
+        dummyUser = null;
       }
 
-      if (dummmyUser != null && dummmyUser.password == inputPassword) {
+      if (dummyUser != null && dummyUser.password == inputPassword) {
         success = true;
       } else {
         isDummyFail = true;

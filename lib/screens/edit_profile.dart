@@ -6,7 +6,9 @@ import 'package:graduation_project/screens/profile.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 
 class EditProfilePage extends StatefulWidget {
-  const EditProfilePage({super.key});
+  const EditProfilePage({super.key, required this.user});
+
+  final UserModel user;
 
   @override
   _EditProfilePageState createState() => _EditProfilePageState();
@@ -15,7 +17,6 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   bool _obscurePassword = true;
   String? _selectedCategory;
-  User? user;
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -27,36 +28,45 @@ class _EditProfilePageState extends State<EditProfilePage> {
     "Orthopedics",
     "General"
   ];
-
+  // UserModel? _currentUser;
   // This function fetches user data from the server
-  void fetchUserData() async {
-    try {
-      final fetchedUser = await USerService().fetchUserByEmail("m@gmail.com");
-      if (fetchedUser != null) {
-        setState(() {
-          user = fetchedUser;
-          _nameController.text = user?.name ?? "user";
-          _emailController.text = user?.email ?? "user@gmail.com";
-          _passwordController.text =
-              user?.password ?? "423m4po523h5o25oi52io[5]";
+  // void fetchUserData() async {
+  //   try {
+  //     final fetchedUser =
+  //         await USerService().fetchUserByEmail(widget.user.email);
+  //     if (fetchedUser != null) {
+  //       setState(() {
+  //         _currentUser = fetchedUser;
+  //         _nameController.text = _currentUser?.name ?? "user";
+  //         _emailController.text = _currentUser?.email ?? "user@gmail.com";
+  //         _passwordController.text =
+  //             _currentUser?.password ?? "423m4po523h5o25oi52io[5]";
 
-          // Ensure the value exists before assigning it
-          _selectedCategory = _categories.contains(user?.medicalSpecialist)
-              ? user?.medicalSpecialist
-              : null;
-        });
-      } else {
-        print("User not found");
-      }
-    } catch (e) {
-      print("Error fetching user: $e");
-    }
-  }
+  //         // Ensure the value exists before assigning it
+  //         _selectedCategory =
+  //             _categories.contains(_currentUser?.medicalSpecialist)
+  //                 ? _currentUser?.medicalSpecialist
+  //                 : null;
+  //       });
+  //     } else {
+  //       print("User not found");
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching user: $e");
+  //   }
+  // }
 
   @override
   void initState() {
     super.initState();
-    fetchUserData(); // Fetch user data when the page is loaded
+    // Populate the text fields with the user data passed from ProfilePage
+    _nameController.text = widget.user.name ?? ''; // Set name
+    _emailController.text = widget.user.email ?? ''; // Set email
+    _passwordController.text = widget.user.password ?? ''; // Set password
+    _selectedCategory = _categories.contains(widget.user.medicalSpecialist)
+        ? widget.user.medicalSpecialist
+        : null; // Set category if it exists
+    // fetchUserData(); // Fetch user data when the page is loaded
   }
 
   @override
