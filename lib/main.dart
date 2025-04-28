@@ -23,23 +23,13 @@ import 'package:graduation_project/background/server_check.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
-  // Initialize background services
   await AndroidAlarmManager.initialize();
   await NotificationService.init();
-
-  // Ensure localization is initialized
   await EasyLocalization.ensureInitialized();
-
-  // Override HTTP client for debugging (for custom SSL certificates)
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }
-
-  // Schedule a periodic task for server check
   await AndroidAlarmManager.periodic(
     const Duration(seconds: 20),
     123,
@@ -47,13 +37,9 @@ Future<void> main() async {
     wakeup: true,
     exact: true,
   );
-
-  // Load SharedPreferences to check if the user is logged in
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
   final savedLocaleCode = prefs.getString('locale') ?? 'en';
-
-  // Run the app with EasyLocalization and BlocProvider
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('ar')],
@@ -71,7 +57,6 @@ Future<void> main() async {
   );
 }
 
-// Custom HTTP client override for SSL certificates (only for debugging)
 class MyHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {

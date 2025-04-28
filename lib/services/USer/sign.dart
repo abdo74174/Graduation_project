@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -179,38 +180,65 @@ class USerService {
     }
   }
 
-  // Update user profile
   Future<void> updateUserProfile({
     required String email,
     required String name,
-    // required String password,
     required String medicalSpecialist,
-    File? profileImage,
+    String? profileImage,
+    String? phone,
+    String? address,
   }) async {
     try {
-      final formData = FormData.fromMap({
+      Map<String, dynamic> formDataMap = {
         'Email': email,
         'Name': name,
-        // 'Password': password,
         'MedicalSpecialist': medicalSpecialist,
-        if (profileImage != null)
-          'profileImage': await MultipartFile.fromFile(profileImage.path,
-              filename: profileImage.path.split('/').last),
-      });
+      };
 
+      if (phone != null) {
+        formDataMap['Phone'] = phone;
+      }
+      if (address != null) {
+        formDataMap['Address'] = address;
+      }
+
+      if (profileImage != null) {
+        if (profileImage.startsWith('data:image')) {
+          // Extract the Base64 part after the comma
+          final bytes = base64Decode(profileImage.split(',').last);
+          formDataMap['profileImage'] = MultipartFile.fromBytes(
+            bytes,
+            filename: 'profileImage.jpg',
+          );
+        } else {
+          // Handle regular file path
+          final file = File(profileImage);
+          if (await file.exists()) {
+            formDataMap['profileImage'] = await MultipartFile.fromFile(
+              profileImage,
+              filename: profileImage.split('/').last,
+            );
+          } else {
+            print("❌ Profile image file does not exist: $profileImage");
+            return; // Exit early if the file doesn't exist
+          }
+        }
+      }
+
+      final formData = FormData.fromMap(formDataMap);
       final response = await dio.put(
-        '/User/$email', // Use relative URL
+        '/User/$email',
         data: formData,
-        options: Options(headers: {
-          "Content-Type": "multipart/form-data",
-        }),
+        options: Options(headers: {"Content-Type": "multipart/form-data"}),
       );
 
       print("✅ Update successful: ${response.data}");
     } on DioException catch (e) {
       print("❌ Update error: ${e.message}");
-      print("Status Code: ${e.response?.statusCode}");
-      print("Response Data: ${e.response?.data}");
+      if (e.response != null) {
+        print("Status Code: ${e.response?.statusCode}");
+        print("Response Data: ${e.response?.data}");
+      }
     }
   }
 }

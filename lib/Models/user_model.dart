@@ -10,10 +10,10 @@ class UserModel {
   final String? confirmPassword;
   final String? resetToken;
   final DateTime? resetTokenExpires;
-  final int phone;
+  final String phone;
   final String? medicalSpecialist;
   final String? address;
-  final Uint8List? profileImage;
+  final String? profileImage;
   final DateTime createdAt;
   final String role;
   final List<ProductModel> products;
@@ -51,9 +51,7 @@ class UserModel {
       phone: json['phone'],
       medicalSpecialist: json['medicalSpecialist'],
       address: json['address'],
-      profileImage: json['profileImage'] != null
-          ? Uint8List.fromList(List<int>.from(json['profileImage']))
-          : null,
+      profileImage: json['profileImage'],
       createdAt: DateTime.parse(json['createdAt']),
       role: json['role'],
       products: (json['products'] as List?)

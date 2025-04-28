@@ -1,9 +1,12 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:easy_localization/easy_localization.dart'; // Import the easy_localization package
+import 'package:easy_localization/easy_localization.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:graduation_project/Models/user_model.dart';
-import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/profile.dart';
 import 'package:graduation_project/services/USer/sign.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key, required this.user});
@@ -11,62 +14,44 @@ class EditProfilePage extends StatefulWidget {
   final UserModel user;
 
   @override
-  _EditProfilePageState createState() => _EditProfilePageState();
+  State<EditProfilePage> createState() => _EditProfilePageState();
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  final bool _obscurePassword = true;
   String? _selectedCategory;
+  File? _profileImage;
+  bool _hasExistingImage = false;
+  final ImagePicker _picker = ImagePicker();
 
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
-  final List<String> _categories = [
+  final List<String> _specialists = [
     "Cardiology",
     "Neurology",
     "Orthopedics",
     "General"
   ];
-  // UserModel? _currentUser;
-  // This function fetches user data from the server
-  // void fetchUserData() async {
-  //   try {
-  //     final fetchedUser =
-  //         await USerService().fetchUserByEmail(widget.user.email);
-  //     if (fetchedUser != null) {
-  //       setState(() {
-  //         _currentUser = fetchedUser;
-  //         _nameController.text = _currentUser?.name ?? "user";
-  //         _emailController.text = _currentUser?.email ?? "user@gmail.com";
-  //         _passwordController.text =
-  //             _currentUser?.password ?? "423m4po523h5o25oi52io[5]";
-
-  //         // Ensure the value exists before assigning it
-  //         _selectedCategory =
-  //             _categories.contains(_currentUser?.medicalSpecialist)
-  //                 ? _currentUser?.medicalSpecialist
-  //                 : null;
-  //       });
-  //     } else {
-  //       print("User not found");
-  //     }
-  //   } catch (e) {
-  //     print("Error fetching user: $e");
-  //   }
-  // }
 
   @override
   void initState() {
     super.initState();
-    // Populate the text fields with the user data passed from ProfilePage
-    _nameController.text = widget.user.name ?? ''; // Set name
-    _emailController.text = widget.user.email ?? ''; // Set email
-    _passwordController.text = widget.user.password ?? ''; // Set password
-    _selectedCategory = _categories.contains(widget.user.medicalSpecialist)
+    _initializeData();
+  }
+
+  void _initializeData() {
+    _nameController.text = widget.user.name ?? '';
+    _emailController.text = widget.user.email;
+    _passwordController.text = widget.user.password ?? '';
+    _phoneController.text = widget.user.phone;
+    _addressController.text = widget.user.address ?? '';
+    _selectedCategory = _specialists.contains(widget.user.medicalSpecialist)
         ? widget.user.medicalSpecialist
-        : null; // Set category if it exists
-    // fetchUserData(); // Fetch user data when the page is loaded
+        : null;
+    _hasExistingImage = widget.user.profileImage?.isNotEmpty ?? false;
   }
 
   @override
@@ -77,15 +62,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_sharp, color: Colors.black),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfilePage()),
-            );
-          },
+          onPressed: () => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfilePage()),
+          ),
         ),
         title: Text(
-          "edit_profile".tr(), // Use .tr() to get the localized string
+          "edit_profile".tr(),
           style: const TextStyle(
             color: Colors.black,
             fontWeight: FontWeight.bold,
@@ -93,92 +76,151 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: ListView(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        child: Column(
           children: [
-            const SizedBox(height: 10),
-
-            // Avatar
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.grey.shade200,
-              backgroundImage: const AssetImage("assets/images/doctor 1.png"),
+            const SizedBox(height: 20),
+            // Profile Image Section
+            Center(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.blue, width: 2),
+                    ),
+                    child: ClipOval(
+                      child: _profileImage != null
+                          ? Image.file(_profileImage!, fit: BoxFit.cover)
+                          : _hasExistingImage
+                              ? CachedNetworkImage(
+                                  imageUrl: widget.user.profileImage!,
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) =>
+                                      const CircularProgressIndicator(),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.error),
+                                )
+                              : Image.asset(
+                                  "assets/images/doctor 1.png",
+                                  fit: BoxFit.cover,
+                                ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -5,
+                    right: -5,
+                    child: GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(Icons.edit,
+                            color: Colors.white, size: 20),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+            // Name Field
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: "user_name".tr(),
+                prefixIcon: const Icon(Icons.person),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
             ),
             const SizedBox(height: 20),
-
-            _buildLabel("user_name".tr()), // Localize the label text
-            _buildTextField(_nameController, Icons.person),
-
-            _buildLabel("email".tr()), // Localize the label text
-            _buildTextField(_emailController, Icons.email),
-
-            const SizedBox(height: 15),
-            _buildLabel("category".tr()), // Localize the label text
-
-            DropdownButtonFormField<String>(
+            // Email Field
+            TextFormField(
+              controller: _emailController,
               decoration: InputDecoration(
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                prefixIcon:
-                    const Icon(Icons.medical_services, color: Colors.grey),
+                labelText: "email".tr(),
+                prefixIcon: const Icon(Icons.email),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
+              keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+            // Category Dropdown
+            DropdownButtonFormField<String>(
               value: _selectedCategory,
-              hint: Text("select_category".tr()), // Localize the hint text
-              onChanged: (newValue) {
+              decoration: InputDecoration(
+                labelText: "category".tr(),
+                prefixIcon: const Icon(Icons.medical_services),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              items: _specialists.map((String category) {
+                return DropdownMenuItem<String>(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
+              onChanged: (String? newValue) {
                 setState(() {
                   _selectedCategory = newValue;
                 });
               },
-              items: _categories
-                  .map((category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category),
-                      ))
-                  .toList(),
             ),
-
-            const SizedBox(height: 25),
-
+            const SizedBox(height: 20),
+            // Phone Field
+            TextFormField(
+              controller: _phoneController,
+              decoration: InputDecoration(
+                labelText: "Phone".tr(),
+                prefixIcon: const Icon(Icons.phone),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 20),
+            // Address Field
+            TextFormField(
+              controller: _addressController,
+              decoration: InputDecoration(
+                labelText: "Address".tr(),
+                prefixIcon: const Icon(Icons.home),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 30),
             // Save Button
-            Container(
+            SizedBox(
               width: double.infinity,
               height: 50,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.blue, Colors.indigo],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: TextButton(
-                onPressed: () async {
-                  try {
-                    await USerService().updateUserProfile(
-                      email: _emailController.text,
-                      name: _nameController.text,
-                      medicalSpecialist: _selectedCategory ?? "",
-                      profileImage: null,
-                    );
-
-                    if (!mounted) return;
-
-                    showSnackbar(
-                        context,
-                        "updated_successfully"
-                            .tr()); // Localize success message
-                  } catch (e) {
-                    if (!mounted) return;
-
-                    showSnackbar(context,
-                        "update_failed".tr()); // Localize failure message
-                    print("❌ Caught Error: $e");
-                  }
-                },
+                onPressed: _saveProfile,
                 child: Text(
-                  "save_changes".tr(), // Localize the button text
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  "save_changes".tr(),
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
             ),
@@ -188,29 +230,58 @@ class _EditProfilePageState extends State<EditProfilePage> {
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 15, bottom: 5),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
-          ),
-        ),
-      ),
-    );
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      if (pickedFile != null) {
+        setState(() {
+          _profileImage = File(pickedFile.path);
+          _hasExistingImage = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Image picker error: $e");
+    }
   }
 
-  Widget _buildTextField(TextEditingController controller, IconData icon) {
-    return TextField(
-      controller: controller,
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon, color: Colors.grey),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+  Future<void> _saveProfile() async {
+    try {
+      String? base64Image;
+      if (_profileImage != null) {
+        final bytes = await _profileImage!.readAsBytes();
+        base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+      }
+
+      await USerService().updateUserProfile(
+        email: _emailController.text,
+        name: _nameController.text,
+        address: _addressController.text,
+        phone: _phoneController.text,
+        medicalSpecialist: _selectedCategory ?? "",
+        profileImage: base64Image,
+      );
+
+      if (!mounted) return;
+      showSnackbar(context, "updated_successfully".tr());
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePage()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showSnackbar(context, "update_failed".tr());
+      debugPrint("Profile update error: $e");
+    }
+  }
+
+  void showSnackbar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

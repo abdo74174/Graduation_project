@@ -1,20 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
-import 'package:graduation_project/core/constants/dummy_static_data.dart';
-import 'package:graduation_project/screens/homepage.dart';
+import 'package:graduation_project/screens/edit_profile.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
-import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:graduation_project/services/USer/sign.dart';
-import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'edit_profile.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({Key? key}) : super(key: key);
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
@@ -22,8 +15,9 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   UserModel? user;
-  bool _isServerOnline = true; // Assuming the server is online initially
-  bool _isLoading = true; // Flag for loading state
+  bool _isServerOnline = true;
+  bool _isLoading = true;
+  bool _isImageLoading = true;
 
   @override
   void initState() {
@@ -32,43 +26,36 @@ class _ProfilePageState extends State<ProfilePage> {
     checkServerStatus();
   }
 
-  /// Method to fetch user data
-  void fetchUserData() async {
+  Future<void> fetchUserData() async {
     try {
-      // Get email from SharedPreferences
       final email = await UserService().getEmail();
-
       if (email == null || email.isEmpty) {
         print("No email found in SharedPreferences!");
         return;
       }
-
-      // Fetch the user data by email
       final fetchedUser = await USerService().fetchUserByEmail(email);
-
       if (fetchedUser != null) {
         setState(() {
-          user = fetchedUser; // Update the user data
-          _isLoading = false; // Stop the loading state
+          user = fetchedUser;
         });
       } else {
         print("User not found");
-        setState(() {
-          _isLoading = false;
-        });
       }
     } catch (e) {
       print("Error fetching user: $e");
+    } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  // Simulate a server status check (replace with actual check logic)
   Future<void> checkServerStatus() async {
     bool isServerOnline =
         await ServerStatusService().checkAndUpdateServerStatus();
+
+    if (!mounted) return;
     setState(() {
       _isServerOnline = isServerOnline;
     });
@@ -79,105 +66,8 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _isServerOnline
-              ? SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Stack(
-                        alignment: Alignment.center,
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            height: 300,
-                            width: double.infinity,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                  "assets/images/various-medical-equipments-blue-backdrop 1.png",
-                                ),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          const Positioned(
-                            bottom: -80,
-                            child: CircleAvatar(
-                              radius: 80,
-                              backgroundColor: Colors.white,
-                              child: CircleAvatar(
-                                radius: 75,
-                                backgroundImage:
-                                    AssetImage("assets/images/doctor 1.png"),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 60),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              children: [
-                                _buildProfileField("name".tr(),
-                                    user!.name ?? "user", Icons.person),
-                                const SizedBox(height: 20),
-                                _buildProfileField(
-                                    "email".tr(), user!.email, Icons.email),
-                                const SizedBox(height: 20),
-                                _buildProfileField("password".tr(),
-                                    "************", Icons.lock),
-                                const SizedBox(height: 20),
-                                _buildProfileField(
-                                    "specialty".tr(),
-                                    user!.medicalSpecialist ?? "Unknown",
-                                    Icons.medical_services),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EditProfilePage(
-                                  user: user!,
-                                ),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 40, vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            backgroundColor: Colors.blue,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: Text(
-                            'edit_profile'.tr(),
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                    ],
-                  ),
-                )
-              : Center(
+          : !_isServerOnline
+              ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -189,12 +79,163 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ],
                   ),
-                ),
+                )
+              : user == null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.person_off,
+                              size: 50, color: Colors.grey),
+                          const SizedBox(height: 10),
+                          const Text(
+                            "No user data found!",
+                            style: TextStyle(fontSize: 18),
+                          ),
+                        ],
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          Stack(
+                            alignment: Alignment.center,
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                height: 300,
+                                width: double.infinity,
+                                decoration: const BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                      "assets/images/various-medical-equipments-blue-backdrop 1.png",
+                                    ),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                bottom: -60,
+                                child: CircleAvatar(
+                                  radius: 80,
+                                  backgroundColor: Colors.white,
+                                  child: ClipOval(
+                                    child: user?.profileImage != null &&
+                                            user!.profileImage!.isNotEmpty
+                                        ? Image.network(
+                                            user!.profileImage!,
+                                            width: 150,
+                                            height: 150,
+                                            fit: BoxFit.cover,
+                                            loadingBuilder: (context, child,
+                                                loadingProgress) {
+                                              if (loadingProgress == null) {
+                                                return child;
+                                              }
+                                              return SizedBox(
+                                                width: 150,
+                                                height: 150,
+                                                child: Center(
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    value: loadingProgress
+                                                                .expectedTotalBytes !=
+                                                            null
+                                                        ? loadingProgress
+                                                                .cumulativeBytesLoaded /
+                                                            loadingProgress
+                                                                .expectedTotalBytes!
+                                                        : null,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                            errorBuilder:
+                                                (context, error, stackTrace) {
+                                              return const Icon(Icons.person,
+                                                  size: 80, color: Colors.grey);
+                                            },
+                                          )
+                                        : const CircleAvatar(
+                                            radius: 75,
+                                            backgroundImage: AssetImage(
+                                                "assets/images/doctor 1.png"),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 60),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: Card(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
+                                  children: [
+                                    buildProfileTextField("name".tr(),
+                                        user?.name ?? "Unknown", Icons.person),
+                                    const SizedBox(height: 20),
+                                    buildProfileTextField("email".tr(),
+                                        user?.email ?? "Unknown", Icons.email),
+                                    const SizedBox(height: 20),
+                                    buildProfileTextField(
+                                        "specialty".tr(),
+                                        user?.medicalSpecialist ?? "Unknown",
+                                        Icons.medical_services),
+                                    const SizedBox(height: 20),
+                                    buildProfileTextField("phone".tr(),
+                                        user?.phone ?? "Unknown", Icons.phone),
+                                    const SizedBox(height: 20),
+                                    buildProfileTextField("address".tr(),
+                                        user?.address ?? "Unknown", Icons.home),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        EditProfilePage(user: user!),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 40, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                backgroundColor: Colors.blue,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text(
+                                'edit_profile'.tr(),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
     );
   }
 
-  // Profile field widget
-  Widget _buildProfileField(String label, String value, IconData icon) {
+  Widget buildProfileTextField(String label, String value, IconData icon) {
     return TextFormField(
       initialValue: value,
       enabled: false,
