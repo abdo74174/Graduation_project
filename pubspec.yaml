@@ -58,6 +58,7 @@ dependencies:
   wave: ^0.2.2
   chat_bubbles: ^1.6.0
   cached_network_image: ^3.4.1
+  firebase_dynamic_links: ^6.1.5
 
 dev_dependencies:
   flutter_test:
