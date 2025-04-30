@@ -28,7 +28,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> fetchUserData() async {
     try {
-      final email = await UserService().getEmail();
+      final email = await UserServicee().getEmail();
       if (email == null || email.isEmpty) {
         print("No email found in SharedPreferences!");
         return;

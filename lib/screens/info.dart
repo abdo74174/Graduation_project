@@ -4,27 +4,62 @@ import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
+import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
-  const RoleSelectionScreen({super.key});
+  final String? initialKindOfWork;
+  final String? initialSpecialty;
+
+  const RoleSelectionScreen({
+    super.key,
+    this.initialKindOfWork,
+    this.initialSpecialty,
+  });
 
   @override
   _RoleSelectionScreenState createState() => _RoleSelectionScreenState();
 }
 
 class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
-  String? selectedRole;
+  String? selectedKindOfWork;
   String? selectedSpecialty;
-
-  final List<String> roles = ['Doctor', 'Merchant', 'MedicalTrader'];
+  List<String> workTypes = [];
+  List<String> specialties = [];
   bool _serverOnline = true;
+  bool _isLoading = false;
 
   final ServerStatusService _statusService = ServerStatusService();
 
   @override
   void initState() {
     super.initState();
+    selectedKindOfWork = widget.initialKindOfWork;
+    selectedSpecialty = widget.initialSpecialty;
     _checkServer();
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    setState(() => _isLoading = true);
+    final fetchedWorkTypes = await USerService().fetchWorkTypes();
+    final fetchedSpecialties = await USerService().fetchSpecialties();
+    if (mounted) {
+      setState(() {
+        workTypes = fetchedWorkTypes;
+        specialties = fetchedSpecialties;
+        _isLoading = false;
+        if (selectedKindOfWork == null && workTypes.isNotEmpty) {
+          selectedKindOfWork = workTypes[0];
+        }
+        if (selectedKindOfWork == 'Doctor' &&
+            selectedSpecialty == null &&
+            specialties.isNotEmpty) {
+          selectedSpecialty = specialties[0];
+        }
+      });
+    }
   }
 
   Future<void> _checkServer() async {
@@ -34,23 +69,47 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   }
 
   void _onNextPressed() async {
-    if (selectedRole == null || selectedSpecialty == null) {
+    if (selectedKindOfWork == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('roleSelectionScreen.error'.tr())),
       );
       return;
     }
 
+    if (selectedKindOfWork == 'Doctor' && selectedSpecialty == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('roleSelectionScreen.specialtyError'.tr())),
+      );
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final email = prefs.getString('email') ?? '';
+
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('roleSelectionScreen.emailError'.tr())),
+      );
+      return;
+    }
+
     if (_serverOnline) {
       final success = await USerService().updateRoleAndSpecialist(
-        email: 'test@gmail.com',
-        role: selectedRole,
-        medicalSpecialist: selectedSpecialty,
+        email: email,
+        kindOfWork: selectedKindOfWork,
+        medicalSpecialist:
+            selectedKindOfWork == 'Doctor' ? selectedSpecialty : null,
       );
 
       if (!mounted) return;
 
       if (success) {
+        context.read<UserCubit>().setUser(
+              email,
+              selectedKindOfWork!,
+              selectedKindOfWork == 'Doctor' ? selectedSpecialty : null,
+              prefs.getBool('isAdmin') ?? false,
+            );
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const HomePage()),
@@ -61,7 +120,19 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         );
       }
     } else {
-      // OFFLINE MODE: Just navigate forward
+      // OFFLINE MODE
+      context.read<UserCubit>().setUser(
+            email,
+            selectedKindOfWork!,
+            selectedKindOfWork == 'Doctor' ? selectedSpecialty : null,
+            prefs.getBool('isAdmin') ?? false,
+          );
+      await prefs.setString('kindOfWork', selectedKindOfWork!);
+      if (selectedKindOfWork == 'Doctor' && selectedSpecialty != null) {
+        await prefs.setString('medicalSpecialist', selectedSpecialty!);
+      } else {
+        await prefs.remove('medicalSpecialist');
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('roleSelectionScreen.offlineError'.tr())),
       );
@@ -77,90 +148,121 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            'roleSelectionScreen.title'.tr(), // Using .tr() for translation
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.blueAccent,
+          'roleSelectionScreen.title'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: pkColor,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'roleSelectionScreen.selectRole'
-                  .tr(), // Translated text for 'Select your Role'
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(
-                      blurRadius: 2, color: Colors.grey, offset: Offset(1, 1))
-                ],
-              ),
-            ),
-            DropdownButton<String>(
-              value: selectedRole,
-              hint: Text('roleSelectionScreen.selectRoleHint'
-                  .tr()), // Translated text for hint
-              onChanged: (v) => setState(() => selectedRole = v),
-              items: roles
-                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                  .toList(),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'roleSelectionScreen.selectSpecialty'
-                  .tr(), // Translated text for 'What Is Your Medical Specialty?'
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                shadows: [
-                  Shadow(
-                      blurRadius: 2, color: Colors.grey, offset: Offset(1, 1))
-                ],
-              ),
-            ),
-            DropdownButton<String>(
-              value: selectedSpecialty,
-              hint: Text('roleSelectionScreen.selectSpecialtyHint'
-                  .tr()), // Translated text for hint
-              onChanged: (v) => setState(() => selectedSpecialty = v),
-              items: specialties
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                  .toList(),
-            ),
-            const SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.blue[900]!,
-                    Colors.blue[500]!,
-                    Colors.blue[300]!
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'roleSelectionScreen.selectWorkType'.tr(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          blurRadius: 2,
+                          color: Colors.grey,
+                          offset: const Offset(1, 1),
+                        ),
+                      ],
+                    ),
                   ),
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                ),
-                onPressed: _onNextPressed,
-                child: Text(
-                  'roleSelectionScreen.next'.tr(), // Translated text for 'Next'
-                  style: const TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                  const SizedBox(height: 10),
+                  DropdownButton<String>(
+                    value: selectedKindOfWork,
+                    hint: Text('roleSelectionScreen.selectWorkTypeHint'.tr()),
+                    isExpanded: true,
+                    onChanged: (v) {
+                      setState(() {
+                        selectedKindOfWork = v;
+                        if (v != 'Doctor') {
+                          selectedSpecialty = null;
+                        } else if (specialties.isNotEmpty) {
+                          selectedSpecialty = specialties[0];
+                        }
+                      });
+                    },
+                    items: workTypes
+                        .map((wt) =>
+                            DropdownMenuItem(value: wt, child: Text(wt)))
+                        .toList(),
+                  ),
+                  if (selectedKindOfWork == 'Doctor') ...[
+                    const SizedBox(height: 20),
+                    Text(
+                      'roleSelectionScreen.selectSpecialty'.tr(),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            blurRadius: 2,
+                            color: Colors.grey,
+                            offset: const Offset(1, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    DropdownButton<String>(
+                      value: selectedSpecialty,
+                      hint:
+                          Text('roleSelectionScreen.selectSpecialtyHint'.tr()),
+                      isExpanded: true,
+                      onChanged: (v) => setState(() => selectedSpecialty = v),
+                      items: specialties
+                          .map(
+                              (s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                    ),
+                  ],
+                  const SizedBox(height: 30),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: const LinearGradient(
+                        colors: [pkColor, Color(0xFF3E84D7)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _onNextPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text(
+                        'roleSelectionScreen.next'.tr(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (!_serverOnline) ...[
+                    const SizedBox(height: 20),
+                    Text(
+                      'roleSelectionScreen.offlineWarning'.tr(),
+                      style: const TextStyle(color: Colors.red, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

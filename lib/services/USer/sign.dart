@@ -1,35 +1,72 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:graduation_project/Models/user_model.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // مهم للـ HttpClientAdapter
+import 'package:shared_preferences/shared_preferences.dart';
 
 class USerService {
   final Dio dio;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Create a single instance of Dio with base URL
   USerService()
       : dio = Dio(BaseOptions(
-          baseUrl: 'https://10.0.2.2:7273/api/MedBridge', // Use base URL here
+          baseUrl: 'https://10.0.2.2:7273/api/MedBridge',
           headers: {'Content-Type': 'application/json'},
         )) {
-    // Configure the HTTP client to ignore certificate errors
-    (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
-        (HttpClient client) {
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
       client.badCertificateCallback =
-          (X509Certificate cert, String host, int port) =>
-              true; // Ignore SSL certificate
+          (X509Certificate cert, String host, int port) => true;
       return client;
     };
   }
 
-  // Fetch user data by email
+  Future<List<String>> fetchWorkTypes() async {
+    try {
+      final response = await dio.get('/work-types');
+      if (response.statusCode == 200) {
+        return List<String>.from(response.data['workTypes']);
+      } else {
+        print(
+            'Failed to fetch work types. Status code: ${response.statusCode}');
+        return [];
+      }
+    } on DioException catch (e) {
+      print('DioException: $e');
+      return [];
+    } catch (e) {
+      print('Unexpected error: $e');
+      return [];
+    }
+  }
+
+  Future<List<String>> fetchSpecialties() async {
+    try {
+      final response = await dio.get('/specialties');
+      if (response.statusCode == 200) {
+        return List<String>.from(response.data['specialties']);
+      } else {
+        print(
+            'Failed to fetch specialties. Status code: ${response.statusCode}');
+        return [];
+      }
+    } on DioException catch (e) {
+      print('DioException: $e');
+      return [];
+    } catch (e) {
+      print('Unexpected error: $e');
+      return [];
+    }
+  }
+
   Future<UserModel?> fetchUserByEmail(String email) async {
     try {
       final encodedEmail = Uri.encodeComponent(email);
-      final url =
-          '/User/$encodedEmail'; // Use relative URL, since base URL is already set
+      final url = '/User/$encodedEmail';
       print('Fetching from: $url');
 
       final response = await dio.get(url);
@@ -54,42 +91,68 @@ class USerService {
     }
   }
 
-  // User signup
   Future<void> signup({
     required String name,
     required String email,
     required String password,
     required String confirmPassword,
+    bool isAdmin = false,
   }) async {
-    const String url = '/User/signup'; // Use relative URL
-
-    final formData = FormData.fromMap({
-      'Name': name,
-      'Email': email,
-      'Password': password,
-      'ConfirmPassword': confirmPassword,
-    });
-
     try {
-      Response response = await dio.post(
-        url,
-        data: formData,
-        options: Options(
-          contentType: 'multipart/form-data',
-        ),
+      // Firebase signup
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
       );
 
-      if (response.statusCode == 200) {
+      User? user = userCredential.user;
+
+      if (user != null) {
+        // Store user data in Firestore
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'username': name,
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Backend signup
+        final formData = FormData.fromMap({
+          'Name': name,
+          'Email': email,
+          'Password': password,
+          'ConfirmPassword': confirmPassword,
+          'IsAdmin': isAdmin,
+        });
+
+        final response = await dio.post(
+          '/User/signup',
+          data: formData,
+          options: Options(
+            contentType: 'multipart/form-data',
+          ),
+        );
+
+        if (response.statusCode != 200) {
+          print(
+              'Backend signup failed: ${response.statusCode} - ${response.data}');
+          throw Exception('Backend signup failed');
+        }
+
         print('Signup success: ${response.data}');
-      } else {
-        print('Signup failed: ${response.statusCode} - ${response.data}');
       }
-    } catch (e) {
-      print('Signup error: $e');
+    } on FirebaseAuthException catch (e) {
+      print('Firebase signup error: $e');
+      throw Exception(e.message);
     } on DioException catch (e) {
       final errorMessage =
-          e.response?.data['errors'] ?? e.response?.data ?? "Signup failed";
-      print("Signup error: $errorMessage");
+          e.response?.data['message'] ?? e.response?.data ?? "Signup failed";
+      print("Backend signup error: $errorMessage");
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('Unexpected signup error: $e');
+      throw Exception('Signup failed: $e');
     }
   }
 
@@ -97,55 +160,63 @@ class USerService {
     required String email,
     required String password,
   }) async {
-    const String url = '/User/signIn'; // relative path
-
-    final formData = FormData.fromMap({
-      'email': email,
-      'password': password,
-    });
-
     try {
+      // Firebase login
+      await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      // Backend login
+      final formData = FormData.fromMap({
+        'email': email,
+        'password': password,
+      });
+
       final response = await dio.post(
-        url,
+        '/User/signIn',
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
         ),
       );
 
-      print(
-          "===================================================================");
-      print(response.data.toString());
-      print(
-          "__+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-      print(response.data.runtimeType);
-
       if (response.statusCode == 200) {
         print('SignIn success: ${response.data}');
-
-        // 👇 استخراج التوكن (حسب شكل الـ response)
-        final token = response.data['token']; // غيرها حسب السيرفر بيرجع إيه
+        final token = response.data['token'];
+        final kindOfWork = response.data['kindOfWork'];
+        final medicalSpecialist = response.data['medicalSpecialist'];
+        final isAdmin = response.data['isAdmin'];
 
         if (token != null && token is String) {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('token', token);
-          print("0000000000000000000000000000000000000000000000000000");
-          print('Token saved to SharedPreferences: $token');
-          print("0000000000000000000000000000000000000000000000000000");
+          await prefs.setString('kindOfWork', kindOfWork ?? 'Doctor');
+          if (medicalSpecialist != null) {
+            await prefs.setString('medicalSpecialist', medicalSpecialist);
+          } else {
+            await prefs.remove('medicalSpecialist');
+          }
+          await prefs.setBool('isAdmin', isAdmin ?? false);
+          await prefs.setString('email', email);
+          print(
+              'Token, kindOfWork, medicalSpecialist, and isAdmin saved: $token, $kindOfWork, $medicalSpecialist, $isAdmin');
+          return true;
         } else {
           print('Token not found in response!');
           return false;
         }
-
-        return true;
       } else {
         print('SignIn failed: ${response.statusCode} - ${response.data}');
         return false;
       }
+    } on FirebaseAuthException catch (e) {
+      print('Firebase login error: $e');
+      return false;
     } on DioException catch (e) {
       final errorMessage =
-          e.response?.data['errors'] ?? e.response?.data ?? "SignIn failed";
-      print("SignIn error: $errorMessage");
+          e.response?.data['message'] ?? e.response?.data ?? "SignIn failed";
+      print("Backend signIn error: $errorMessage");
       return false;
     } catch (e) {
       print('Unexpected login error: $e');
@@ -155,26 +226,36 @@ class USerService {
 
   Future<bool> updateRoleAndSpecialist({
     required String email,
-    String? role,
+    String? kindOfWork,
     String? medicalSpecialist,
   }) async {
     final Map<String, dynamic> payload = {};
-    if (role != null) payload['role'] = role;
-    if (medicalSpecialist != null) {
+    if (kindOfWork != null) payload['kindOfWork'] = kindOfWork;
+    if (medicalSpecialist != null)
       payload['medicalSpecialist'] = medicalSpecialist;
-    }
 
     try {
       final response = await dio.patch(
-        '/User/info/$email', // relative to baseUrl :contentReference[oaicite:0]{index=0}
+        '/User/info/$email',
         data: payload,
         options: Options(
           contentType: Headers.jsonContentType,
         ),
       );
-      return response.statusCode == 200;
+      if (response.statusCode == 200) {
+        final prefs = await SharedPreferences.getInstance();
+        if (kindOfWork != null) {
+          await prefs.setString('kindOfWork', kindOfWork);
+        }
+        if (medicalSpecialist != null) {
+          await prefs.setString('medicalSpecialist', medicalSpecialist);
+        } else if (kindOfWork != 'Doctor') {
+          await prefs.remove('medicalSpecialist');
+        }
+        return true;
+      }
+      return false;
     } on DioException catch (e) {
-      // Log error details if you need to debug
       print('❌ PATCH error: ${e.response?.statusCode} ${e.response?.data}');
       return false;
     }
@@ -183,35 +264,28 @@ class USerService {
   Future<void> updateUserProfile({
     required String email,
     required String name,
-    required String medicalSpecialist,
     String? profileImage,
     String? phone,
     String? address,
+    String? medicalSpecialist,
   }) async {
     try {
       Map<String, dynamic> formDataMap = {
         'Email': email,
         'Name': name,
         'MedicalSpecialist': medicalSpecialist,
+        'Phone': phone,
+        'Address': address,
       };
-
-      if (phone != null) {
-        formDataMap['Phone'] = phone;
-      }
-      if (address != null) {
-        formDataMap['Address'] = address;
-      }
 
       if (profileImage != null) {
         if (profileImage.startsWith('data:image')) {
-          // Extract the Base64 part after the comma
           final bytes = base64Decode(profileImage.split(',').last);
           formDataMap['profileImage'] = MultipartFile.fromBytes(
             bytes,
             filename: 'profileImage.jpg',
           );
         } else {
-          // Handle regular file path
           final file = File(profileImage);
           if (await file.exists()) {
             formDataMap['profileImage'] = await MultipartFile.fromFile(
@@ -220,7 +294,7 @@ class USerService {
             );
           } else {
             print("❌ Profile image file does not exist: $profileImage");
-            return; // Exit early if the file doesn't exist
+            return;
           }
         }
       }
@@ -239,6 +313,17 @@ class USerService {
         print("Status Code: ${e.response?.statusCode}");
         print("Response Data: ${e.response?.data}");
       }
+      throw Exception(e.message);
     }
+  }
+
+  Future<void> saveEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('email', email);
+  }
+
+  Future<void> clearEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('email');
   }
 }

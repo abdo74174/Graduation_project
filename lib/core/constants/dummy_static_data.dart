@@ -123,6 +123,8 @@ final dummyFavourites = [
 // Dummy Users
 final dummyUsers = [
   UserModel(
+    kindOfWork: "docto",
+    isAdmin: false,
     id: 1,
     name: "Dr. Sarah",
     email: "user@gmail.com",
@@ -135,15 +137,16 @@ final dummyUsers = [
     address: "Cairo",
     profileImage: null,
     createdAt: DateTime.now(),
-    role: "Doctor",
     products: [dummyProducts[0]],
     contactUsMessages: [],
   ),
   UserModel(
+    kindOfWork: "docto",
+    isAdmin: true,
     id: 2,
-    name: "PharmaPlus",
-    email: "pharma@example.com",
-    password: null,
+    name: "admin",
+    email: "admin@gmail.com",
+    password: "admin",
     confirmPassword: null,
     resetToken: null,
     resetTokenExpires: null,
@@ -152,7 +155,6 @@ final dummyUsers = [
     address: "Alexandria",
     profileImage: null,
     createdAt: DateTime.now(),
-    role: "Pharmacy",
     products: [dummyProducts[1]],
     contactUsMessages: [],
   ),

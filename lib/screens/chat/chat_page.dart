@@ -28,7 +28,7 @@ class _ChatPageState extends State<ChatPage> {
 
   // Initialize email from shared preferences
   void _initializeEmail() async {
-    email = await UserService().getEmail();
+    email = await UserServicee().getEmail();
     // email = "noha@gmail.com";
     setState(() {});
   }

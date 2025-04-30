@@ -15,7 +15,8 @@ class UserModel {
   final String? address;
   final String? profileImage;
   final DateTime createdAt;
-  final String role;
+  final String kindOfWork;
+  final bool isAdmin;
   final List<ProductModel> products;
   final List<ContactUs> contactUsMessages;
 
@@ -32,7 +33,8 @@ class UserModel {
     this.address,
     this.profileImage,
     required this.createdAt,
-    required this.role,
+    required this.kindOfWork,
+    required this.isAdmin,
     required this.products,
     required this.contactUsMessages,
   });
@@ -45,15 +47,16 @@ class UserModel {
       password: json['password'],
       confirmPassword: json['confirmPassword'],
       resetToken: json['resetToken'],
-      resetTokenExpires: json['resetTokenExpires'] != null
+      resetTokenExpires: json['reset groeneTokenExpires'] != null
           ? DateTime.parse(json['resetTokenExpires'])
           : null,
-      phone: json['phone'],
+      phone: json['phone'] ?? '',
       medicalSpecialist: json['medicalSpecialist'],
       address: json['address'],
       profileImage: json['profileImage'],
       createdAt: DateTime.parse(json['createdAt']),
-      role: json['role'],
+      kindOfWork: json['kindOfWork'] ?? 'Doctor',
+      isAdmin: json['isAdmin'] ?? false,
       products: (json['products'] as List?)
               ?.map((item) => ProductModel.fromJson(item))
               .toList() ??
@@ -79,7 +82,8 @@ class UserModel {
       'address': address,
       'profileImage': profileImage,
       'createdAt': createdAt.toIso8601String(),
-      'role': role,
+      'kindOfWork': kindOfWork,
+      'isAdmin': isAdmin,
       'products': products.map((product) => product.toJson()).toList(),
       'contactUsMessages':
           contactUsMessages.map((message) => message.toJson()).toList(),

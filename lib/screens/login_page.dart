@@ -1,22 +1,24 @@
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
+import 'package:graduation_project/screens/forget_password.dart';
+import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/info.dart';
-import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
+import 'package:graduation_project/screens/register.dart';
+import 'package:graduation_project/services/Server/server_status_service.dart';
+import 'package:graduation_project/services/USer/sign.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/core/constants/constant.dart';
-import 'package:graduation_project/screens/forget_password.dart';
-import 'package:graduation_project/screens/register.dart';
-import 'package:graduation_project/services/Server/server_status_service.dart';
-import 'package:graduation_project/services/USer/sign.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -78,9 +80,12 @@ class _LoginPageState extends State<LoginPage> {
       final p = _passCtrl.text.trim();
       if (e.isEmpty) {
         _emailErr = 'email_empty'.tr();
-      } else if (!RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$').hasMatch(e))
+      } else if (!RegExp(r'^[\w\.\-]+@[\w\.\-]+\.\w+$').hasMatch(e)) {
         _emailErr = 'email_invalid'.tr();
-      if (p.isEmpty) _passErr = 'password_empty'.tr();
+      }
+      if (p.isEmpty) {
+        _passErr = 'password_empty'.tr();
+      }
     });
   }
 
@@ -109,6 +114,10 @@ class _LoginPageState extends State<LoginPage> {
     bool success = false;
     bool isDummyFail = false;
 
+    String? kindOfWork;
+    String? medicalSpecialist;
+    bool isAdmin = false;
+
     if (_serverOnline) {
       try {
         success = await USerService().login(
@@ -117,16 +126,16 @@ class _LoginPageState extends State<LoginPage> {
         );
 
         if (success) {
-          await FirebaseAuth.instance.signInWithEmailAndPassword(
-            email: _emailCtrl.text.trim(),
-            password: _passCtrl.text.trim(),
-          );
-          // ignore: use_build_context_synchronously
-          context.read<UserCubit>().setEmail(_emailCtrl.text);
-          showSnackbar(context, "firebas SUcessssssssssssssss");
+          final prefs = await SharedPreferences.getInstance();
+          kindOfWork = prefs.getString('kindOfWork') ?? 'Doctor';
+          medicalSpecialist = prefs.getString('medicalSpecialist');
+          isAdmin = prefs.getBool('isAdmin') ?? false;
+          context
+              .read<UserCubit>()
+              .setUser(_emailCtrl.text, kindOfWork, medicalSpecialist, isAdmin);
         }
       } catch (e) {
-        print('Error during server/Firebase login: $e');
+        print('Error during server login: $e');
         success = false;
       }
     } else {
@@ -144,6 +153,9 @@ class _LoginPageState extends State<LoginPage> {
 
       if (dummyUser != null && dummyUser.password == inputPassword) {
         success = true;
+        kindOfWork = dummyUser.kindOfWork;
+        medicalSpecialist = dummyUser.medicalSpecialist;
+        isAdmin = dummyUser.isAdmin;
       } else {
         isDummyFail = true;
         success = false;
@@ -157,11 +169,25 @@ class _LoginPageState extends State<LoginPage> {
       final tok = prefs.getString('token') ?? 'dummy_token';
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('token', tok);
+      await prefs.setString('email', _emailCtrl.text.trim());
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const RoleSelectionScreen()),
-      );
+      // Simplified navigation logic based on isAdmin
+      if (isAdmin) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => DashboardScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RoleSelectionScreen(
+              initialKindOfWork: kindOfWork,
+              initialSpecialty: medicalSpecialist,
+            ),
+          ),
+        );
+      }
     } else {
       final msg = isDummyFail ? 'offline_login_fail'.tr() : 'login_fail'.tr();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));

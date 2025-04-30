@@ -1,13 +1,27 @@
-// part of 'user_cubit.dart';
+class UserState {
+  final String? email;
+  final String? kindOfWork;
+  final String? medicalSpecialist;
+  final bool isAdmin;
 
-// import 'package:flutter/foundation.dart' show immutable;
+  UserState({
+    this.email,
+    this.kindOfWork,
+    this.medicalSpecialist,
+    required this.isAdmin,
+  });
 
-// @immutable
-// sealed class UserCubitState {}
-
-// final class UserCubitInitial extends UserCubitState {}
-
-// final class UserCubitEmailSet extends UserCubitState {
-//   final String email;
-//   UserCubitEmailSet(this.email);
-// }
+  UserState copyWith({
+    String? email,
+    String? kindOfWork,
+    String? medicalSpecialist,
+    bool? isAdmin,
+  }) {
+    return UserState(
+      email: email ?? this.email,
+      kindOfWork: kindOfWork ?? this.kindOfWork,
+      medicalSpecialist: medicalSpecialist ?? this.medicalSpecialist,
+      isAdmin: isAdmin ?? this.isAdmin,
+    );
+  }
+}
