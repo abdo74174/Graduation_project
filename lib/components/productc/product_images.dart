@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/services/Favourites/favourites_service.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ImageWidget extends StatefulWidget {
   const ImageWidget({
@@ -17,16 +19,29 @@ class ImageWidget extends StatefulWidget {
   State<ImageWidget> createState() => _ImageWidgetState();
 }
 
-class _ImageWidgetState extends State<ImageWidget> {
+class _ImageWidgetState extends State<ImageWidget> with SingleTickerProviderStateMixin {
   bool isFavourite = false;
   late SharedPreferences _prefs;
   bool _isPrefsInitialized = false;
   bool _isImageError = false;
+  late AnimationController _favAnimationController;
+  late Animation<double> _favScaleAnimation;
 
   @override
   void initState() {
     super.initState();
     _initPrefs();
+    _initAnimation();
+  }
+
+  void _initAnimation() {
+    _favAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _favScaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _favAnimationController, curve: Curves.easeInOut),
+    );
   }
 
   Future<void> _initPrefs() async {
@@ -68,6 +83,9 @@ class _ImageWidgetState extends State<ImageWidget> {
   void _toggleFavoriteStatus() {
     if (!_isPrefsInitialized) return;
 
+    HapticFeedback.lightImpact();
+    _favAnimationController.forward().then((_) => _favAnimationController.reverse());
+
     final newStatus = !isFavourite;
     setState(() => isFavourite = newStatus);
     _prefs.setBool('fav_${widget.productId}', newStatus);
@@ -88,67 +106,101 @@ class _ImageWidgetState extends State<ImageWidget> {
   }
 
   @override
+  void dispose() {
+    _favAnimationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Stack(
+      alignment: Alignment.center,
       children: [
-        // Main Image
-        SizedBox(
+        // Main Image with Gradient Overlay
+        Container(
           width: screenWidth,
-          height: 400,
+          height: screenHeight * 0.5,
+          decoration: BoxDecoration(
+            image: _isImageError
+                ? const DecorationImage(
+              image: AssetImage(defaultProductImage),
+              fit: BoxFit.cover,
+            )
+                : null,
+          ),
           child: _isImageError
-              ? Image.asset(defaultProductImage, fit: BoxFit.cover)
-              : Image.network(
-                  widget.image,
-                  fit: BoxFit.cover,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (mounted) setState(() => _isImageError = true);
-                    });
-                    return Image.asset(defaultProductImage, fit: BoxFit.cover);
-                  },
+              ? null
+              : Stack(
+            fit: StackFit.expand,
+            children: [
+              Image.network(
+                widget.image,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Shimmer.fromColors(
+                    baseColor: Colors.grey[300]!,
+                    highlightColor: Colors.grey[100]!,
+                    child: Container(color: Colors.grey[300]),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() => _isImageError = true);
+                  });
+                  return Container(
+                    color: Colors.grey[200],
+                    child: const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                  );
+                },
+              ),
+              // Gradient overlay
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(0.3),
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.3),
+                    ],
+                  ),
                 ),
+              ),
+            ],
+          ),
         ),
 
-        // Favorite Icon with Border
+        // Favorite Button
         Positioned(
           right: 16,
-          top: 40,
-          child: Material(
-            // Use Material to get the ripple (ink splash) effect
-            color: Colors.transparent,
-            shape: CircleBorder(),
-            child: InkWell(
-              customBorder: CircleBorder(),
+          top: MediaQuery.of(context).padding.top + 16,
+          child: ScaleTransition(
+            scale: _favScaleAnimation,
+            child: GestureDetector(
               onTap: _toggleFavoriteStatus,
-              child: AnimatedContainer(
-                duration: Duration(milliseconds: 250),
-                padding: EdgeInsets.all(6),
+              child: Container(
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFFCDD2), // فاتح أحمر (light red)
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white, // crisp white border
-                    width: 3, // thicker border for contrast
-                  ),
+                  color: Colors.white.withOpacity(0.2),
+                  border: Border.all(color: Colors.white, width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.red.withOpacity(0.5),
-                      blurRadius: 12,
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 8,
                       spreadRadius: 1,
-                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
-                  Icons.favorite,
+                  isFavourite ? Icons.favorite : Icons.favorite_border,
                   color: isFavourite ? Colors.redAccent : Colors.white,
-                  size: 32,
+                  size: 28,
                 ),
               ),
             ),
@@ -158,41 +210,34 @@ class _ImageWidgetState extends State<ImageWidget> {
         // Back Button
         Positioned(
           left: 16,
-          top: 40,
-          child: Material(
-            color: Colors.transparent,
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: () => Navigator.pop(context),
-              splashColor: Colors.white24,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(8), // generous tap area
-                decoration: BoxDecoration(
-                  color:
-                      pkColor, // Teal-blue background :contentReference[oaicite:0]{index=0}
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors
-                        .white, // crisp white border for 3:1 contrast :contentReference[oaicite:1]{index=1}
-                    width: 2,
+          top: MediaQuery.of(context).padding.top + 16,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+                border: Border.all(color: Colors.white.withOpacity(0.3)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    spreadRadius: 1,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: pkColor,
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                      offset: const Offset(0, 3),
-                    ),
+                ],
+                // Glassmorphism effect
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withOpacity(0.2),
+                    Colors.white.withOpacity(0.05),
                   ],
                 ),
-                child: const Icon(
-                  Icons.arrow_back,
-                  size: 24,
-                  color: Colors
-                      .white, // white icon ensures 3:1 non-text contrast :contentReference[oaicite:2]{index=2}
-                ),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                color: Colors.white,
+                size: 24,
               ),
             ),
           ),
@@ -205,8 +250,16 @@ class _ImageWidgetState extends State<ImageWidget> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
+          content: Text(
+            message,
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.black87,
           duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       );
     }

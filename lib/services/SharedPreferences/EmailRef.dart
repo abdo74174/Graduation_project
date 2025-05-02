@@ -15,4 +15,10 @@ class UserServicee {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('user_email');
   }
+
+  Future<bool> login({required String email, required String password}) async {
+    // Simulate a server login (replace with actual API call)
+    await Future.delayed(const Duration(seconds: 1));
+    return email.isNotEmpty && password.isNotEmpty;
+  }
 }

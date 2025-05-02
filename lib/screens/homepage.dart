@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
@@ -7,6 +8,7 @@ import 'package:graduation_project/components/home_page/drawer.dart';
 import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/home_page/searchbar.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/chat/chat_page.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/services/Product/category_service.dart';
@@ -17,6 +19,7 @@ import 'package:graduation_project/screens/categories_page.dart';
 import 'package:graduation_project/screens/chat_app.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,11 +54,6 @@ class _HomePageState extends State<HomePage> {
     final online = await serverStatusService.checkAndUpdateServerStatus();
     setState(() {
       isOffline = !online;
-
-      print("+++++++online++++++++++++");
-      print(online);
-      print("+++++++isOffline++++++++++++");
-      print(isOffline);
     });
   }
 
@@ -68,12 +66,9 @@ class _HomePageState extends State<HomePage> {
         });
       } else {
         final result = await Future.any([
-          CategoryService()
-              .fetchAllCategories(), // Make sure this fetches data from the API
-          Future.delayed(
-              const Duration(seconds: 15),
-              () => throw TimeoutException(
-                  'Timeout')), // Timeout if it takes too long
+          CategoryService().fetchAllCategories(),
+          Future.delayed(const Duration(seconds: 15),
+              () => throw TimeoutException('Timeout')),
         ]);
         setState(() {
           categories = result;
@@ -96,14 +91,10 @@ class _HomePageState extends State<HomePage> {
           isLoading = false;
         });
       } else {
-        // Make sure you call the API to fetch products here instead of just delaying
         final result = await Future.any([
-          ProductService()
-              .fetchAllProducts(), // Ensure this is the correct API call to fetch products
-          Future.delayed(
-              const Duration(seconds: 15),
-              () => throw TimeoutException(
-                  'Timeout')), // Timeout if it takes too long
+          ProductService().fetchAllProducts(),
+          Future.delayed(const Duration(seconds: 15),
+              () => throw TimeoutException('Timeout')),
         ]);
         setState(() {
           products = result;
@@ -145,6 +136,53 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  void _startChat() async {
+    final email = await UserServicee().getEmail();
+    if (email == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to start a chat')),
+      );
+      return;
+    }
+
+    const contactEmail = 'abdulrhmanosama744@gmail.com';
+    if (contactEmail == email) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot chat with yourself')),
+      );
+      return;
+    }
+
+    try {
+      final contactName = 'Support'; // Hardcoded for simplicity
+      final chatId = '${email}_$contactEmail';
+      await FirebaseFirestore.instance.collection('chats').doc(chatId).set({
+        'contactName': contactName,
+        'lastMessage': '',
+        'lastMessageTime': DateTime.now(),
+        'unreadCount': 0,
+        'contactId': contactEmail,
+        'isPinned': false,
+        'participants': [email, contactEmail],
+      }, SetOptions(merge: true));
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatPage(
+            chatId: chatId,
+            contactId: contactEmail,
+            contactName: contactName,
+          ),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error starting chat: $e')),
+      );
+    }
+  }
+
   @override
   void dispose() {
     _debounce?.cancel();
@@ -178,10 +216,16 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
+            onPressed: _startChat,
+            icon: Icon(Icons.support_agent,
+                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
+            tooltip: 'Chat with Support',
+          ),
+          IconButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FavoritePage()),
+                MaterialPageRoute(builder: (context) => const FavouritePage()),
               );
             },
             icon: Icon(Icons.favorite_border_outlined,
@@ -191,7 +235,8 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => ShoppingCartPage()),
+                MaterialPageRoute(
+                    builder: (context) => const ShoppingCartPage()),
               );
             },
             icon: Icon(Icons.shopping_cart_outlined,
@@ -199,8 +244,10 @@ class _HomePageState extends State<HomePage> {
           ),
           IconButton(
             onPressed: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => DashboardScreen()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => DashboardScreen()),
+              );
             },
             icon: Icon(Icons.notifications_none,
                 color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
@@ -252,7 +299,8 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => CategoryScreen()),
+                                      builder: (context) =>
+                                          const CategoryScreen()),
                                 );
                               },
                               child: Text(
@@ -271,7 +319,8 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => CategoryScreen()),
+                                      builder: (context) =>
+                                          const CategoryScreen()),
                                 );
                               },
                               child: Text(

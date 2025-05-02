@@ -4,6 +4,7 @@ import 'package:graduation_project/Models/cart_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/payment/PaymentScreen.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
@@ -333,7 +334,9 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // Handle checkout logic here
+                Navigator.push(context, MaterialPageRoute(builder: (con) {
+                  return Paymentscreen();
+                }));
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: pkColor,

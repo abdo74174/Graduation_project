@@ -1,20 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
 import 'package:graduation_project/screens/forget_password.dart';
-import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/info.dart';
 import 'package:graduation_project/screens/register.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/USer/sign.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
-import 'package:graduation_project/core/constants/constant.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -30,6 +27,7 @@ class _LoginPageState extends State<LoginPage> {
 
   String? _emailErr, _passErr;
   bool _serverOnline = true, _loggingIn = false, _allowOfflineLogin = false;
+  bool _obscurePassword = true;
   int _count = 10;
   Timer? _timer;
 
@@ -114,25 +112,47 @@ class _LoginPageState extends State<LoginPage> {
     bool success = false;
     bool isDummyFail = false;
 
+    String? userId;
     String? kindOfWork;
     String? medicalSpecialist;
     bool isAdmin = false;
 
+    final prefs = await SharedPreferences.getInstance();
+
     if (_serverOnline) {
       try {
-        success = await USerService().login(
+        final loginSuccess = await USerService().login(
           email: _emailCtrl.text.trim(),
           password: _passCtrl.text.trim(),
         );
+        print('Login success: $loginSuccess'); // Debug log
 
-        if (success) {
-          final prefs = await SharedPreferences.getInstance();
-          kindOfWork = prefs.getString('kindOfWork') ?? 'Doctor';
-          medicalSpecialist = prefs.getString('medicalSpecialist');
-          isAdmin = prefs.getBool('isAdmin') ?? false;
-          context
-              .read<UserCubit>()
-              .setUser(_emailCtrl.text, kindOfWork, medicalSpecialist, isAdmin);
+        if (loginSuccess) {
+          userId = prefs.getString('user_id');
+          if (userId == null) {
+            print('Error: user_id not found in SharedPreferences after login');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('login_id_error'.tr()),
+                backgroundColor: Colors.red,
+              ),
+            );
+            success = false;
+          } else {
+            success = true;
+            kindOfWork = prefs.getString('kindOfWork') ?? 'Doctor';
+            medicalSpecialist = prefs.getString('medicalSpecialist');
+            isAdmin = prefs.getBool('isAdmin') ?? false;
+            context.read<UserCubit>().setUser(
+                  userId,
+                  _emailCtrl.text.trim(),
+                  kindOfWork,
+                  medicalSpecialist,
+                  isAdmin,
+                );
+          }
+        } else {
+          print('Server login failed: Invalid credentials or server error');
         }
       } catch (e) {
         print('Error during server login: $e');
@@ -146,6 +166,7 @@ class _LoginPageState extends State<LoginPage> {
       try {
         dummyUser = dummyUsers.firstWhere(
           (u) => u.email.toLowerCase() == inputEmail,
+          orElse: () => throw Exception('User not found'),
         );
       } catch (e) {
         dummyUser = null;
@@ -153,9 +174,23 @@ class _LoginPageState extends State<LoginPage> {
 
       if (dummyUser != null && dummyUser.password == inputPassword) {
         success = true;
-        kindOfWork = dummyUser.kindOfWork;
-        medicalSpecialist = dummyUser.medicalSpecialist;
-        isAdmin = dummyUser.isAdmin;
+        userId = 'dummy_${inputEmail.hashCode}';
+        await prefs.setString('user_id', userId);
+        await prefs.setString('kindOfWork', dummyUser.kindOfWork ?? 'Doctor');
+        if (dummyUser.medicalSpecialist != null) {
+          await prefs.setString(
+              'medicalSpecialist', dummyUser.medicalSpecialist!);
+        } else {
+          await prefs.remove('medicalSpecialist');
+        }
+        await prefs.setBool('isAdmin', dummyUser.isAdmin);
+        context.read<UserCubit>().setUser(
+              userId,
+              _emailCtrl.text.trim(),
+              dummyUser.kindOfWork ?? 'Doctor',
+              dummyUser.medicalSpecialist,
+              dummyUser.isAdmin,
+            );
       } else {
         isDummyFail = true;
         success = false;
@@ -165,13 +200,11 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _loggingIn = false);
 
     if (success) {
-      final prefs = await SharedPreferences.getInstance();
       final tok = prefs.getString('token') ?? 'dummy_token';
       await prefs.setBool('isLoggedIn', true);
       await prefs.setString('token', tok);
       await prefs.setString('email', _emailCtrl.text.trim());
 
-      // Simplified navigation logic based on isAdmin
       if (isAdmin) {
         Navigator.pushReplacement(
           context,
@@ -189,7 +222,11 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } else {
-      final msg = isDummyFail ? 'offline_login_fail'.tr() : 'login_fail'.tr();
+      final msg = isDummyFail
+          ? 'offline_login_fail'.tr()
+          : (userId == null && _serverOnline
+              ? 'login_credentials_error'.tr()
+              : 'login_fail'.tr());
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     }
   }
@@ -214,24 +251,42 @@ class _LoginPageState extends State<LoginPage> {
                   width: 160, height: 160),
               const SizedBox(height: 24),
               Text('login'.tr(),
-                  style: const TextStyle(fontSize: 28, color: pkColor)),
+                  style: const TextStyle(fontSize: 28, color: Colors.blue)),
               const SizedBox(height: 8),
               Text('login_continue'.tr()),
               const SizedBox(height: 24),
-              CustomInputField(
+              TextField(
                 controller: _emailCtrl,
-                hint: 'email'.tr(),
-                icon: Icons.email_outlined,
-                errorText: _emailErr,
-                isPassword: false,
+                decoration: InputDecoration(
+                  hintText: 'email'.tr(),
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  errorText: _emailErr,
+                  border: const OutlineInputBorder(),
+                ),
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
-              CustomInputField(
+              TextField(
                 controller: _passCtrl,
-                hint: 'password'.tr(),
-                icon: Icons.lock_outline,
-                errorText: _passErr,
-                isPassword: true,
+                decoration: InputDecoration(
+                  hintText: 'password'.tr(),
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                  errorText: _passErr,
+                  border: const OutlineInputBorder(),
+                ),
+                obscureText: _obscurePassword,
               ),
               Align(
                 alignment: Alignment.centerRight,
@@ -277,14 +332,14 @@ class _LoginPageState extends State<LoginPage> {
                   child: ElevatedButton(
                     onPressed: _loggingIn ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: pkColor,
+                      backgroundColor: Colors.blue,
                     ),
                     child: _loggingIn
                         ? const SizedBox(
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                              color: pkColor,
+                              color: Colors.white,
                               strokeWidth: 2,
                             ),
                           )

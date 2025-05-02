@@ -8,14 +8,14 @@ import 'package:graduation_project/services/Favourites/favourites_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:easy_localization/easy_localization.dart'; // Add this import
 
-class FavoritePage extends StatefulWidget {
-  const FavoritePage({super.key});
+class FavouritePage extends StatefulWidget {
+  const FavouritePage({super.key});
 
   @override
-  State<FavoritePage> createState() => _FavoritePageState();
+  State<FavouritePage> createState() => _FavoritePageState();
 }
 
-class _FavoritePageState extends State<FavoritePage> {
+class _FavoritePageState extends State<FavouritePage> {
   List<ProductModel> favourites = [];
   bool isLoading = true;
 
@@ -56,7 +56,7 @@ class _FavoritePageState extends State<FavoritePage> {
         });
       }
     } else {
-      // Use dummy data when offline
+      if (mounted) return;
       setState(() {
         favourites = dummyProducts; // Assuming you have dummyProducts
         isLoading = false;

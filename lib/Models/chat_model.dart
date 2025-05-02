@@ -2,25 +2,25 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatModel {
   final String message;
+  final DateTime createdAt;
   final String senderId;
   final String receiverId;
-  final Timestamp createdAt;
 
   ChatModel({
     required this.message,
+    required this.createdAt,
     required this.senderId,
     required this.receiverId,
-    required this.createdAt,
   });
 
   factory ChatModel.fromSnapshot(
-      QueryDocumentSnapshot<Map<String, dynamic>> snap) {
-    final data = snap.data();
+      QueryDocumentSnapshot<Map<String, dynamic>> snapshot) {
+    final data = snapshot.data();
     return ChatModel(
-      message: data['message'] as String,
-      senderId: data['senderId'] as String,
-      receiverId: data['receiverId'] as String,
-      createdAt: data['createdAt'] as Timestamp,
+      message: data['message'] ?? '',
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      senderId: data['senderId'] ?? '',
+      receiverId: data['receiverId'] ?? '',
     );
   }
 }

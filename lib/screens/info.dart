@@ -35,7 +35,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    selectedKindOfWork = widget.initialKindOfWork;
+    // Initialize selectedKindOfWork as null to avoid invalid value
+    selectedKindOfWork = null;
     selectedSpecialty = widget.initialSpecialty;
     _checkServer();
     _fetchData();
@@ -50,14 +51,22 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         workTypes = fetchedWorkTypes;
         specialties = fetchedSpecialties;
         _isLoading = false;
-        if (selectedKindOfWork == null && workTypes.isNotEmpty) {
+        // Validate initialKindOfWork
+        print('Fetched workTypes: $workTypes');
+        print('Initial kindOfWork: ${widget.initialKindOfWork}');
+        if (widget.initialKindOfWork != null &&
+            workTypes.contains(widget.initialKindOfWork)) {
+          selectedKindOfWork = widget.initialKindOfWork;
+        } else if (workTypes.isNotEmpty) {
           selectedKindOfWork = workTypes[0];
         }
+        // Handle specialty for Doctor
         if (selectedKindOfWork == 'Doctor' &&
             selectedSpecialty == null &&
             specialties.isNotEmpty) {
           selectedSpecialty = specialties[0];
         }
+        print('Selected kindOfWork: $selectedKindOfWork');
       });
     }
   }
@@ -85,10 +94,18 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('email') ?? '';
+    final userId = prefs.getString('user_id');
 
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('roleSelectionScreen.emailError'.tr())),
+      );
+      return;
+    }
+
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('roleSelectionScreen.userIdError'.tr())),
       );
       return;
     }
@@ -105,6 +122,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
 
       if (success) {
         context.read<UserCubit>().setUser(
+              userId,
               email,
               selectedKindOfWork!,
               selectedKindOfWork == 'Doctor' ? selectedSpecialty : null,
@@ -122,6 +140,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     } else {
       // OFFLINE MODE
       context.read<UserCubit>().setUser(
+            userId,
             email,
             selectedKindOfWork!,
             selectedKindOfWork == 'Doctor' ? selectedSpecialty : null,
@@ -175,25 +194,28 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
-                  DropdownButton<String>(
-                    value: selectedKindOfWork,
-                    hint: Text('roleSelectionScreen.selectWorkTypeHint'.tr()),
-                    isExpanded: true,
-                    onChanged: (v) {
-                      setState(() {
-                        selectedKindOfWork = v;
-                        if (v != 'Doctor') {
-                          selectedSpecialty = null;
-                        } else if (specialties.isNotEmpty) {
-                          selectedSpecialty = specialties[0];
-                        }
-                      });
-                    },
-                    items: workTypes
-                        .map((wt) =>
-                            DropdownMenuItem(value: wt, child: Text(wt)))
-                        .toList(),
-                  ),
+                  workTypes.isEmpty
+                      ? const Text('No work types available')
+                      : DropdownButton<String>(
+                          value: selectedKindOfWork,
+                          hint: Text(
+                              'roleSelectionScreen.selectWorkTypeHint'.tr()),
+                          isExpanded: true,
+                          onChanged: (v) {
+                            setState(() {
+                              selectedKindOfWork = v;
+                              if (v != 'Doctor') {
+                                selectedSpecialty = null;
+                              } else if (specialties.isNotEmpty) {
+                                selectedSpecialty = specialties[0];
+                              }
+                            });
+                          },
+                          items: workTypes
+                              .map((wt) =>
+                                  DropdownMenuItem(value: wt, child: Text(wt)))
+                              .toList(),
+                        ),
                   if (selectedKindOfWork == 'Doctor') ...[
                     const SizedBox(height: 20),
                     Text(
@@ -211,17 +233,20 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    DropdownButton<String>(
-                      value: selectedSpecialty,
-                      hint:
-                          Text('roleSelectionScreen.selectSpecialtyHint'.tr()),
-                      isExpanded: true,
-                      onChanged: (v) => setState(() => selectedSpecialty = v),
-                      items: specialties
-                          .map(
-                              (s) => DropdownMenuItem(value: s, child: Text(s)))
-                          .toList(),
-                    ),
+                    specialties.isEmpty
+                        ? const Text('No specialties available')
+                        : DropdownButton<String>(
+                            value: selectedSpecialty,
+                            hint: Text(
+                                'roleSelectionScreen.selectSpecialtyHint'.tr()),
+                            isExpanded: true,
+                            onChanged: (v) =>
+                                setState(() => selectedSpecialty = v),
+                            items: specialties
+                                .map((s) =>
+                                    DropdownMenuItem(value: s, child: Text(s)))
+                                .toList(),
+                          ),
                   ],
                   const SizedBox(height: 30),
                   Container(

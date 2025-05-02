@@ -154,6 +154,31 @@
   "Now": "الآن",
   "Our vision: To make medical devices easily accessible with high quality, at the lowest cost, and in the shortest time!": "رؤيتنا: جعل الأجهزة الطبية في متناول الجميع بجودة عالية وأقل تكلفة وفي أسرع وقت!",
   "Login": "تسجيل الدخول",
-  "Register": "التسجيل"
+  "Register": "التسجيل",
+  "my_cart": "سلة التسوق",
+  "remove_item": "إزالة العنصر",
+  "remove_item_confirmation": "هل أنت متأكد أنك تريد إزالة هذا العنصر؟",
+  "cancel": "إلغاء",
+  "enter_discount_code": "أدخل رمز الخصم",
+  "apply": "تطبيق",
+  "subtotal": "الإجمالي الفرعي",
+  "discount": "الخصم",
+  "total": "الإجمالي",
+  "proceed_to_checkout": "المتابعة للدفع",
+  "you_are_offline": "أنت غير متصل بالإنترنت. يتم عرض بيانات وهمية للسلة.",  "product_page": {
+    "on_sale": "تخفيض",
+    "reviews": "المراجعات",
+    "related_products": "منتجات ذات صلة",
+    "add_to_cart": "أضف إلى السلة"
+  },
+  "payment": {
+    "Payment": "الدفع",
+    "Subtotal": "المجموع الفرعي",
+    "Shipping": "الشحن",
+    "Total": "الإجمالي",
+    "add_new_card": "إضافة بطاقة جديدة",
+    "pay_now": "ادفع الآن"
   }
+}
+  
   

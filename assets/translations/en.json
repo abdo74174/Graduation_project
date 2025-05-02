@@ -156,6 +156,27 @@
   "Now": "Now",
   "Our vision: To make medical devices easily accessible with high quality, at the lowest cost, and in the shortest time!": "Our vision: To make medical devices easily accessible with high quality, at the lowest cost, and in the shortest time!",
   "Login": "Login",
-  "Register": "Register"
+  "Register": "Register",
+  "enter_discount_code": "Enter discount code",
+  "apply": "Apply",
+  "subtotal": "Subtotal",
+  "discount": "Discount",
+  "total": "Total",
+  "proceed_to_checkout": "Proceed to Checkout",
+  "you_are_offline": "You are offline. Showing dummy cart data.",
+  "product_page": {
+    "on_sale": "On Sale",
+    "reviews": "Reviews",
+    "related_products": "Related Products",
+    "add_to_cart": "Add to Cart"
+  },
+  "payment": {
+    "Payment": "Payment",
+    "Subtotal": "Subtotal",
+    "Shipping": "Shipping",
+    "Total": "Total",
+    "add_new_card": "Add New Card",
+    "pay_now": "Pay Now"
+  }
   }
   

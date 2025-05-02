@@ -29,7 +29,7 @@ class USerService {
     try {
       final response = await dio.get('/work-types');
       if (response.statusCode == 200) {
-        return List<String>.from(response.data['workTypes']);
+        return List<String>.from(response.data['workTypes']).toSet().toList();
       } else {
         print(
             'Failed to fetch work types. Status code: ${response.statusCode}');
@@ -48,7 +48,7 @@ class USerService {
     try {
       final response = await dio.get('/specialties');
       if (response.statusCode == 200) {
-        return List<String>.from(response.data['specialties']);
+        return List<String>.from(response.data['specialties']).toSet().toList();
       } else {
         print(
             'Failed to fetch specialties. Status code: ${response.statusCode}');
@@ -60,6 +60,31 @@ class USerService {
     } catch (e) {
       print('Unexpected error: $e');
       return [];
+    }
+  }
+
+  Future<bool> updateRoleAndSpecialist({
+    required String email,
+    required String? kindOfWork,
+    String? medicalSpecialist,
+  }) async {
+    try {
+      final response = await dio.patch(
+        '/User/info/$email',
+        data: {
+          'kindOfWork': kindOfWork,
+          'medicalSpecialist': medicalSpecialist,
+        },
+      );
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        print('Failed to update role. Status code: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error updating role: $e');
+      return false;
     }
   }
 
@@ -140,7 +165,13 @@ class USerService {
           throw Exception('Backend signup failed');
         }
 
-        print('Signup success: ${response.data}');
+        // Save user ID and email
+        final prefs = await SharedPreferences.getInstance();
+        final userId = response.data['id']?.toString() ?? user.uid;
+        await prefs.setString('user_id', userId);
+        await prefs.setString('email', email);
+        print(
+            'Signup success: ${response.data}, user_id: $userId saved to SharedPreferences');
       }
     } on FirebaseAuthException catch (e) {
       print('Firebase signup error: $e');
@@ -187,6 +218,7 @@ class USerService {
         final kindOfWork = response.data['kindOfWork'];
         final medicalSpecialist = response.data['medicalSpecialist'];
         final isAdmin = response.data['isAdmin'];
+        final userId = response.data['id']?.toString();
 
         if (token != null && token is String) {
           final prefs = await SharedPreferences.getInstance();
@@ -199,8 +231,17 @@ class USerService {
           }
           await prefs.setBool('isAdmin', isAdmin ?? false);
           await prefs.setString('email', email);
+          if (userId != null) {
+            await prefs.setString('user_id', userId);
+          } else {
+            // Fallback to Firebase UID if backend doesn't provide ID
+            final user = _auth.currentUser;
+            if (user != null) {
+              await prefs.setString('user_id', user.uid);
+            }
+          }
           print(
-              'Token, kindOfWork, medicalSpecialist, and isAdmin saved: $token, $kindOfWork, $medicalSpecialist, $isAdmin');
+              'Token, user_id, kindOfWork, medicalSpecialist, isAdmin saved: $token, $userId, $kindOfWork, $medicalSpecialist, $isAdmin');
           return true;
         } else {
           print('Token not found in response!');
@@ -220,43 +261,6 @@ class USerService {
       return false;
     } catch (e) {
       print('Unexpected login error: $e');
-      return false;
-    }
-  }
-
-  Future<bool> updateRoleAndSpecialist({
-    required String email,
-    String? kindOfWork,
-    String? medicalSpecialist,
-  }) async {
-    final Map<String, dynamic> payload = {};
-    if (kindOfWork != null) payload['kindOfWork'] = kindOfWork;
-    if (medicalSpecialist != null)
-      payload['medicalSpecialist'] = medicalSpecialist;
-
-    try {
-      final response = await dio.patch(
-        '/User/info/$email',
-        data: payload,
-        options: Options(
-          contentType: Headers.jsonContentType,
-        ),
-      );
-      if (response.statusCode == 200) {
-        final prefs = await SharedPreferences.getInstance();
-        if (kindOfWork != null) {
-          await prefs.setString('kindOfWork', kindOfWork);
-        }
-        if (medicalSpecialist != null) {
-          await prefs.setString('medicalSpecialist', medicalSpecialist);
-        } else if (kindOfWork != 'Doctor') {
-          await prefs.remove('medicalSpecialist');
-        }
-        return true;
-      }
-      return false;
-    } on DioException catch (e) {
-      print('❌ PATCH error: ${e.response?.statusCode} ${e.response?.data}');
       return false;
     }
   }

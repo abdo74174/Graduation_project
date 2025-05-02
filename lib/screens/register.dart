@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graduation_project/components/sign/cutomize_inputfield.dart';
 import 'package:graduation_project/screens/login_page.dart';
 import 'package:graduation_project/services/USer/sign.dart';
+import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class RegisterForm extends StatefulWidget {
@@ -79,6 +82,22 @@ class _RegisterFormState extends State<RegisterForm> {
     setState(() => _isLoading = true);
 
     try {
+      // Check if user_id already exists
+      final prefs = await SharedPreferences.getInstance();
+      final existingUserId = prefs.getString('user_id');
+      if (existingUserId != null) {
+        print(
+            'Warning: Existing user_id found: $existingUserId. Clearing for new signup.');
+        await prefs.clear(); // Clear all SharedPreferences for a fresh signup
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('signup_existing_user_error'.tr()),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+
+      // Perform signup
       await USerService().signup(
         name: _usernameController.text.trim(),
         email: _emailController.text.trim(),
@@ -86,6 +105,31 @@ class _RegisterFormState extends State<RegisterForm> {
         confirmPassword: _confirmPasswordController.text.trim(),
         isAdmin: false,
       );
+
+      // Verify user_id and email after signup
+      final userId = prefs.getString('user_id');
+      final email = prefs.getString('email');
+
+      if (userId == null || email == null) {
+        print(
+            'Error: user_id or email not found in SharedPreferences after signup');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('signup_id_error'.tr()),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Set user state in UserCubit
+      context.read<UserCubit>().setUser(
+            userId,
+            email,
+            'Doctor', // Default kindOfWork as per UserController
+            null, // medicalSpecialist is null initially
+            false, // isAdmin is false
+          );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
