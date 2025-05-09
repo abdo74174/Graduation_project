@@ -177,6 +177,8 @@
     "Total": "Total",
     "add_new_card": "Add New Card",
     "pay_now": "Pay Now"
-  }
+  },
+  "sign_in_with_google": "Sign in with Google",
+  "google_sign_in_error": "Failed to sign in with Google. Please try again."
   }
   

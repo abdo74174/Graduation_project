@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/screens/dashboard/orders_page.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   const PaymentSuccessScreen({super.key});
@@ -25,9 +27,9 @@ class PaymentSuccessScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                "Payment Successful",
-                style: TextStyle(
+              Text(
+                "payment_successful".tr(),
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
@@ -44,17 +46,17 @@ class PaymentSuccessScreen extends StatelessWidget {
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text("Order", style: TextStyle(fontSize: 16)),
-                  Text("125.00", style: TextStyle(fontSize: 16)),
+                children: [
+                  Text("order".tr(), style: const TextStyle(fontSize: 16)),
+                  const Text("125.00", style: TextStyle(fontSize: 16)),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text("Amount", style: TextStyle(fontSize: 16)),
-                  Text("\$75.00", style: TextStyle(fontSize: 16)),
+                children: [
+                  Text("amount".tr(), style: const TextStyle(fontSize: 16)),
+                  const Text("\$75.00", style: TextStyle(fontSize: 16)),
                 ],
               ),
               const SizedBox(height: 30),
@@ -62,21 +64,24 @@ class PaymentSuccessScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to orders screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => OrdersPage()),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF4285F4),
+                    backgroundColor: const Color(0xFF4285F4),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    "Go to Orders",
-                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  child: Text(
+                    "go_to_orders".tr(),
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ),
-              )
+              ),
             ],
           ),
         ),

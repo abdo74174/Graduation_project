@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:graduation_project/screens/login_page.dart';
+import 'package:graduation_project/screens/Auth/login_page.dart';
 import 'package:graduation_project/services/passwordReset.dart';
 
 class PasswordResetScreen extends StatefulWidget {

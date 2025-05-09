@@ -8,7 +8,7 @@ import 'package:graduation_project/screens/payment/PaymentScreen.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
-import 'package:easy_localization/easy_localization.dart'; // Import easy_localization
+import 'package:easy_localization/easy_localization.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -111,12 +111,12 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('remove_item'.tr()), // Using .tr() for localization
-          content: Text('remove_item_confirmation'.tr()), // Using .tr()
+          title: Text('remove_item'.tr()),
+          content: Text('remove_item_confirmation'.tr()),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('cancel'.tr()), // Using .tr()
+              child: Text('cancel'.tr()),
             ),
             TextButton(
               onPressed: () async {
@@ -129,8 +129,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
 
                 Navigator.pop(context);
               },
-              child: Text('remove'.tr(),
-                  style: TextStyle(color: Colors.red)), // Using .tr()
+              child: Text('remove'.tr(), style: TextStyle(color: Colors.red)),
             ),
           ],
         );
@@ -151,7 +150,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         title: Text('my_cart'.tr(),
-            style: const TextStyle(fontWeight: FontWeight.bold)), // Using .tr()
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -300,7 +299,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                 child: TextField(
                   controller: discountController,
                   decoration: InputDecoration(
-                    hintText: 'enter_discount_code'.tr(), // Using .tr()
+                    hintText: 'enter_discount_code'.tr(),
                     filled: true,
                     fillColor: Colors.grey.shade100,
                     border: OutlineInputBorder(
@@ -315,7 +314,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
               const SizedBox(width: 8),
               TextButton(
                 onPressed: _applyDiscount,
-                child: Text('apply'.tr(), // Using .tr()
+                child: Text('apply'.tr(),
                     style:
                         TextStyle(color: pkColor, fontWeight: FontWeight.bold)),
               )
@@ -333,9 +332,16 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
+                for (var item in cartModel!.cartItems) {
+                  await CartService().deleteFromCart(item.productId);
+                }
+                setState(() {
+                  cartModel!.cartItems.clear();
+                });
                 Navigator.push(context, MaterialPageRoute(builder: (con) {
-                  return Paymentscreen();
+                  return Paymentscreen(
+                      total: total, cartItems: cartModel!.cartItems);
                 }));
               },
               style: ElevatedButton.styleFrom(
@@ -345,7 +351,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
                     borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(
-                'proceed_to_checkout'.tr(), // Using .tr()
+                'proceed_to_checkout'.tr(),
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),

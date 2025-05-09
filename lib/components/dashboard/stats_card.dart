@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/screens/dashboard/customers_page.dart';
+import 'package:graduation_project/screens/dashboard/orders_page.dart';
+import 'package:graduation_project/screens/dashboard/products_page.dart';
+import 'package:graduation_project/screens/dashboard/revenue_page.dart';
 
 class DashboardPage extends StatelessWidget {
   final List<Map<String, dynamic>> stats = [
     {
-      "title": "Products",
+      "title": "products",
       "value": 120,
       "icon": Icons.shopping_bag,
       "color": Colors.blue,
     },
     {
-      "title": "Orders",
+      "title": "orders",
       "value": 75,
       "icon": Icons.shopping_cart,
       "color": Colors.green,
     },
     {
-      "title": "Revenue",
+      "title": "revenue",
       "value": "\$12.5K",
       "icon": Icons.attach_money,
       "color": Colors.orange,
     },
     {
-      "title": "Customers",
+      "title": "customers",
       "value": 50,
       "icon": Icons.people,
       "color": Colors.purple,
@@ -67,16 +71,28 @@ class StatsCard extends StatelessWidget {
           onTap: () {
             switch (item['title']) {
               case 'Products':
-                Navigator.pushNamed(context, '/products');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProductsPage()),
+                );
                 break;
               case 'Orders':
-                Navigator.pushNamed(context, '/orders');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => OrdersPage()),
+                );
                 break;
               case 'Revenue':
-                Navigator.pushNamed(context, '/revenue');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => RevenuePage()),
+                );
                 break;
               case 'Customers':
-                Navigator.pushNamed(context, '/customers');
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => CustomersPage()),
+                );
                 break;
             }
           },

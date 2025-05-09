@@ -7,6 +7,7 @@ class ForgotPasswordService {
   final Dio dio;
 
   ForgotPasswordService({required this.dio}) {
+    debugPrint('Initial Dio base URL: ${dio.options.baseUrl}');
     dio.options = BaseOptions(
       baseUrl: 'https://10.0.2.2:7273/api/ForgotPassword',
       connectTimeout: const Duration(seconds: 30),
@@ -27,9 +28,24 @@ class ForgotPasswordService {
       };
     }
 
+    dio.interceptors
+        .clear(); // Clear any existing interceptors to avoid overrides
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         debugPrint('Sending request to ${options.uri}');
+        debugPrint('Request data: ${options.data}');
+        debugPrint('Base URL: ${dio.options.baseUrl}');
+        debugPrint('Full URL: ${options.uri.toString()}');
+        // Validate URL to catch malformed URLs early
+        if (options.uri.toString().contains('https://https') ||
+            options.uri.toString().contains(':7273/api/:7273')) {
+          debugPrint('ERROR: Malformed URL detected: ${options.uri}');
+          throw DioException(
+            requestOptions: options,
+            error: 'Malformed URL: ${options.uri}',
+            type: DioExceptionType.badResponse,
+          );
+        }
         return handler.next(options);
       },
       onResponse: (response, handler) {
@@ -40,7 +56,7 @@ class ForgotPasswordService {
           return handler.reject(DioException(
             requestOptions: response.requestOptions,
             error:
-                'Server returned HTML instead of JSON. Check your API endpoint configuration.',
+                'Server returned HTML instead of JSON. Check API endpoint configuration.',
             type: DioExceptionType.badResponse,
             response: response,
           ));
@@ -50,6 +66,7 @@ class ForgotPasswordService {
       onError: (DioException error, handler) {
         debugPrint(
             'Error occurred: ${error.message}, response: ${error.response?.data}');
+        debugPrint('Error details: ${error.toString()}');
         return handler.next(error);
       },
     ));
@@ -57,6 +74,7 @@ class ForgotPasswordService {
 
   Future<Map<String, dynamic>> sendOtp(String email) async {
     try {
+      debugPrint('Preparing to send OTP for email: $email');
       final response = await dio.post(
         '/send-otp',
         data: {'email': email},
@@ -70,6 +88,7 @@ class ForgotPasswordService {
       debugPrint('Send OTP response data: ${response.data}');
 
       if (response.data is! Map<String, dynamic>) {
+        debugPrint('Invalid server response format: ${response.data}');
         return {
           'success': false,
           'message': 'Invalid server response format',
@@ -82,17 +101,29 @@ class ForgotPasswordService {
       };
     } on DioException catch (e) {
       debugPrint('Send OTP error response: ${e.response?.data}');
+      debugPrint('Error details: ${e.message}');
       String errorMessage = 'Network error';
       if (e.response != null) {
         if (e.response!.data.toString().contains('<html>')) {
           errorMessage = 'Server configuration issue - received HTML response';
         } else if (e.response!.data is Map) {
           errorMessage = e.response!.data['message'] ?? 'Request failed';
+        } else {
+          errorMessage = e.message ?? 'Unknown network error';
         }
+      } else {
+        errorMessage =
+            'Failed to connect to server. Check network or server status.';
       }
       return {
         'success': false,
         'message': errorMessage,
+      };
+    } catch (e) {
+      debugPrint('Unexpected error: $e');
+      return {
+        'success': false,
+        'message': 'Unexpected error: $e',
       };
     }
   }
@@ -100,6 +131,7 @@ class ForgotPasswordService {
   Future<Map<String, dynamic>> verifyOtp(
       String email, String otp, String newPassword) async {
     try {
+      debugPrint('Preparing to verify OTP for email: $email');
       final passwordRegex = RegExp(
           r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$');
       if (!passwordRegex.hasMatch(newPassword)) {
@@ -143,13 +175,19 @@ class ForgotPasswordService {
       return result;
     } on DioException catch (e) {
       debugPrint('Verify OTP error response: ${e.response?.data}');
+      debugPrint('Error details: ${e.message}');
       String errorMessage = 'Network error occurred. Please try again.';
       if (e.response != null) {
         if (e.response!.data.toString().contains('<html>')) {
           errorMessage = 'Server configuration issue - received HTML response';
         } else if (e.response!.data is Map) {
           errorMessage = e.response!.data['message'] ?? 'Request failed';
+        } else {
+          errorMessage = e.message ?? 'Unknown network error';
         }
+      } else {
+        errorMessage =
+            'Failed to connect to server. Check network or server status.';
       }
       final errorResult = {
         'success': false,
@@ -157,6 +195,12 @@ class ForgotPasswordService {
       };
       debugPrint('Verify OTP error result: $errorResult');
       return errorResult;
+    } catch (e) {
+      debugPrint('Unexpected error: $e');
+      return {
+        'success': false,
+        'message': 'Unexpected error: $e',
+      };
     }
   }
 }

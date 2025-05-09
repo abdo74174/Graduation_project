@@ -1,25 +1,25 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:graduation_project/Models/category_model.dart';
-import 'package:graduation_project/Models/product_model.dart';
+import 'package:graduation_project/components/home_page/searchbar.dart';
+import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/components/category/Category_view.dart';
 import 'package:graduation_project/components/home_page/drawer.dart';
 import 'package:graduation_project/components/productc/product.dart';
-import 'package:graduation_project/components/home_page/searchbar.dart';
-import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/Models/category_model.dart';
+import 'package:graduation_project/Models/product_model.dart';
+import 'package:graduation_project/screens/cart.dart';
+import 'package:graduation_project/screens/categories_page.dart';
 import 'package:graduation_project/screens/chat/chat_page.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
+import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/services/Product/category_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
-import 'package:graduation_project/screens/favourite_page.dart';
-import 'package:graduation_project/screens/cart.dart';
-import 'package:graduation_project/screens/categories_page.dart';
-import 'package:graduation_project/screens/chat_app.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -154,7 +154,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     try {
-      final contactName = 'Support'; // Hardcoded for simplicity
+      final contactName = 'Support';
       final chatId = '${email}_$contactEmail';
       await FirebaseFirestore.instance.collection('chats').doc(chatId).set({
         'contactName': contactName,
@@ -200,15 +200,14 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
         toolbarHeight: 40,
-        backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
+        backgroundColor: isDark ? Colors.black : Colors.white,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu,
-                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
+            icon: Icon(Icons.menu, color: isDark ? Colors.white : Colors.black),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
@@ -217,8 +216,10 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
             onPressed: _startChat,
-            icon: Icon(Icons.support_agent,
-                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
+            icon: Icon(
+              Icons.support_agent,
+              color: isDark ? Colors.white : Colors.black,
+            ),
             tooltip: 'Chat with Support',
           ),
           IconButton(
@@ -229,7 +230,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
             icon: Icon(Icons.favorite_border_outlined,
-                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
+                color: isDark ? Colors.white : Colors.black),
           ),
           IconButton(
             onPressed: () {
@@ -240,7 +241,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
             icon: Icon(Icons.shopping_cart_outlined,
-                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
+                color: isDark ? Colors.white : Colors.black),
           ),
           IconButton(
             onPressed: () {
@@ -250,7 +251,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
             icon: Icon(Icons.notifications_none,
-                color: isDark ? Colors.white : const Color(0xFF1A1A1A)),
+                color: isDark ? Colors.white : Colors.black),
           ),
         ],
       ),
@@ -279,7 +280,8 @@ class _HomePageState extends State<HomePage> {
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8.0),
-                                  border: Border.all(width: 1.0),
+                                  border: Border.all(
+                                      color: Color(pkColor.value), width: 1.0),
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(8.0),
@@ -310,7 +312,7 @@ class _HomePageState extends State<HomePage> {
                                   fontWeight: FontWeight.bold,
                                   color: isDark
                                       ? Colors.white
-                                      : const Color(0xFF1A1A1A),
+                                      : Color(pkColor.value),
                                 ),
                               ),
                             ),
@@ -329,7 +331,7 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 18,
                                   color: isDark
                                       ? Colors.white
-                                      : const Color(0xFF1A1A1A),
+                                      : Color(pkColor.value),
                                 ),
                               ),
                             ),
@@ -371,7 +373,7 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                                 color: isDark
                                     ? Colors.white
-                                    : const Color(0xFF1A1A1A),
+                                    : Color(pkColor.value),
                               ),
                             ),
                           ],
@@ -437,7 +439,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                 ),
                                 subtitle: Text(
-                                  product.description ?? '',
+                                  product.description,
                                   style: TextStyle(
                                     color: Colors.grey[600],
                                   ),

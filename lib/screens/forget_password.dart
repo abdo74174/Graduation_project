@@ -1,18 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:graduation_project/screens/login_page.dart';
+import 'package:graduation_project/screens/Auth/login_page.dart';
 import 'package:graduation_project/screens/password/Password%20Reset%20Screen%20.dart';
 import 'package:graduation_project/services/passwordReset.dart';
 
-class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+class ForgottenPasswordScreen extends StatefulWidget {
+  const ForgottenPasswordScreen({Key? key}) : super(key: key);
 
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
 
-class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
+class _ForgotPasswordScreenState extends State<ForgottenPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String _message = '';

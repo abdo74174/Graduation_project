@@ -60,6 +60,8 @@ dependencies:
   cached_network_image: ^3.4.1
   firebase_dynamic_links: ^6.1.5
   shimmer: ^3.0.0
+  permission_handler: ^12.0.0+1
+  google_sign_in: ^6.3.0
 
 dev_dependencies:
   flutter_test:

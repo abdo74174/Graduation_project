@@ -1,5 +1,8 @@
+// ignore_for_file: deprecated_member_use
+
 import 'dart:io';
 import 'package:dio/dio.dart';
+// ignore: duplicate_shown_name
 import 'package:dio/io.dart' show IOHttpClientAdapter, IOHttpClientAdapter;
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
@@ -26,9 +29,6 @@ class CategoryService {
     try {
       Response response = await dio.get('Categories');
       if (response.statusCode == 200) {
-        print("============================================");
-        print(response.data);
-        print("============================================");
         final List data = response.data;
         categories = data.map((e) => CategoryModel.fromJson(e)).toList();
 

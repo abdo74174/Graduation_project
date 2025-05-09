@@ -1,25 +1,18 @@
 import 'dart:io';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:graduation_project/components/setting/ThemeNotifier.dart';
-import 'package:graduation_project/firebase_options.dart';
-import 'package:graduation_project/screens/dashboard/customers_page.dart';
-import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
-import 'package:graduation_project/screens/dashboard/orders_page.dart';
-import 'package:graduation_project/screens/dashboard/products_page.dart';
-import 'package:graduation_project/screens/dashboard/revenue_page.dart';
-import 'package:graduation_project/screens/homepage.dart';
-import 'package:graduation_project/screens/login_page.dart';
-import 'package:graduation_project/screens/splash_screen.dart';
-import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/components/main/MedicalApp.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
-import 'package:graduation_project/services/notifications/notification_service.dart';
-import 'package:graduation_project/background/server_check.dart';
+import 'firebase_options.dart';
+import 'components/setting/ThemeNotifier.dart';
+import 'services/stateMangment/cubit/user_cubit.dart';
+import 'services/notifications/notification_service.dart';
+import 'background/server_check.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,9 +20,11 @@ Future<void> main() async {
   await AndroidAlarmManager.initialize();
   await NotificationService.init();
   await EasyLocalization.ensureInitialized();
+
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }
+
   await AndroidAlarmManager.periodic(
     const Duration(seconds: 20),
     123,
@@ -37,9 +32,11 @@ Future<void> main() async {
     wakeup: true,
     exact: true,
   );
+
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
   final savedLocaleCode = prefs.getString('locale') ?? 'en';
+
   runApp(
     EasyLocalization(
       supportedLocales: const [Locale('en'), Locale('ar')],
@@ -64,33 +61,5 @@ class MyHttpOverrides extends HttpOverrides {
     client.badCertificateCallback =
         (X509Certificate cert, String host, int port) => true;
     return client;
-  }
-}
-
-class MedicalApp extends StatelessWidget {
-  final bool isLoggedIn;
-
-  const MedicalApp({required this.isLoggedIn, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final themeNotifier = Provider.of<ThemeNotifier>(context);
-
-    return MaterialApp(
-      title: 'Graduation Project',
-      debugShowCheckedModeBanner: false,
-      theme: themeNotifier.isDarkMode ? ThemeData.dark() : ThemeData.light(),
-      locale: context.locale,
-      supportedLocales: context.supportedLocales,
-      localizationsDelegates: context.localizationDelegates,
-      home: isLoggedIn ? const HomePage() : const LoginPage(),
-      routes: {
-        '/dashboard': (context) => DashboardScreen(),
-        '/products': (context) => ProductsPage(),
-        '/orders': (context) => OrdersPage(),
-        '/revenue': (context) => RevenuePage(),
-        '/customers': (context) => CustomersPage(),
-      },
-    );
   }
 }

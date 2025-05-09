@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:graduation_project/Models/user_model.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class USerService {
@@ -16,9 +17,14 @@ class USerService {
       : dio = Dio(BaseOptions(
           baseUrl: 'https://10.0.2.2:7273/api/MedBridge',
           headers: {'Content-Type': 'application/json'},
+          validateStatus: (status) => status! < 500,
         )) {
+    // Note: For production, ensure a valid SSL certificate is used.
+    // For local development, you may need to trust a self-signed certificate.
+    // Avoid disabling certificate verification in production.
     (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
+      // Temporarily allow self-signed certificates for local development
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
       return client;
@@ -36,7 +42,7 @@ class USerService {
         return [];
       }
     } on DioException catch (e) {
-      print('DioException: $e');
+      print('DioException: ${e.message}');
       return [];
     } catch (e) {
       print('Unexpected error: $e');
@@ -55,7 +61,7 @@ class USerService {
         return [];
       }
     } on DioException catch (e) {
-      print('DioException: $e');
+      print('DioException: ${e.message}');
       return [];
     } catch (e) {
       print('Unexpected error: $e');
@@ -82,6 +88,9 @@ class USerService {
         print('Failed to update role. Status code: ${response.statusCode}');
         return false;
       }
+    } on DioException catch (e) {
+      print('DioException: ${e.message}');
+      return false;
     } catch (e) {
       print('Error updating role: $e');
       return false;
@@ -104,7 +113,7 @@ class USerService {
         return null;
       }
     } on DioException catch (e) {
-      print('DioException: $e');
+      print('DioException: ${e.message}');
       if (e.response != null) {
         print('Status Code: ${e.response?.statusCode}');
         print('Response Data: ${e.response?.data}');
@@ -162,7 +171,7 @@ class USerService {
         if (response.statusCode != 200) {
           print(
               'Backend signup failed: ${response.statusCode} - ${response.data}');
-          throw Exception('Backend signup failed');
+          throw Exception('Backend signup failed: ${response.data['message']}');
         }
 
         // Save user ID and email
@@ -174,12 +183,13 @@ class USerService {
             'Signup success: ${response.data}, user_id: $userId saved to SharedPreferences');
       }
     } on FirebaseAuthException catch (e) {
-      print('Firebase signup error: $e');
+      print('Firebase signup error: ${e.code} - ${e.message}');
       throw Exception(e.message);
     } on DioException catch (e) {
-      final errorMessage =
-          e.response?.data['message'] ?? e.response?.data ?? "Signup failed";
-      print("Backend signup error: $errorMessage");
+      final errorMessage = e.response?.data['message'] ??
+          e.response?.data?.toString() ??
+          'Signup failed';
+      print('Backend signup error: $errorMessage');
       throw Exception(errorMessage);
     } catch (e) {
       print('Unexpected signup error: $e');
@@ -193,7 +203,7 @@ class USerService {
   }) async {
     try {
       // Firebase login
-      await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
@@ -205,15 +215,17 @@ class USerService {
       });
 
       final response = await dio.post(
-        '/User/signIn',
+        '/User/signin', // Corrected to match backend endpoint
         data: formData,
         options: Options(
           contentType: 'multipart/form-data',
+          headers: {
+            'X-Firebase-Locale': 'en', // Avoid null header warning
+          },
         ),
       );
 
       if (response.statusCode == 200) {
-        print('SignIn success: ${response.data}');
         final token = response.data['token'];
         final kindOfWork = response.data['kindOfWork'];
         final medicalSpecialist = response.data['medicalSpecialist'];
@@ -231,36 +243,30 @@ class USerService {
           }
           await prefs.setBool('isAdmin', isAdmin ?? false);
           await prefs.setString('email', email);
-          if (userId != null) {
-            await prefs.setString('user_id', userId);
-          } else {
-            // Fallback to Firebase UID if backend doesn't provide ID
-            final user = _auth.currentUser;
-            if (user != null) {
-              await prefs.setString('user_id', user.uid);
-            }
-          }
-          print(
-              'Token, user_id, kindOfWork, medicalSpecialist, isAdmin saved: $token, $userId, $kindOfWork, $medicalSpecialist, $isAdmin');
+          await prefs.setString('user_id', userId ?? userCredential.user!.uid);
+          print('Login success: token=$token, user_id=$userId');
           return true;
         } else {
-          print('Token not found in response!');
+          print('Error: Token missing or invalid in response');
           return false;
         }
       } else {
-        print('SignIn failed: ${response.statusCode} - ${response.data}');
+        print(
+            'Error: Server responded with status ${response.statusCode}: ${response.data}');
         return false;
       }
     } on FirebaseAuthException catch (e) {
-      print('Firebase login error: $e');
+      print('FirebaseAuth error: ${e.code} - ${e.message}');
       return false;
     } on DioException catch (e) {
-      final errorMessage =
-          e.response?.data['message'] ?? e.response?.data ?? "SignIn failed";
-      print("Backend signIn error: $errorMessage");
+      final errorMessage = e.response?.data['message'] ??
+          e.response?.data?.toString() ??
+          'Server error';
+      print('Backend error: $errorMessage');
+      print('Full response: ${e.response?.data}');
       return false;
     } catch (e) {
-      print('Unexpected login error: $e');
+      print('Unexpected error: $e');
       return false;
     }
   }
@@ -297,7 +303,7 @@ class USerService {
               filename: profileImage.split('/').last,
             );
           } else {
-            print("❌ Profile image file does not exist: $profileImage");
+            print('❌ Profile image file does not exist: $profileImage');
             return;
           }
         }
@@ -307,15 +313,15 @@ class USerService {
       final response = await dio.put(
         '/User/$email',
         data: formData,
-        options: Options(headers: {"Content-Type": "multipart/form-data"}),
+        options: Options(headers: {'Content-Type': 'multipart/form-data'}),
       );
 
-      print("✅ Update successful: ${response.data}");
+      print('✅ Update successful: ${response.data}');
     } on DioException catch (e) {
-      print("❌ Update error: ${e.message}");
+      print('❌ Update error: ${e.message}');
       if (e.response != null) {
-        print("Status Code: ${e.response?.statusCode}");
-        print("Response Data: ${e.response?.data}");
+        print('Status Code: ${e.response?.statusCode}');
+        print('Response Data: ${e.response?.data}');
       }
       throw Exception(e.message);
     }

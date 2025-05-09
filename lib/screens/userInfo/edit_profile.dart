@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:graduation_project/Models/user_model.dart';
-import 'package:graduation_project/screens/profile.dart';
+import 'package:graduation_project/screens/userInfo/profile.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:image_picker/image_picker.dart';
 

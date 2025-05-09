@@ -1,9 +1,15 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:graduation_project/screens/payment/PaymentSuccessfulscreen,dart';
+import 'package:graduation_project/Models/cart_item.dart';
+import 'package:graduation_project/screens/payment/PaymentSuccessfulscreen.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/services/Order/order_service.dart';
 
 class Paymentscreen extends StatelessWidget {
-  const Paymentscreen({super.key});
+  final double total;
+  final List<CartItem> cartItems;
+
+  const Paymentscreen(
+      {super.key, required this.total, required this.cartItems});
 
   @override
   Widget build(BuildContext context) {
@@ -12,86 +18,57 @@ class Paymentscreen extends StatelessWidget {
       appBar: null,
       body: Column(
         children: [
-          SizedBox(
-            height: 60,
-          ),
+          const SizedBox(height: 60),
           Center(
             child: Text(
               "Payment".tr(),
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          SizedBox(
-            height: 30,
-          ),
+          const SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
+              Text("Subtotal".tr(), style: const TextStyle(fontSize: 30)),
               Text(
-                "Subtotal".tr(),
-                style: TextStyle(fontSize: 30),
-              ),
-              Text(
-                "\$70.00",
-                style: TextStyle(
-                  fontSize: 30,
-                  color: Colors.grey,
-                ),
+                "\$${total.toStringAsFixed(2)}",
+                style: const TextStyle(fontSize: 30, color: Colors.grey),
               ),
             ],
           ),
-          SizedBox(
-            height: 30,
-          ),
+          const SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              Text(
-                "Shipping".tr(),
-                style: TextStyle(fontSize: 30),
-              ),
-              Text(
+              Text("Shipping".tr(), style: const TextStyle(fontSize: 30)),
+              const Text(
                 "\$5.00",
-                style: TextStyle(
-                  fontSize: 30,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 30, color: Colors.grey),
               ),
             ],
           ),
-          SizedBox(
-            height: 35,
-          ),
-          Divider(
+          const SizedBox(height: 35),
+          const Divider(
             indent: 60,
             endIndent: 60,
-            thickness: .4,
+            thickness: 0.4,
             color: Colors.grey,
           ),
-          SizedBox(
-            height: 30,
-          ),
+          const SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
+              const Text("Total", style: TextStyle(fontSize: 30)),
               Text(
-                "Total",
-                style: TextStyle(fontSize: 30),
-              ),
-              Text(
-                "\$75.00",
-                style: TextStyle(
-                  fontSize: 30,
-                ),
+                "\$${(total + 5.0).toStringAsFixed(2)}",
+                style: const TextStyle(fontSize: 30),
               ),
             ],
           ),
-          SizedBox(
-            height: 50,
-          ),
+          const SizedBox(height: 50),
           Container(
             margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 40),
             padding: const EdgeInsets.all(20),
@@ -120,16 +97,10 @@ class Paymentscreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 30),
-
-          // Add New Card Button
           Center(
             child: TextButton(
               onPressed: () {
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //       builder: (context) => const AddPaymentScreen()),
-                // );
+                // Navigate to add new card screen if needed
               },
               child: SizedBox(
                 width: 200,
@@ -147,16 +118,29 @@ class Paymentscreen extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(
-            height: 50,
-          ),
+          const SizedBox(height: 50),
           SizedBox(
             width: 200,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (c) {
-                  return PaymentSuccessScreen();
-                }));
+              onPressed: () async {
+                try {
+                  int userId = 1; // Replace with actual user ID
+                  List<Map<String, dynamic>> items = cartItems
+                      .map((item) => {
+                            'productId': item.productId,
+                            'quantity': item.quantity,
+                          })
+                      .toList();
+
+                  await OrderService().createOrder(userId, items);
+                  Navigator.push(context, MaterialPageRoute(builder: (c) {
+                    return PaymentSuccessScreen();
+                  }));
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to create order: $e')),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4285F4),

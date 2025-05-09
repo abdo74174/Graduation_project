@@ -1,20 +1,19 @@
-import 'package:graduation_project/Models/product_model.dart';
-
-class OrderDetail {
-  final int id;
-  final int orderId;
-  final ProductModel product;
+class OrderItemModel {
+  final String productName;
   final int quantity;
-  final double totalPrice;
+  final double unitPrice;
 
-  OrderDetail({
-    required this.id,
-    required this.orderId,
-    required this.product,
+  OrderItemModel({
+    required this.productName,
     required this.quantity,
-    required this.totalPrice,
+    required this.unitPrice,
   });
 
-  // factory OrderDetail.fromJson(Map<String, dynamic> json) => _$OrderDetailFromJson(json);
-  // Map<String, dynamic> toJson() => _$OrderDetailToJson(this);
+  factory OrderItemModel.fromJson(Map<String, dynamic> json) {
+    return OrderItemModel(
+      productName: json['productName'],
+      quantity: json['quantity'],
+      unitPrice: json['unitPrice'].toDouble(),
+    );
+  }
 }

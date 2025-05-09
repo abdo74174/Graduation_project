@@ -9,12 +9,12 @@ import 'package:provider/provider.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
 
 class RoleSelectionScreen extends StatefulWidget {
-  final String? initialKindOfWork;
+  final String initialKindOfWork;
   final String? initialSpecialty;
 
   const RoleSelectionScreen({
     super.key,
-    this.initialKindOfWork,
+    required this.initialKindOfWork,
     this.initialSpecialty,
   });
 
@@ -35,8 +35,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize selectedKindOfWork as null to avoid invalid value
-    selectedKindOfWork = null;
+    // Initialize selectedKindOfWork with initialKindOfWork
+    selectedKindOfWork = widget.initialKindOfWork;
     selectedSpecialty = widget.initialSpecialty;
     _checkServer();
     _fetchData();
@@ -51,14 +51,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
         workTypes = fetchedWorkTypes;
         specialties = fetchedSpecialties;
         _isLoading = false;
-        // Validate initialKindOfWork
+        // Validate selectedKindOfWork
         print('Fetched workTypes: $workTypes');
         print('Initial kindOfWork: ${widget.initialKindOfWork}');
-        if (widget.initialKindOfWork != null &&
-            workTypes.contains(widget.initialKindOfWork)) {
-          selectedKindOfWork = widget.initialKindOfWork;
-        } else if (workTypes.isNotEmpty) {
-          selectedKindOfWork = workTypes[0];
+        if (!workTypes.contains(selectedKindOfWork)) {
+          selectedKindOfWork = workTypes.isNotEmpty ? workTypes[0] : null;
         }
         // Handle specialty for Doctor
         if (selectedKindOfWork == 'Doctor' &&

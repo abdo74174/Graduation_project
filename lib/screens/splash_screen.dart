@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:graduation_project/screens/login_page.dart';
-import 'package:graduation_project/screens/register.dart';
+
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/screens/Auth/login_page.dart';
+import 'package:graduation_project/screens/Auth/register.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});

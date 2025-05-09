@@ -1,22 +1,32 @@
 import 'package:graduation_project/Models/order_details_model.dart';
 
-class Order {
-  final int id;
-  final int userId;
-  final double totalPrice;
-  final String status;
+class OrderModel {
+  final int orderId;
+  final String userName;
   final DateTime orderDate;
-  final List<OrderDetail> orderDetails;
+  final String status;
+  final double totalPrice;
+  final List<OrderItemModel> items;
 
-  Order({
-    required this.id,
-    required this.userId,
-    required this.totalPrice,
-    required this.status,
+  OrderModel({
+    required this.orderId,
+    required this.userName,
     required this.orderDate,
-    required this.orderDetails,
+    required this.status,
+    required this.totalPrice,
+    required this.items,
   });
 
-  // factory Order.fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);
-  // Map<String, dynamic> toJson() => _$OrderToJson(this);
+  factory OrderModel.fromJson(Map<String, dynamic> json) {
+    return OrderModel(
+      orderId: json['orderId'],
+      userName: json['userName'],
+      orderDate: DateTime.parse(json['orderDate']),
+      status: json['status'],
+      totalPrice: json['totalPrice'].toDouble(),
+      items: (json['items'] as List)
+          .map((item) => OrderItemModel.fromJson(item))
+          .toList(),
+    );
+  }
 }

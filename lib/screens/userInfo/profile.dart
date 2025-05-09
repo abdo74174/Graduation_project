@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
-import 'package:graduation_project/screens/edit_profile.dart';
+import 'package:graduation_project/screens/userInfo/edit_profile.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
