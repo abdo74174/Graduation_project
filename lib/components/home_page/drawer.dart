@@ -15,11 +15,19 @@ import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart'
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/screens/favourite_page.dart';
+import 'package:graduation_project/screens/user_products_page.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/components/home_page/drawer_items.dart';
 
 import '../../screens/adding_pr_cat_sub.dart/addCatandSub.dart';
 
+enum DrawerType { main, admin, seller, buyer }
+
 class DrawerHome extends StatefulWidget {
-  const DrawerHome({super.key});
+  final DrawerType drawerType;
+
+  const DrawerHome({super.key, this.drawerType = DrawerType.main});
 
   @override
   State<DrawerHome> createState() => _DrawerHomeState();
@@ -31,6 +39,8 @@ class _DrawerHomeState extends State<DrawerHome> {
     await prefs.remove('isLoggedIn');
     await prefs.remove('userToken');
     await prefs.remove('userName');
+
+    if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -44,94 +54,61 @@ class _DrawerHomeState extends State<DrawerHome> {
     return BlocBuilder<UserCubit, UserState>(
       builder: (context, state) {
         return Drawer(
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
+          child: Column(
+            children: [
+              // Drawer Header
               DrawerHeader(
-                decoration: const BoxDecoration(color: Colors.blue),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      FontAwesomeIcons.user,
-                      size: 40,
-                      color: Colors.white,
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        size: 40,
+                        color: Theme.of(context).primaryColor,
+                      ),
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      state.email ?? 'Guest',
-                      style: const TextStyle(color: Colors.white, fontSize: 20),
+                    FutureBuilder<String?>(
+                      future: UserServicee().getEmail(),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && snapshot.data != null) {
+                          return Text(
+                            snapshot.data!,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                            ),
+                          );
+                        }
+                        return const Text(
+                          'Guest',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-              ListTile(
-                leading: const Icon(FontAwesomeIcons.edit),
-                title: Text('Profile'.tr()),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ProfilePage()),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(FontAwesomeIcons.edit),
-                title: Text('Add New Product'.tr()),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AddProductScreen(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(FontAwesomeIcons.phoneAlt),
-                title: Text('Contact Us'.tr()),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ContactUsPage(),
-                    ),
-                  );
-                },
-              ),
-              ListTile(
-                leading: const Icon(FontAwesomeIcons.cog),
-                title: Text('Settings'.tr()),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SettingsPage(),
-                    ),
-                  );
-                },
-              ),
-              if (state.isAdmin) // Conditionally show Admin tile
-                ListTile(
-                  leading: const Icon(FontAwesomeIcons.userLarge),
-                  title: Text('Admin'.tr()),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminDashboardApp(),
-                      ),
-                    );
+
+              // Drawer Items
+              Expanded(
+                child: DrawerItems(
+                  drawerType: widget.drawerType,
+                  isAdmin: state.isAdmin,
+                  onLogout: () {
+                    context.read<UserCubit>().clearUser();
+                    _logout();
                   },
                 ),
-              ListTile(
-                leading: const Icon(FontAwesomeIcons.signOutAlt),
-                title: Text('Logout'.tr()),
-                onTap: () {
-                  context.read<UserCubit>().clearUser();
-                  _logout();
-                },
               ),
             ],
           ),

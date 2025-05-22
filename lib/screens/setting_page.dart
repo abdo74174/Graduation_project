@@ -20,16 +20,19 @@ class SettingsPage extends StatelessWidget {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text("settings.title".tr())),
+      appBar: AppBar(
+        title: Text('settings.title'.tr()),
+        centerTitle: true,
+      ),
       body: ListView(
         children: [
           SwitchListTile(
-            title: Text("settings.dark_mode".tr()),
+            title: Text('settings.dark_mode'.tr()),
             value: themeNotifier.isDarkMode,
             onChanged: (value) => themeNotifier.toggleTheme(value),
           ),
           ListTile(
-            title: Text("settings.language".tr()),
+            title: Text('settings.language'.tr()),
             trailing: ElevatedButton(
               onPressed: () => toggleLanguage(context),
               child: Text(

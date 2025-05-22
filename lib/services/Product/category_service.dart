@@ -15,6 +15,7 @@ class CategoryService {
   CategoryService()
       : dio = Dio(BaseOptions(
           baseUrl: baseUri,
+          validateStatus: (status) => status! < 500,
         )) {
     (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
         (HttpClient client) {
@@ -25,36 +26,70 @@ class CategoryService {
   }
 
   Future<List<CategoryModel>> fetchAllCategories() async {
-    List<CategoryModel> categories = [];
     try {
-      Response response = await dio.get('Categories');
+      print('🔍 Fetching all categories...');
+      final response = await dio.get('Categories');
+
       if (response.statusCode == 200) {
         final List data = response.data;
-        categories = data.map((e) => CategoryModel.fromJson(e)).toList();
-
+        final categories =
+            data.map((item) => CategoryModel.fromJson(item)).toList();
+        print('✅ Fetched ${categories.length} categories');
         return categories;
       } else {
-        throw Exception(
-            "Failed to load categories, Status Code: ${response.statusCode}");
+        print('❌ Failed to fetch categories: ${response.statusCode}');
+        throw Exception('Failed to fetch categories');
       }
     } catch (e) {
-      // Enhanced error handling
-      if (e is DioException) {
-        // DioError handling (for network issues, timeouts, etc.)
-        if (e.type == DioExceptionType.connectionTimeout) {
-          throw Exception("Connection Timeout. Please check your network.");
-        } else if (e.type == DioExceptionType.receiveTimeout) {
-          throw Exception(
-              "Receive Timeout. The server is taking too long to respond.");
-        } else if (e.type == DioExceptionType.unknown) {
-          throw Exception("Network error: ${e.message}");
-        } else {
-          throw Exception("API error: $e");
-        }
+      print('❌ Error fetching categories: $e');
+      throw Exception('Failed to fetch categories: $e');
+    }
+  }
+
+  Future<void> addCategory({
+    required String name,
+    required String description,
+    required File imageFile,
+  }) async {
+    try {
+      print('📤 Adding new category: $name');
+      final formData = FormData.fromMap({
+        'Name': name,
+        'Description': description,
+        'Image': await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.path.split('/').last,
+        ),
+      });
+
+      final response = await dio.post('Categories', data: formData);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('✅ Category added successfully');
       } else {
-        // General error handling
-        throw Exception("An unexpected error occurred: $e");
+        print('❌ Failed to add category: ${response.statusCode}');
+        throw Exception('Failed to add category: ${response.data}');
       }
+    } catch (e) {
+      print('❌ Error adding category: $e');
+      throw Exception('Failed to add category: $e');
+    }
+  }
+
+  Future<void> deleteCategory(int categoryId) async {
+    try {
+      print('🗑️ Deleting category: $categoryId');
+      final response = await dio.delete('Categories/$categoryId');
+
+      if (response.statusCode == 200) {
+        print('✅ Category deleted successfully');
+      } else {
+        print('❌ Failed to delete category: ${response.statusCode}');
+        throw Exception('Failed to delete category');
+      }
+    } catch (e) {
+      print('❌ Error deleting category: $e');
+      throw Exception('Failed to delete category: $e');
     }
   }
 }

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-// ignore: must_be_immutable, camel_case_types
-class totalAmountRow extends StatelessWidget {
-  totalAmountRow({super.key, required this.totalAmount});
-  dynamic totalAmount;
+class TotalAmountRow extends StatelessWidget {
+  final double totalAmount;
+
+  const TotalAmountRow({
+    super.key,
+    required this.totalAmount,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -12,11 +15,11 @@ class totalAmountRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'total_amount'.tr(),
+          'cart.total'.tr(),
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         Text(
-          '\$$totalAmount',
+          '\$${totalAmount.toStringAsFixed(2)}',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,

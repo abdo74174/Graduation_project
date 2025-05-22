@@ -1,4 +1,69 @@
 {
+    "common": {
+        "select": "اختر",
+        "cancel": "إلغاء",
+        "submit": "إرسال",
+        "save": "حفظ",
+        "delete": "حذف",
+        "edit": "تعديل",
+        "add": "إضافة",
+        "remove": "إزالة",
+        "search": "بحث",
+        "loading": "جاري التحميل...",
+        "error": "خطأ",
+        "success": "نجاح",
+        "warning": "تحذير",
+        "info": "معلومات"
+    },
+    "auth": {
+        "login": "تسجيل الدخول",
+        "register": "إنشاء حساب",
+        "logout": "تسجيل الخروج",
+        "forgot_password": "هل نسيت كلمة المرور؟",
+        "email": "البريد الإلكتروني",
+        "password": "كلمة المرور",
+        "confirm_password": "تأكيد كلمة المرور",
+        "username": "اسم المستخدم"
+    },
+    "product": {
+        "name": "اسم المنتج",
+        "description": "الوصف",
+        "price": "السعر",
+        "quantity": "الكمية",
+        "category": "الفئة",
+        "subcategory": "الفئة الفرعية",
+        "status": "الحالة",
+        "discount": "الخصم",
+        "add_to_cart": "أضف إلى السلة",
+        "remove_from_cart": "إزالة من السلة",
+        "out_of_stock": "نفذت الكمية",
+        "in_stock": "متوفر"
+    },
+    "cart": {
+        "title": "سلة التسوق",
+        "empty": "سلة التسوق فارغة",
+        "subtotal": "المجموع الفرعي",
+        "total": "الإجمالي",
+        "checkout": "الدفع",
+        "remove_item": "إزالة العنصر",
+        "clear_cart": "تفريغ السلة"
+    },
+    "profile": {
+        "title": "الملف الشخصي",
+        "edit": "تعديل الملف الشخصي",
+        "settings": "الإعدادات",
+        "orders": "الطلبات",
+        "favorites": "المفضلات",
+        "addresses": "العناوين"
+    },
+    "settings": {
+        "title": "الإعدادات",
+        "language": "اللغة",
+        "theme": "المظهر",
+        "notifications": "الإشعارات",
+        "privacy": "الخصوصية",
+        "about": "حول"
+    },
     "login": "تسجيل الدخول",
     "login_continue": "قم بتسجيل الدخول لمتابعة استخدام التطبيق",
     "email": "البريد الإلكتروني",
@@ -16,6 +81,17 @@
     "server_offline_msg": "الخادم غير متصل، بدء العد التنازلي للدخول بدون اتصال",
     "offline_login_fail": "فشل تسجيل الدخول (بدون اتصال): بريد إلكتروني أو كلمة مرور غير صحيحة\n\nبيانات تجريبية:\nالبريد: user@gmail.com\nكلمة المرور: user",
     "login_fail": "فشل تسجيل الدخول: بيانات اعتماد خاطئة",
+    "drawer": {
+        "profile": "الملف الشخصي",
+        "settings": "الإعدادات",
+        "add_product": "إضافة منتج جديد",
+        "contact_us": "اتصل بنا",
+        "favorites": "المفضلات",
+        "my_products": "منتجاتي",
+        "admin_dashboard": "لوحة التحكم",
+        "admin": "لوحة الإدارة",
+        "logout": "تسجيل الخروج"
+    },
     "add_product": {
       "title": "إضافة منتج جديد",
       "product_name": "اسم المنتج",
@@ -36,7 +112,6 @@
     "add_to_cart": "أضف إلى السلة",
     "remove": "إزالة",
     "product_details": "تفاصيل المنتج",
-    "price": "السعر",
     "old_price": "السعر القديم",
     "new_price": "السعر الجديد",
     "checkout": "الدفع",
@@ -70,9 +145,11 @@
   "Product Quantity": "كمية المنتج",
   "Product added successfully!": "تم إضافة المنتج بنجاح!",
   "Error: $e": "خطأ: $e",
-  "categories": "الفئات",
-  "subcategories": "الفئات الفرعية",
-  "choose_subcategory": "اختر فئة فرعية",
+  "Categories": "الفئات",
+  "Subcategories": "الفئات الفرعية",
+  "Items": "عناصر",
+  "Select a Category": "اختر فئة",
+  "Choose a Subcategory": "اختر فئة فرعية",
   "no_products": "لا توجد منتجات متاحة",
   "contact_us": "اتصل بنا",
   "full_name": "الاسم الكامل",
@@ -94,7 +171,6 @@
 "user_name": "اسم المستخدم",
 "category": "الفئة",
 "save_changes": "حفظ التغييرات",
-"select_category": "اختر الفئة الخاصة بك",
 "updated_successfully": "تم التحديث بنجاح",
 "update_failed": "فشل التحديث",
 "Favorites": "المفضلات",
@@ -112,7 +188,6 @@
   "Email or Phone Number": "البريد الإلكتروني أو رقم الهاتف",
   "enter your email": "أدخل بريدك الإلكتروني",
   "Reset Password": "إعادة تعيين كلمة المرور",
-  "Categories": "الفئات",
   "View all": "عرض الكل",
   "Products": "المنتجات",
 
@@ -178,6 +253,43 @@
     "Total": "الإجمالي",
     "add_new_card": "إضافة بطاقة جديدة",
     "pay_now": "ادفع الآن"
+  },
+  "my_products": "منتجاتي",
+  "no_products_found": "لا توجد منتجات",
+  "Home Medical Equipment": "معدات طبية منزلية",
+  "mstest": "مستلزمات طبية",
+  "Blood Pressure Monitors": "أجهزة قياس ضغط الدم",
+  "Blood Glucose Meters": "أجهزة قياس السكر",
+  "medical sub": "مستلزمات طبية",
+  "Manual Wheelchairs": "كراسي متحركة يدوية",
+  "Electric Wheelchairs": "كراسي متحركة كهربائية",
+  "Digital Monitors": "شاشات رقمية",
+  "Manual Monitors": "شاشات يدوية",
+  "product_card": {
+    "on_sale": "خصم",
+    "unnamed": "منتج بدون اسم",
+    "no_description": "لا يوجد وصف",
+    "add_to_cart": "أضف إلى السلة"
+  },
+  "dropdown": {
+    "select": "اختر"
+  },
+  "user_not_logged_in": "يرجى تسجيل الدخول لعرض منتجاتك",
+  "invalid_user_id": "معرف المستخدم غير صالح",
+  "error_loading_products": "خطأ في تحميل المنتجات",
+  "product_deleted_successfully": "تم حذف المنتج بنجاح",
+  "failed_to_delete_product": "فشل في حذف المنتج",
+  "error_deleting_product": "خطأ في حذف المنتج",
+  "category_types": {
+    "home_medical_equipment": "معدات طبية منزلية",
+    "mstest": "اختبار طبي",
+    "blood_pressure_monitors": "أجهزة قياس ضغط الدم",
+    "blood_glucose_meters": "أجهزة قياس السكر",
+    "medical_sub": "فرعي طبي",
+    "manual_wheelchairs": "كراسي متحركة يدوية",
+    "electric_wheelchairs": "كراسي متحركة كهربائية",
+    "digital_monitors": "شاشات رقمية",
+    "manual_monitors": "شاشات يدوية"
   }
 }
   

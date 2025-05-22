@@ -8,6 +8,7 @@ class ForgotPasswordService {
 
   ForgotPasswordService({required this.dio}) {
     debugPrint('Initial Dio base URL: ${dio.options.baseUrl}');
+
     dio.options = BaseOptions(
       baseUrl: 'https://10.0.2.2:7273/api/ForgotPassword',
       connectTimeout: const Duration(seconds: 30),

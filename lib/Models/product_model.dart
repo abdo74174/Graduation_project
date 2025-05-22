@@ -15,6 +15,9 @@ class ProductModel {
   static const String defaultProductImage = "assets/images/equip2.png";
   // Default image for product
 
+  // Add id getter
+  int get id => productId;
+
   ProductModel({
     required this.productId,
     required this.name,
@@ -30,10 +33,23 @@ class ProductModel {
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    String parseStringField(dynamic field) {
+      if (field is String) {
+        return field;
+      } else if (field is Map) {
+        // Attempt to extract a common language key, or fallback
+        return field['en'] as String? ??
+            field.values.firstWhere((v) => v is String, orElse: () => '')
+                as String? ??
+            '';
+      }
+      return '';
+    }
+
     return ProductModel(
       productId: json['productId'] ?? 0,
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
+      name: parseStringField(json['name']),
+      description: parseStringField(json['description']),
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       isNew: json['isNew'] ?? false,
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,

@@ -7,6 +7,7 @@ import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/services/Product/recommendation_service.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, required this.product});
@@ -25,13 +26,14 @@ class _ProductPageState extends State<ProductPage> {
   }
 
   List<ProductModel> products = [];
+  // List<ProductModel> recommendedProducts = [];
   bool _isLoading = true;
   bool _showDummy = false;
 
   @override
   void initState() {
     super.initState();
-    loadProducts();
+    loadRecommendations();
     Future.delayed(Duration(seconds: 7), () {
       if (mounted && products.isEmpty) {
         setState(() {
@@ -42,17 +44,37 @@ class _ProductPageState extends State<ProductPage> {
     });
   }
 
-  Future<void> loadProducts() async {
+  // Future<void> loadProducts() async {
+  //   try {
+  //     final fetchedProducts = await ProductService().fetchAllProducts();
+  //     if (mounted) {
+  //       setState(() {
+  //         products = fetchedProducts;
+  //         _isLoading = false;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print("⚠️ Error loading products: $e");
+  //     if (mounted) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //     }
+  //   }
+  // }
+
+  Future<void> loadRecommendations() async {
     try {
-      final fetchedProducts = await ProductService().fetchAllProducts();
+      final fetchedProducts = await RecommendationService()
+          .fetchRecommendations(widget.product.productId);
       if (mounted) {
         setState(() {
-          products = fetchedProducts;
+          products = fetchedProducts.cast<ProductModel>();
           _isLoading = false;
         });
       }
     } catch (e) {
-      print("⚠️ Error loading products: $e");
+      print("⚠️ Error loading recommendations: $e");
       if (mounted) {
         setState(() {
           _isLoading = false;

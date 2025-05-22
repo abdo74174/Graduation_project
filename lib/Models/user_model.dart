@@ -47,7 +47,7 @@ class UserModel {
       password: json['password'],
       confirmPassword: json['confirmPassword'],
       resetToken: json['resetToken'],
-      resetTokenExpires: json['reset groeneTokenExpires'] != null
+      resetTokenExpires: json['resetTokenExpires'] != null
           ? DateTime.parse(json['resetTokenExpires'])
           : null,
       phone: json['phone'] ?? '',

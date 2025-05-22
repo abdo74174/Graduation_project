@@ -2,181 +2,205 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 
 class _Dim {
-  static const double cardWidth = 160;
-  static const double borderRadius = 16;
-  static const double imageHeight = 110;
-  static const double badgePaddingH = 6;
-  static const double badgePaddingV = 2;
-  static const double badgeFontSize = 10;
+  static const double cardWidth = 180;
+  static const double cardHeight = 380;
+  static const double borderRadius = 12;
+  static const double imageHeight = 120;
+  static const double badgePaddingH = 8;
+  static const double badgePaddingV = 4;
+  static const double badgeFontSize = 12;
   static const double titleFontSize = 13;
-  static const double iconSize = 12;
+  static const double priceFontSize = 15;
+  static const double iconSize = 16;
   static const double buttonHeight = 30;
   static const double buttonFontSize = 12;
-  static const double paddingSmall = 6;
+  static const double paddingSmall = 4;
   static const double paddingMedium = 8;
-  static const double shadowBlur = 6;
-  static const Offset shadowOffset = Offset(0, 3);
+  static const double shadowBlur = 8;
+  static const Offset shadowOffset = Offset(0, 2);
 }
 
 class ProductCard extends StatelessWidget {
   final ProductModel product;
   final VoidCallback onTap;
+  final bool isOwner;
+  final VoidCallback? onDelete;
 
-  const ProductCard({super.key, required this.product, required this.onTap});
+  const ProductCard({
+    super.key,
+    required this.product,
+    required this.onTap,
+    this.isOwner = false,
+    this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: _Dim.paddingMedium,
-        vertical: _Dim.paddingMedium / 2,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(_Dim.borderRadius),
-        child: Container(
-          width: _Dim.cardWidth,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(_Dim.borderRadius),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.white, Colors.grey.shade100],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: _Dim.cardWidth,
+        height: _Dim.cardHeight,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[900] : Colors.white,
+          borderRadius: BorderRadius.circular(_Dim.borderRadius),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: _Dim.shadowBlur,
+              offset: _Dim.shadowOffset,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: _Dim.shadowBlur,
-                offset: _Dim.shadowOffset,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Image + Badge
-              Stack(
-                children: [
-                  ClipRRect(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(_Dim.borderRadius),
-                      ),
-                      child: product.images.isNotEmpty
-                          ? Image.network(
-                              product.images[0],
-                              height: _Dim.imageHeight,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (ctx, err, stack) => Container(
-                                height: _Dim.imageHeight,
-                                color: Colors.grey.shade200,
-                                child: Icon(
-                                  Icons.broken_image,
-                                  size: _Dim.imageHeight / 3,
-                                  color: Color(0xff3B8FDA),
-                                ),
-                              ),
-                            )
-                          : Image.asset(
-                              defaultProductImage,
-                              height: _Dim.imageHeight,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (ctx, err, stack) => Container(
-                                height: _Dim.imageHeight,
-                                color: Colors.grey.shade200,
-                                child: Icon(
-                                  Icons.broken_image,
-                                  size: _Dim.imageHeight / 3,
-                                  color: Color(0xff3B8FDA),
-                                ),
-                              ),
-                            )),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product image and sale badge
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(_Dim.borderRadius),
+                    topRight: Radius.circular(_Dim.borderRadius),
+                  ),
+                  child: Image.network(
+                    product.images?.isNotEmpty == true
+                        ? product.images[0]
+                        : defaultProductImage,
+                    width: double.infinity,
+                    height: _Dim.imageHeight,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Image.asset(
+                      defaultProductImage,
+                      width: double.infinity,
+                      height: _Dim.imageHeight,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                if (product.discount > 0)
                   Positioned(
                     top: _Dim.paddingSmall,
-                    right: _Dim.paddingSmall,
+                    left: _Dim.paddingSmall,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: _Dim.badgePaddingH,
                         vertical: _Dim.badgePaddingV,
                       ),
                       decoration: BoxDecoration(
-                        color: Color(0xff3B8FDA),
-                        borderRadius: BorderRadius.circular(8),
+                        color: pkColor,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        "\$${product.price.toStringAsFixed(2)}",
+                        '${product.discount}% OFF',
                         style: TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.bold,
                           fontSize: _Dim.badgeFontSize,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-
-              // Info + Button
-              Padding(
-                padding: const EdgeInsets.all(_Dim.paddingSmall),
+              ],
+            ),
+            // Product details
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(_Dim.paddingMedium),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // Product name
                     Text(
                       product.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: _Dim.titleFontSize,
                         fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                        height: 1.1,
                       ),
+                    ),
+                    SizedBox(height: _Dim.paddingSmall),
+                    // Product description
+                    Text(
+                      product.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: _Dim.paddingSmall),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.star,
-                            size: _Dim.iconSize, color: Colors.amber),
-                        const SizedBox(width: _Dim.paddingSmall / 2),
-                        Text(
-                          product.discount.toStringAsFixed(1),
-                          style: TextStyle(fontSize: _Dim.iconSize),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: _Dim.paddingSmall),
-                    SizedBox(
-                      height: _Dim.buttonHeight,
-                      child: ElevatedButton(
-                        onPressed: onTap,
-                        style: ElevatedButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(_Dim.borderRadius / 2),
-                          ),
-                          elevation: 1,
-                          backgroundColor: Colors.blueAccent,
-                        ),
-                        child: Text(
-                          "Buy".tr(), // Here, we use `.tr()` for translation
-                          style: TextStyle(
-                            fontSize: _Dim.buttonFontSize,
-                            color: Colors.white,
-                          ),
-                        ),
+                      style: TextStyle(
+                        fontSize: _Dim.titleFontSize - 1,
+                        color: isDark ? Colors.white70 : Colors.black54,
+                        height: 1.1,
                       ),
+                    ),
+                    const Spacer(),
+                    // Price and button section
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (product.discount > 0)
+                          Text(
+                            '${'currency_symbol'.tr()}${(product.price ?? 0).toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: _Dim.priceFontSize - 2,
+                              decoration: TextDecoration.lineThrough,
+                              color: isDark ? Colors.white38 : Colors.black38,
+                            ),
+                          ),
+                        Text(
+                          '${'currency_symbol'.tr()}${((product.price ?? 0) * (1 - (product.discount ?? 0) / 100)).toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: _Dim.priceFontSize,
+                            fontWeight: FontWeight.bold,
+                            color: pkColor,
+                          ),
+                        ),
+                        if (!isOwner) ...[
+                          SizedBox(height: _Dim.paddingSmall),
+                          SizedBox(
+                            width: double.infinity,
+                            height: _Dim.buttonHeight,
+                            child: ElevatedButton(
+                              onPressed: onTap,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: pkColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: isSmallScreen ? 4 : 6,
+                                ),
+                              ),
+                              child: Text(
+                                'product_card.add_to_cart'.tr(),
+                                style: TextStyle(
+                                  fontSize: _Dim.buttonFontSize,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

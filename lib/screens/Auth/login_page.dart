@@ -12,7 +12,8 @@ import 'package:graduation_project/screens/Auth/compelete_profile_screen.dart';
 import 'package:graduation_project/screens/Auth/register.dart';
 import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
-import 'package:graduation_project/screens/forget_password.dart';
+import 'package:graduation_project/screens/homepage.dart';
+import 'package:graduation_project/screens/password/forget_password.dart';
 import 'package:graduation_project/screens/userInfo/info.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/USer/sign.dart';
@@ -350,7 +351,7 @@ class _LoginPageState extends State<LoginPage> {
           if (isAdmin) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => AdminDashboardApp()),
+              MaterialPageRoute(builder: (_) => HomePage()),
             );
           } else {
             Navigator.pushReplacement(

@@ -1,4 +1,72 @@
 {
+    "common": {
+        "select": "Select",
+        "cancel": "Cancel",
+        "submit": "Submit",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "add": "Add",
+        "remove": "Remove",
+        "search": "Search",
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "warning": "Warning",
+        "info": "Info"
+    },
+    "auth": {
+        "login": "Login",
+        "register": "Register",
+        "logout": "Logout",
+        "forgot_password": "Forgot password?",
+        "email": "Email",
+        "password": "Password",
+        "confirm_password": "Confirm Password",
+        "username": "Username"
+    },
+    "product": {
+        "name": "Product Name",
+        "description": "Description",
+        "price": "Price",
+        "quantity": "Quantity",
+        "category": "Category",
+        "subcategory": "Subcategory",
+        "status": "Status",
+        "discount": "Discount",
+        "add_to_cart": "Add to Cart",
+        "remove_from_cart": "Remove from Cart",
+        "out_of_stock": "Out of Stock",
+        "in_stock": "In Stock",
+        "on_sale": "On Sale",
+        "unnamed": "Unnamed Product",
+        "no_description": "No description available"
+    },
+    "cart": {
+        "title": "Shopping Cart",
+        "empty": "Your cart is empty",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "checkout": "Checkout",
+        "remove_item": "Remove Item",
+        "clear_cart": "Clear Cart"
+    },
+    "profile": {
+        "title": "Profile",
+        "edit": "Edit Profile",
+        "settings": "Settings",
+        "orders": "Orders",
+        "favorites": "Favorites",
+        "addresses": "Addresses"
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "theme": "Theme",
+        "notifications": "Notifications",
+        "privacy": "Privacy",
+        "about": "About"
+    },
     "login": "Login",
     "login_continue": "Login to continue using the app",
     "email": "Email",
@@ -16,6 +84,17 @@
     "server_offline_msg": "Server is offline, starting offline countdown",
     "offline_login_fail": "Login failed (offline): incorrect dummy email or password\n\nDummy Credentials:\nEmail: user@gmail.com\nPassword: user",
     "login_fail": "Login failed: wrong credentials",
+    "drawer": {
+        "profile": "Profile",
+        "settings": "Settings",
+        "add_product": "Add New Product",
+        "contact_us": "Contact Us",
+        "favorites": "Favorites",
+        "my_products": "My Products",
+        "admin_dashboard": "Admin Dashboard",
+        "admin": "Admin Panel",
+        "logout": "Logout"
+    },
     "add_product": {
       "title": "Add New Product",
       "product_name": "Product Name",
@@ -29,14 +108,27 @@
       "product_added_successfully": "Product added successfully!",
       "error_adding_product": "Error adding product: {}",
       "used": "Used",
-      "new": "New"
+      "new": "New",
+      "add_product": "Add Product",
+      "product_name_required": "Product name is required",
+      "description_required": "Description is required",
+      "price_required": "Price is required",
+      "invalid_price": "Please enter a valid price",
+      "quantity_required": "Quantity is required",
+      "invalid_quantity": "Please enter a valid quantity",
+      "invalid_discount": "Discount must be between 0 and 100",
+      "category_required": "Please select a category",
+      "subcategory_required": "Please select a subcategory",
+      "please_select_at_least_one_image": "Please select at least one image",
+      "error_loading_categories": "Error loading categories",
+      "error_loading_subcategories": "Error loading subcategories",
+      "user_not_logged_in": "Please log in to add a product"
     },
     "quantity": "Quantity",
     "currency_symbol": "/$",
     "add_to_cart": "Add to Cart",
     "remove": "Remove",
     "product_details": "Product Details",
-    "price": "Price",
     "old_price": "Old Price",
     "new_price": "New Price",
      "checkout": "Check out",
@@ -50,7 +142,7 @@
       "Settings": "Settings",
       "Logout": "Logout",
       "What do you Search for ?": "What do you Search for ?",
-      "Description": "Description",  "Select": "Select",
+      "Description": "Description",
       "Category": "Category",
       "SubCategory": "SubCategory",  "Amount": "Amount",
       "Price": "Price",
@@ -71,9 +163,22 @@
   "remove_item": "Remove Item",
   "remove_item_confirmation": "Are you sure you want to remove this item?",
   "cancel": "Cancel",
-  "categories": "Categories",
-  "subcategories": "SubCategory",
-  "choose_subcategory": "Choose a subcategory",
+  "Categories": "Categories",
+  "Subcategories": "Subcategories",
+  "Items": "Items",
+  "Select a Category": "Select a Category",
+  "Choose a Subcategory": "Choose a Subcategory",
+  "category_types": {
+    "home_medical_equipment": "Home Medical Equipment",
+    "mstest": "Medical Test",
+    "blood_pressure_monitors": "Blood Pressure Monitors",
+    "blood_glucose_meters": "Blood Glucose Meters",
+    "medical_sub": "Medical Sub",
+    "manual_wheelchairs": "Manual Wheelchairs",
+    "electric_wheelchairs": "Electric Wheelchairs",
+    "digital_monitors": "Digital Monitors",
+    "manual_monitors": "Manual Monitors"
+  },
   "no_products": "No products available",
   "contact_us": "Contact Us",
   "full_name": "Full name",
@@ -90,8 +195,8 @@
   "phone_number": "01032204289",
   "email_value": "sm1234@gmail.com",
   "working_hours": "Daily 09 am - 5 pm",
-  "contact_message": "Feel free to reach out to us anytime! We're always here to assist you and answer any questions you may have."
-,  "edit_profile": "Edit Profile",
+  "contact_message": "Feel free to reach out to us anytime! We're always here to assist you and answer any questions you may have.",
+  "edit_profile": "Edit Profile",
 "user_name": "User Name",
 "category": "Category",
 "save_changes": "Save changes",
@@ -113,7 +218,6 @@
   "Email or Phone Number": "Email or Phone Number",
   "enter your email": "Enter your email",
   "Reset Password": "Reset Password",
-  "Categories": "Categories",
   "View all": "View all",
   "Products": "Products",
 
@@ -134,7 +238,6 @@
   "on_sale": "% On Sale",
   "reviews": "12 reviews",
   "related_products": "Products Related to This Item:",
-  "name": "Name",
   "specialty": "Specialty",
   "create_account": "Create an account to start using the app",
   "enter_username": "Enter Your Username",
@@ -179,6 +282,23 @@
     "pay_now": "Pay Now"
   },
   "sign_in_with_google": "Sign in with Google",
-  "google_sign_in_error": "Failed to sign in with Google. Please try again."
-  }
+  "google_sign_in_error": "Failed to sign in with Google. Please try again.",
+  "my_products": "My Products",
+  "no_products_found": "No products found",
+  "product_card": {
+    "on_sale": "OFF",
+    "unnamed": "Unnamed Product",
+    "no_description": "No description",
+    "add_to_cart": "Add to Cart"
+  },
+  "dropdown": {
+    "select": "Select"
+  },
+  "items": "items",
+  "invalid_user_id": "Invalid user ID",
+  "error_loading_products": "Error loading products",
+  "product_deleted_successfully": "Product deleted successfully",
+  "failed_to_delete_product": "Failed to delete product",
+  "error_deleting_product": "Error deleting product"
+}
   

@@ -44,7 +44,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
                   ),
                 )
               : null,
-          hintText: widget.hint.tr(), // Using .tr() here for localization
+          hintText: 'auth.${widget.hint}'.tr(),
           filled: true,
           // ignore: deprecated_member_use
           fillColor: Colors.white.withOpacity(0.8),
@@ -52,7 +52,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
             borderRadius: BorderRadius.circular(16),
             borderSide: const BorderSide(color: Colors.black12),
           ),
-          errorText: widget.errorText,
+          errorText:
+              widget.errorText != null ? 'auth.${widget.errorText}'.tr() : null,
         ),
       ),
     );
