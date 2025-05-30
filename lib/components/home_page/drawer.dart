@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/screens/Auth/login_page.dart';
 import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
@@ -11,6 +12,7 @@ import 'package:graduation_project/screens/setting_page.dart';
 import 'package:graduation_project/screens/adding_pr_cat_sub.dart/add_product.dart';
 import 'package:graduation_project/screens/contact_us.dart';
 import 'package:graduation_project/screens/userInfo/profile.dart';
+import 'package:graduation_project/services/User/sign.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,6 +36,31 @@ class DrawerHome extends StatefulWidget {
 }
 
 class _DrawerHomeState extends State<DrawerHome> {
+  UserModel? user;
+
+  Future<void> fetchUserData() async {
+    try {
+      final email = await UserServicee().getEmail();
+      if (email == null || email.isEmpty) {
+        print("No email found in SharedPreferences!");
+        return;
+      }
+      final fetchedUser = await USerService().fetchUserByEmail(email);
+      if (fetchedUser != null) {
+        setState(() {
+          user = fetchedUser;
+        });
+      } else {
+        print("User not found");
+      }
+    } catch (e) {
+      print("Error fetching user: $e");
+    } finally {
+      if (!mounted) return;
+      setState(() {});
+    }
+  }
+
   Future<void> _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.remove('isLoggedIn');

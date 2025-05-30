@@ -8,13 +8,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/Auth/account_status_screen.dart';
 import 'package:graduation_project/screens/Auth/compelete_profile_screen.dart';
 import 'package:graduation_project/screens/Auth/register.dart';
 import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/password/forget_password.dart';
-import 'package:graduation_project/screens/userInfo/info.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
@@ -22,6 +22,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:shimmer/main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -43,6 +45,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   int _count = 10;
   Timer? _timer;
+  UserModel? user; // Nullable user field
 
   final String _dummyEmail = "user@gmail.com";
   final String _dummyPassword = "user";
@@ -54,6 +57,33 @@ class _LoginPageState extends State<LoginPage> {
       setState(() => _serverOnline = flag);
       _checkServer();
     });
+  }
+
+  Future<void> fetchUserData(String email) async {
+    try {
+      final fetchedUser = await USerService().fetchUserByEmail(email);
+      if (fetchedUser != null) {
+        setState(() {
+          user = fetchedUser;
+        });
+        print(
+            'Fetched user: ${fetchedUser.email}, status: ${fetchedUser.status}'); // Debug log
+      } else {
+        throw Exception("User not found");
+      }
+    } catch (e) {
+      print("Error fetching user: $e");
+      setState(() {
+        user = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to fetch user data: $e'.tr()),
+          backgroundColor: Colors.red,
+        ),
+      );
+      rethrow; // Rethrow to handle in login flow
+    }
   }
 
   Future<void> _checkServer() async {
@@ -125,8 +155,6 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     bool success = false;
-    // ignore: unused_local_variable
-    bool isDummyFail = false;
     String? errorMessage;
 
     String? userId;
@@ -148,17 +176,34 @@ class _LoginPageState extends State<LoginPage> {
           if (userId == null) {
             errorMessage = 'login_id_error'.tr();
           } else {
-            success = true;
-            kindOfWork = prefs.getString('kindOfWork') ?? 'Doctor';
-            medicalSpecialist = prefs.getString('medicalSpecialist');
-            isAdmin = prefs.getBool('isAdmin') ?? false;
-            context.read<UserCubit>().setUser(
-                  userId,
-                  _emailCtrl.text.trim(),
-                  kindOfWork,
-                  medicalSpecialist,
-                  isAdmin,
-                );
+            // Fetch user data
+            await fetchUserData(_emailCtrl.text.trim());
+            if (user == null) {
+              errorMessage = 'user_fetch_error'.tr();
+            } else {
+              success = true;
+              kindOfWork = user!.kindOfWork;
+              medicalSpecialist = user!.medicalSpecialist;
+              isAdmin = user!.isAdmin;
+
+              // Save to SharedPreferences for consistency
+              await prefs.setString('kindOfWork', kindOfWork);
+              if (medicalSpecialist != null) {
+                await prefs.setString('medicalSpecialist', medicalSpecialist);
+              } else {
+                await prefs.remove('medicalSpecialist');
+              }
+              await prefs.setBool('isAdmin', isAdmin);
+              await prefs.setInt(
+                  'status', user!.status); // For other parts of the app
+              context.read<UserCubit>().setUser(
+                    userId,
+                    _emailCtrl.text.trim(),
+                    kindOfWork,
+                    medicalSpecialist,
+                    isAdmin,
+                  );
+            }
           }
         } else {
           errorMessage = 'login_credentials_error'.tr();
@@ -192,51 +237,63 @@ class _LoginPageState extends State<LoginPage> {
       if (dummyUser != null && dummyUser.password == inputPassword) {
         success = true;
         userId = 'dummy_${inputEmail.hashCode}';
+        setState(() {
+          user = dummyUser; // Set user for offline login
+        });
+        print(
+            'Offline user: ${dummyUser.email}, status: ${dummyUser.status}'); // Debug log
+        kindOfWork = dummyUser.kindOfWork;
+        medicalSpecialist = dummyUser.medicalSpecialist;
+        isAdmin = dummyUser.isAdmin;
+
         await prefs.setString('user_id', userId);
-        await prefs.setString('kindOfWork', dummyUser.kindOfWork ?? 'Doctor');
-        if (dummyUser.medicalSpecialist != null) {
-          await prefs.setString(
-              'medicalSpecialist', dummyUser.medicalSpecialist!);
+        await prefs.setString('kindOfWork', kindOfWork);
+        await prefs.setInt('status', user!.status);
+        if (medicalSpecialist != null) {
+          await prefs.setString('medicalSpecialist', medicalSpecialist);
         } else {
           await prefs.remove('medicalSpecialist');
         }
-        await prefs.setBool('isAdmin', dummyUser.isAdmin);
+        await prefs.setBool('isAdmin', isAdmin);
         context.read<UserCubit>().setUser(
               userId,
               _emailCtrl.text.trim(),
-              dummyUser.kindOfWork,
-              dummyUser.medicalSpecialist,
-              dummyUser.isAdmin,
+              kindOfWork,
+              medicalSpecialist,
+              isAdmin,
             );
       } else {
-        isDummyFail = true;
         success = false;
         errorMessage = 'offline_login_fail'.tr();
       }
     }
 
     setState(() => _loggingIn = false);
-
-    if (success) {
-      final tok = prefs.getString('token') ?? 'dummy_token';
-      await prefs.setBool('isLoggedIn', true);
-      await prefs.setString('token', tok);
-      await prefs.setString('email', _emailCtrl.text.trim());
-
-      if (isAdmin) {
+    if (success && user != null) {
+      print('Final status check: ${user!.status}'); // Debug log
+      if (user!.status == 1 || user!.status == 2) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => AdminDashboardApp()),
+          MaterialPageRoute(
+            builder: (context) => AccountStatusScreen(
+              isBlocked: user!.status == 1,
+              email: _emailCtrl.text.trim(),
+            ),
+          ),
+        );
+        return;
+      }
+
+      await prefs.setBool('isLoggedIn', true);
+      if (user!.isAdmin) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (_) => RoleSelectionScreen(
-              initialKindOfWork: kindOfWork ?? 'Doctor',
-              initialSpecialty: medicalSpecialist,
-            ),
-          ),
+          MaterialPageRoute(builder: (context) => const HomePage()),
         );
       }
     } else {
@@ -253,24 +310,20 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _loggingIn = true);
 
     try {
-      // Trigger the Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         setState(() => _loggingIn = false);
         return;
       }
 
-      // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
-      // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase with the Google credential
       final UserCredential userCredential =
           await _auth.signInWithCredential(credential);
       final User? firebaseUser = userCredential.user;
@@ -279,23 +332,17 @@ class _LoginPageState extends State<LoginPage> {
         throw Exception('Firebase authentication failed');
       }
 
-      // Check if the user exists in Firestore
       final userDoc =
           await _firestore.collection('users').doc(firebaseUser.uid).get();
 
       final prefs = await SharedPreferences.getInstance();
-      String? kindOfWork;
-      String? medicalSpecialist;
-      bool isAdmin = false;
 
       if (!userDoc.exists) {
-        // Save minimal user data to Firestore
         await _firestore.collection('users').doc(firebaseUser.uid).set({
           'email': firebaseUser.email,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
-        // Navigate to CompleteProfileScreen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -306,12 +353,6 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
-        final userData = userDoc.data();
-        kindOfWork = userData?['kindOfWork'] ?? 'Doctor';
-        medicalSpecialist = userData?['medicalSpecialist'];
-        isAdmin = userData?['isAdmin'] ?? false;
-
-        // Save user data to backend
         final response = await http.post(
           Uri.parse('https://10.0.2.2:7273/api/MedBridge/signin/google'),
           headers: {'Content-Type': 'application/json'},
@@ -325,43 +366,58 @@ class _LoginPageState extends State<LoginPage> {
             throw Exception('Invalid backend response');
           }
 
-          // Update SharedPreferences
+          // Fetch user data
+          await fetchUserData(firebaseUser.email!);
+          if (user == null) {
+            throw Exception('Failed to fetch user data');
+          }
+
           await prefs.setString('user_id', userId);
-          await prefs.setString('kindOfWork', kindOfWork!);
-          if (medicalSpecialist != null) {
-            await prefs.setString('medicalSpecialist', medicalSpecialist);
+          await prefs.setString('kindOfWork', user!.kindOfWork);
+          await prefs.setInt('status', user!.status);
+          if (user!.medicalSpecialist != null) {
+            await prefs.setString(
+                'medicalSpecialist', user!.medicalSpecialist!);
           } else {
             await prefs.remove('medicalSpecialist');
           }
-          await prefs.setBool('isAdmin', isAdmin);
+          await prefs.setBool('isAdmin', user!.isAdmin);
           await prefs.setString(
               'token', responseData['token'] ?? 'firebase_token');
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('email', firebaseUser.email!);
 
-          // Update UserCubit
           context.read<UserCubit>().setUser(
                 userId,
                 firebaseUser.email!,
-                kindOfWork,
-                medicalSpecialist,
-                isAdmin,
+                user!.kindOfWork,
+                user!.medicalSpecialist,
+                user!.isAdmin,
               );
 
-          if (isAdmin) {
+          print('Google Sign-In status check: ${user!.status}'); // Debug log
+          if (user!.status == 1 || user!.status == 2) {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => HomePage()),
+              MaterialPageRoute(
+                builder: (context) => AccountStatusScreen(
+                  isBlocked: user!.status == 1,
+                  email: firebaseUser.email!,
+                ),
+              ),
+            );
+            return;
+          }
+
+          if (user!.isAdmin) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomePage()),
             );
           } else {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (_) => RoleSelectionScreen(
-                  initialKindOfWork: kindOfWork!,
-                  initialSpecialty: medicalSpecialist,
-                ),
-              ),
+              MaterialPageRoute(builder: (_) => HomePage()),
             );
           }
         } else {
@@ -370,7 +426,7 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('google_sign_in_error'.tr() + ': $e')),
+        SnackBar(content: Text('${'google_sign_in_error'.tr()}: $e')),
       );
     } finally {
       setState(() => _loggingIn = false);
@@ -408,7 +464,14 @@ class _LoginPageState extends State<LoginPage> {
                   hintText: 'email'.tr(),
                   prefixIcon: const Icon(Icons.email_outlined),
                   errorText: _emailErr,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
@@ -431,7 +494,14 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   errorText: _passErr,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.blue, width: 2),
+                  ),
                 ),
                 obscureText: _obscurePassword,
               ),
@@ -480,6 +550,10 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: _loggingIn ? null : _login,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 5,
                     ),
                     child: _loggingIn
                         ? const SizedBox(
@@ -513,6 +587,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Colors.grey),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 5,
                     ),
                   ),
                 ),

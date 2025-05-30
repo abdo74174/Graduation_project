@@ -4,6 +4,7 @@ import 'package:graduation_project/Models/cart_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/payment/PaymentScreen.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
@@ -154,7 +155,8 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pushReplacement(context,
+              MaterialPageRoute(builder: (context) => const HomePage())),
         ),
       ),
       body: Padding(

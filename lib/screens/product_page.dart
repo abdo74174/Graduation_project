@@ -8,6 +8,11 @@ import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/Product/recommendation_service.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:graduation_project/services/Rating/rating_service.dart';
+import 'package:graduation_project/services/User/sign.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:graduation_project/routes.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, required this.product});
@@ -29,11 +34,16 @@ class _ProductPageState extends State<ProductPage> {
   // List<ProductModel> recommendedProducts = [];
   bool _isLoading = true;
   bool _showDummy = false;
+  double _userRating = 3.0;
+  double _averageRating = 0.0;
+  TextEditingController _commentController = TextEditingController();
+  List<Map<String, dynamic>> _comments = [];
 
   @override
   void initState() {
     super.initState();
     loadRecommendations();
+    fetchAverageRatingAndComments();
     Future.delayed(Duration(seconds: 7), () {
       if (mounted && products.isEmpty) {
         setState(() {
@@ -80,6 +90,68 @@ class _ProductPageState extends State<ProductPage> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<String> getEmailFromUserId(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('email') ?? '';
+  }
+
+  Future<void> fetchAverageRatingAndComments() async {
+    try {
+      final ratings = await RatingService()
+          .getRatings(productId: widget.product.productId.toString());
+      if (ratings.isNotEmpty) {
+        double total = ratings.fold(
+            0.0, (sum, item) => sum + (item['ratingValue'] as int).toDouble());
+        setState(() {
+          _averageRating = total / ratings.length;
+        });
+        // Fetch user data for each comment
+        _comments = await Future.wait(ratings
+            .where((item) =>
+                item['comment'] != null && item['comment'].trim().isNotEmpty)
+            .map((item) async {
+          final email = await getEmailFromUserId(item['userId']);
+          final userData = await USerService().fetchUserByEmail(email);
+          return {
+            'comment': item['comment'],
+            'rating': item['ratingValue'],
+            'userName': userData?.name ?? 'Anonymous',
+            'profileImage': userData?.profileImage ??
+                'https://example.com/default-profile.png',
+          };
+        }).toList());
+      }
+    } catch (e) {
+      print("⚠️ Error fetching ratings: $e");
+    }
+  }
+
+  void _submitRating() async {
+    try {
+      await RatingService().submitRating(
+        productId: widget.product.productId.toString(),
+        userId: 'user123', // Ensure this is a string
+        rating: _userRating.toInt(),
+        comment:
+            _commentController.text.isNotEmpty ? _commentController.text : null,
+      );
+      // Provide feedback using a Snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Rating and comment submitted successfully!')),
+      );
+      _commentController.clear();
+      setState(() {
+        _userRating = 0.0;
+        // Update the UI to reflect the new rating
+        // For example, you could refresh the list of ratings or update an average rating display
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit rating: $e')),
+      );
     }
   }
 
@@ -188,7 +260,7 @@ class _ProductPageState extends State<ProductPage> {
                             ),
                             SizedBox(width: 5),
                             Text(
-                              "4.8",
+                              _averageRating.toStringAsFixed(1),
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
@@ -284,14 +356,11 @@ class _ProductPageState extends State<ProductPage> {
                                 child: ProductCard(
                                   product: dummyProducts[index],
                                   onTap: () {
-                                    Navigator.push(
+                                    Navigator.pushNamed(
                                       context,
-                                      MaterialPageRoute(
-                                        builder: (context) {
-                                          return ProductPage(
-                                              product: dummyProducts[index]);
-                                        },
-                                      ),
+                                      AppRoutes.productPage,
+                                      arguments: ProductPageArguments(
+                                          product: dummyProducts[index]),
                                     );
                                   },
                                 ),
@@ -308,20 +377,116 @@ class _ProductPageState extends State<ProductPage> {
                                 child: ProductCard(
                                   product: products[index],
                                   onTap: () {
-                                    Navigator.push(
+                                    Navigator.pushNamed(
                                       context,
-                                      MaterialPageRoute(
-                                        builder: (context) {
-                                          return ProductPage(
-                                              product: products[index]);
-                                        },
-                                      ),
+                                      AppRoutes.productPage,
+                                      arguments: ProductPageArguments(
+                                          product: products[index]),
                                     );
                                   },
                                 ),
                               );
                             },
                           ),
+              ),
+
+              // Rating and Comment Section
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Rate this product',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 10),
+                    RatingBar.builder(
+                      initialRating: _userRating,
+                      minRating: 1,
+                      allowHalfRating: true,
+                      itemCount: 5,
+                      itemBuilder: (context, _) =>
+                          Icon(Icons.star, color: Colors.amber),
+                      onRatingUpdate: (rating) {
+                        setState(() {
+                          _userRating = rating;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 20),
+                    TextField(
+                      controller: _commentController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Leave a comment',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Center(
+                      child: ElevatedButton(
+                        onPressed: _submitRating,
+                        child: Text('Submit'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: pkColor,
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 30, vertical: 12),
+                        ),
+                      ),
+                    ),
+
+                    // Comments Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Comments',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          SizedBox(height: 10),
+                          ..._comments
+                              .map((comment) => Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 5),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        CircleAvatar(
+                                          backgroundImage: NetworkImage(
+                                              comment['profileImage']),
+                                          radius: 20,
+                                        ),
+                                        SizedBox(width: 10),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(comment['userName'],
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              Text(
+                                                  'Rating: ${comment['rating']}',
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold)),
+                                              Text(comment['comment'] ??
+                                                  'No comment provided'),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ))
+                              .toList(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

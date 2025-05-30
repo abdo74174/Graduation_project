@@ -7,6 +7,7 @@ import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/screens/Auth/login_page.dart';
+import 'package:graduation_project/routes.dart';
 
 class UserProductsPage extends StatefulWidget {
   const UserProductsPage({super.key});
@@ -227,8 +228,8 @@ class _UserProductsPageState extends State<UserProductsPage> {
                         // Navigate to product detail page
                         Navigator.pushNamed(
                           context,
-                          '/product',
-                          arguments: product,
+                          AppRoutes.productPage,
+                          arguments: ProductPageArguments(product: product),
                         );
                       },
                     );

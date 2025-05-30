@@ -123,6 +123,7 @@ final dummyFavourites = [
 // Dummy Users
 final dummyUsers = [
   UserModel(
+    status: 0,
     kindOfWork: "docto",
     isAdmin: false,
     id: 1,
@@ -141,6 +142,7 @@ final dummyUsers = [
     contactUsMessages: [],
   ),
   UserModel(
+    status: 0,
     kindOfWork: "docto",
     isAdmin: true,
     id: 2,

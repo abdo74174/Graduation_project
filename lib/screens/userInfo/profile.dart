@@ -5,6 +5,7 @@ import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/routes.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -204,12 +205,9 @@ class _ProfilePageState extends State<ProfilePage> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.push(
+                                Navigator.pushReplacementNamed(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        EditProfilePage(user: user!),
-                                  ),
+                                  AppRoutes.userProfile,
                                 );
                               },
                               style: ElevatedButton.styleFrom(

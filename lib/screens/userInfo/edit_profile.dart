@@ -46,7 +46,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _nameController.text = widget.user.name ?? '';
     _emailController.text = widget.user.email;
     _passwordController.text = widget.user.password ?? '';
-    _phoneController.text = widget.user.phone;
+    _phoneController.text = widget.user.phone ?? '';
     _addressController.text = widget.user.address ?? '';
     _selectedCategory = _specialists.contains(widget.user.medicalSpecialist)
         ? widget.user.medicalSpecialist

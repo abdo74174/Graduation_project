@@ -16,6 +16,7 @@ class UserModel {
   final String? profileImage;
   final DateTime createdAt;
   final String kindOfWork;
+  final int status; // Changed from hardcoded value to a field
   final bool isAdmin;
   final List<ProductModel> products;
   final List<ContactUs> contactUsMessages;
@@ -24,6 +25,7 @@ class UserModel {
     required this.id,
     this.name,
     required this.email,
+    required this.status, // Changed to required
     this.password,
     this.confirmPassword,
     this.resetToken,
@@ -44,6 +46,7 @@ class UserModel {
       id: json['id'],
       name: json['name'],
       email: json['email'],
+      status: json['status'] ?? 0, // Added status parsing
       password: json['password'],
       confirmPassword: json['confirmPassword'],
       resetToken: json['resetToken'],
@@ -73,6 +76,7 @@ class UserModel {
       'id': id,
       'name': name,
       'email': email,
+      'status': status, // Added status to JSON output
       'password': password,
       'confirmPassword': confirmPassword,
       'resetToken': resetToken,
