@@ -23,7 +23,7 @@ class RecommendationService {
   }
 
   Future<List<ProductModel>> fetchRecommendations(int productId,
-      {int topN = 3}) async {
+      {int topN = 5}) async {
     _logDebug(
         'Fetching recommendations for productId: $productId, topN: $topN');
 

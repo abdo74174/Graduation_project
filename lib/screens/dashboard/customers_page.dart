@@ -260,9 +260,11 @@ class _CustomersPageState extends State<CustomersPage> {
                                       ),
                                       const SizedBox(width: 8),
                                       _buildChip(
-                                        label: _getStatusLabel(user.status),
-                                        color: _getStatusColor(user.status),
-                                        icon: _getStatusIcon(user.status),
+                                        label:
+                                            _getStatusLabel(user.status.index),
+                                        color:
+                                            _getStatusColor(user.status.index),
+                                        icon: _getStatusIcon(user.status.index),
                                       ),
                                     ],
                                   ),

@@ -16,6 +16,7 @@ import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 import 'package:graduation_project/screens/chat/chat_page.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
+import 'package:graduation_project/screens/discounted_products_page.dart';
 import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/screens/user_products_page.dart';
@@ -83,33 +84,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildBanner() {
-    return Container(
-      width: double.infinity,
-      height: 200,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16.0),
-              border: Border.all(color: Color(pkColor.value), width: 1.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(pkColor.value).withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DiscountedProductsPage(products: products),
+          ),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        height: 200,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16.0),
+                border: Border.all(color: Color(pkColor.value), width: 1.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(pkColor.value).withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16.0),
+                child: Image.asset(
+                  "assets/images/offer.avif",
+                  fit: BoxFit.cover,
                 ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16.0),
-              child: Image.asset(
-                "assets/images/offer.avif",
-                fit: BoxFit.cover,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

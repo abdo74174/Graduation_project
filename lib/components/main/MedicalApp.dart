@@ -28,6 +28,16 @@ class MedicalApp extends StatelessWidget {
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
       home: isLoggedIn ? const HomePage() : const LoginPage(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(
+              builder: (_) => isLoggedIn ? const HomePage() : const LoginPage(),
+            );
+          default:
+            return null;
+        }
+      }, // Add this line
       routes: {
         '/dashboard': (context) => DashboardScreen(),
         '/products': (context) => ProductsPage(),

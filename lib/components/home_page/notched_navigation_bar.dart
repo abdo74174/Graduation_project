@@ -27,7 +27,7 @@ class NotchedNavigationBar extends StatefulWidget {
   final double cornerRadius;
 
   const NotchedNavigationBar({
-    Key? key,
+    super.key,
     required this.activeIndex,
     required this.onTap,
     required this.icons,
@@ -42,7 +42,7 @@ class NotchedNavigationBar extends StatefulWidget {
     this.iconSize,
     this.blurEffect = false,
     this.cornerRadius = 16,
-  }) : super(key: key);
+  });
 
   @override
   State<NotchedNavigationBar> createState() => _NotchedNavigationBarState();

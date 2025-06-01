@@ -2,6 +2,13 @@ import 'dart:typed_data';
 import 'package:graduation_project/Models/contact_us_model.dart';
 import 'product_model.dart';
 
+// Add UserStatus enum to match backend
+enum UserStatus {
+  active,
+  blocked,
+  deactivated
+}
+
 class UserModel {
   final int id;
   final String? name;
@@ -16,7 +23,7 @@ class UserModel {
   final String? profileImage;
   final DateTime createdAt;
   final String kindOfWork;
-  final int status; // Changed from hardcoded value to a field
+  final UserStatus status; // Changed from int to UserStatus
   final bool isAdmin;
   final List<ProductModel> products;
   final List<ContactUs> contactUsMessages;
@@ -25,7 +32,7 @@ class UserModel {
     required this.id,
     this.name,
     required this.email,
-    required this.status, // Changed to required
+    required this.status,
     this.password,
     this.confirmPassword,
     this.resetToken,
@@ -42,11 +49,15 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Convert status integer to enum
+    final statusValue = json['status'] ?? json['Status'] ?? 0;
+    final status = UserStatus.values[statusValue];
+
     return UserModel(
       id: json['id'],
       name: json['name'],
       email: json['email'],
-      status: json['status'] ?? 0, // Added status parsing
+      status: status,
       password: json['password'],
       confirmPassword: json['confirmPassword'],
       resetToken: json['resetToken'],
@@ -76,7 +87,7 @@ class UserModel {
       'id': id,
       'name': name,
       'email': email,
-      'status': status, // Added status to JSON output
+      'status': status.index, // Convert enum to integer
       'password': password,
       'confirmPassword': confirmPassword,
       'resetToken': resetToken,

@@ -13,6 +13,8 @@ import 'package:graduation_project/services/Rating/rating_service.dart';
 import 'package:graduation_project/services/User/sign.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/routes.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, required this.product});
@@ -31,8 +33,8 @@ class _ProductPageState extends State<ProductPage> {
   }
 
   List<ProductModel> products = [];
-  // List<ProductModel> recommendedProducts = [];
   bool _isLoading = true;
+  bool _isCommentsLoading = false;
   bool _showDummy = false;
   double _userRating = 3.0;
   double _averageRating = 0.0;
@@ -53,25 +55,6 @@ class _ProductPageState extends State<ProductPage> {
       }
     });
   }
-
-  // Future<void> loadProducts() async {
-  //   try {
-  //     final fetchedProducts = await ProductService().fetchAllProducts();
-  //     if (mounted) {
-  //       setState(() {
-  //         products = fetchedProducts;
-  //         _isLoading = false;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print("⚠️ Error loading products: $e");
-  //     if (mounted) {
-  //       setState(() {
-  //         _isLoading = false;
-  //       });
-  //     }
-  //   }
-  // }
 
   Future<void> loadRecommendations() async {
     try {
@@ -99,33 +82,48 @@ class _ProductPageState extends State<ProductPage> {
   }
 
   Future<void> fetchAverageRatingAndComments() async {
+    setState(() {
+      _isCommentsLoading = true;
+    });
     try {
       final ratings = await RatingService()
           .getRatings(productId: widget.product.productId.toString());
+      print("Fetched ratings: $ratings"); // Debug log
       if (ratings.isNotEmpty) {
         double total = ratings.fold(
             0.0, (sum, item) => sum + (item['ratingValue'] as int).toDouble());
         setState(() {
           _averageRating = total / ratings.length;
         });
-        // Fetch user data for each comment
-        _comments = await Future.wait(ratings
-            .where((item) =>
-                item['comment'] != null && item['comment'].trim().isNotEmpty)
-            .map((item) async {
+        _comments = await Future.wait(ratings.map((item) async {
           final email = await getEmailFromUserId(item['userId']);
           final userData = await USerService().fetchUserByEmail(email);
+          print("Comment data: $item"); // Debug log
           return {
-            'comment': item['comment'],
+            'comment': item['comment']?.isNotEmpty == true
+                ? item['comment']
+                : 'No comment provided',
             'rating': item['ratingValue'],
             'userName': userData?.name ?? 'Anonymous',
             'profileImage': userData?.profileImage ??
-                'https://example.com/default-profile.png',
+                null, // Changed to null to trigger local asset
           };
         }).toList());
+        print("Processed comments: $_comments"); // Debug log
+      } else {
+        setState(() {
+          _comments = [];
+        });
       }
     } catch (e) {
       print("⚠️ Error fetching ratings: $e");
+      setState(() {
+        _comments = [];
+      });
+    } finally {
+      setState(() {
+        _isCommentsLoading = false;
+      });
     }
   }
 
@@ -138,16 +136,15 @@ class _ProductPageState extends State<ProductPage> {
         comment:
             _commentController.text.isNotEmpty ? _commentController.text : null,
       );
-      // Provide feedback using a Snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Rating and comment submitted successfully!')),
       );
       _commentController.clear();
       setState(() {
         _userRating = 0.0;
-        // Update the UI to reflect the new rating
-        // For example, you could refresh the list of ratings or update an average rating display
       });
+      // Refresh comments after submission
+      await fetchAverageRatingAndComments();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to submit rating: $e')),
@@ -445,43 +442,65 @@ class _ProductPageState extends State<ProductPage> {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           SizedBox(height: 10),
-                          ..._comments
-                              .map((comment) => Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 5),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        CircleAvatar(
-                                          backgroundImage: NetworkImage(
-                                              comment['profileImage']),
-                                          radius: 20,
-                                        ),
-                                        SizedBox(width: 10),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(comment['userName'],
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              Text(
-                                                  'Rating: ${comment['rating']}',
-                                                  style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold)),
-                                              Text(comment['comment'] ??
-                                                  'No comment provided'),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
+                          _isCommentsLoading
+                              ? Center(child: CircularProgressIndicator())
+                              : _comments.isEmpty
+                                  ? Text('No comments yet.',
+                                      style: TextStyle(color: Colors.grey))
+                                  : Column(
+                                      children: _comments
+                                          .map((comment) => Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        vertical: 5),
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    CircleAvatar(
+                                                      backgroundImage: comment[
+                                                                      'profileImage'] !=
+                                                                  null &&
+                                                              comment['profileImage']
+                                                                  .startsWith(
+                                                                      'http')
+                                                          ? NetworkImage(comment[
+                                                              'profileImage'])
+                                                          : AssetImage(
+                                                                  'assets/images/user (1).png')
+                                                              as ImageProvider,
+                                                      radius: 20,
+                                                    ),
+                                                    SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                              comment[
+                                                                  'userName'],
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)),
+                                                          Text(
+                                                              'Rating: ${comment['rating']}',
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold)),
+                                                          Text(comment[
+                                                              'comment']),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ))
+                                          .toList(),
                                     ),
-                                  ))
-                              .toList(),
                         ],
                       ),
                     ),
@@ -540,9 +559,12 @@ class _ProductPageState extends State<ProductPage> {
                       onPressed: () {
                         CartService().addToCart(
                           widget.product.productId,
-                          2,
+                          1,
                         );
-                        showSnackbar(context, tr('product_page.add_to_cart'));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                              content: Text(tr('product_page.add_to_cart'))),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: pkColor,

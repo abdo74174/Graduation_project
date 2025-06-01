@@ -23,7 +23,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
   Map<int, ProductModel> productMap = {};
   final TextEditingController discountController = TextEditingController();
   double discountPercent = 0.0;
-  String appliedCode = '';
+  String appliedCode = 'SAVE100';
 
   @override
   void initState() {
@@ -76,7 +76,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
     String enteredCode = discountController.text.trim().toUpperCase();
     if (enteredCode == 'SAVE10') {
       setState(() {
-        discountPercent = 0.10;
+        discountPercent = 1;
         appliedCode = enteredCode;
       });
     } else {

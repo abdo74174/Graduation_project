@@ -3,7 +3,6 @@ from recommendation import load_data, build_recommendation_model, get_similar_pr
 
 app = Flask(__name__)
 
-# تحميل البيانات وبناء النموذج
 connection_string = "mssql+pyodbc://sa:sa123456@DESKTOP-6F8T0T6/MedBridge?driver=ODBC+Driver+17+for+SQL+Server"
 df = load_data(connection_string)
 cosine_sim_matrix, df = build_recommendation_model(df)

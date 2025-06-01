@@ -205,9 +205,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.pushReplacementNamed(
+                                // Replace this navigation
+                                Navigator.push(
                                   context,
-                                  AppRoutes.userProfile,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        EditProfilePage(user: user!),
+                                  ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(

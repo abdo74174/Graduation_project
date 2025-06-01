@@ -15,6 +15,7 @@ import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/password/forget_password.dart';
+import 'package:graduation_project/screens/userInfo/info.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
@@ -22,8 +23,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-import 'package:shimmer/main.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -62,27 +61,21 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> fetchUserData(String email) async {
     try {
       final fetchedUser = await USerService().fetchUserByEmail(email);
+      // Debug log
       if (fetchedUser != null) {
         setState(() {
           user = fetchedUser;
         });
-        print(
-            'Fetched user: ${fetchedUser.email}, status: ${fetchedUser.status}'); // Debug log
+        // Debug log
       } else {
-        throw Exception("User not found");
+        throw Exception("User not found for email: $email");
       }
     } catch (e) {
-      print("Error fetching user: $e");
+      // Debug log
       setState(() {
         user = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to fetch user data: $e'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
-      rethrow; // Rethrow to handle in login flow
+      rethrow;
     }
   }
 
@@ -138,7 +131,7 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => _loggingIn = true);
 
-    if (!_allowOfflineLogin) {
+    if (!_allowOfflineLogin && !_serverOnline) {
       final ok = await _statusService.checkAndUpdateServerStatus();
       if (!mounted) return;
       if (!ok) {
@@ -161,6 +154,7 @@ class _LoginPageState extends State<LoginPage> {
     String? kindOfWork;
     String? medicalSpecialist;
     bool isAdmin = false;
+    UserStatus? status; // Changed from int? to UserStatus?
 
     final prefs = await SharedPreferences.getInstance();
 
@@ -176,7 +170,6 @@ class _LoginPageState extends State<LoginPage> {
           if (userId == null) {
             errorMessage = 'login_id_error'.tr();
           } else {
-            // Fetch user data
             await fetchUserData(_emailCtrl.text.trim());
             if (user == null) {
               errorMessage = 'user_fetch_error'.tr();
@@ -185,8 +178,8 @@ class _LoginPageState extends State<LoginPage> {
               kindOfWork = user!.kindOfWork;
               medicalSpecialist = user!.medicalSpecialist;
               isAdmin = user!.isAdmin;
+              status = user!.status;
 
-              // Save to SharedPreferences for consistency
               await prefs.setString('kindOfWork', kindOfWork);
               if (medicalSpecialist != null) {
                 await prefs.setString('medicalSpecialist', medicalSpecialist);
@@ -194,12 +187,29 @@ class _LoginPageState extends State<LoginPage> {
                 await prefs.remove('medicalSpecialist');
               }
               await prefs.setBool('isAdmin', isAdmin);
-              await prefs.setInt(
-                  'status', user!.status); // For other parts of the app
+              await prefs.setInt('status', status.index); // Store enum index
+              await prefs.setString('email', _emailCtrl.text.trim());
+
+              // Check user status for blocked or deactivated accounts
+              if (status == UserStatus.blocked ||
+                  status == UserStatus.deactivated) {
+                setState(() => _loggingIn = false);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AccountStatusScreen(
+                      isBlocked: status == UserStatus.blocked,
+                      email: _emailCtrl.text.trim(),
+                    ),
+                  ),
+                );
+                return;
+              }
+
               context.read<UserCubit>().setUser(
                     userId,
                     _emailCtrl.text.trim(),
-                    kindOfWork,
+                    kindOfWork ?? '',
                     medicalSpecialist,
                     isAdmin,
                   );
@@ -208,8 +218,9 @@ class _LoginPageState extends State<LoginPage> {
         } else {
           errorMessage = 'login_credentials_error'.tr();
         }
-      } on FirebaseAuthException catch (e) {
-        errorMessage = e.message ?? 'firebase_login_error'.tr();
+      } catch (e) {
+        errorMessage =
+            (e as FirebaseAuthException).message ?? 'firebase_login_error'.tr();
         success = false;
       } on DioException catch (e) {
         errorMessage = e.response?.data['message'] ??
@@ -221,6 +232,7 @@ class _LoginPageState extends State<LoginPage> {
         success = false;
       }
     } else {
+      // Offline login
       final inputEmail = _emailCtrl.text.trim().toLowerCase();
       final inputPassword = _passCtrl.text.trim();
 
@@ -230,35 +242,55 @@ class _LoginPageState extends State<LoginPage> {
           (u) => u.email.toLowerCase() == inputEmail,
           orElse: () => throw Exception('User not found'),
         );
+        // Debug log
       } catch (e) {
         dummyUser = null;
+        // Debug log
       }
 
       if (dummyUser != null && dummyUser.password == inputPassword) {
         success = true;
         userId = 'dummy_${inputEmail.hashCode}';
         setState(() {
-          user = dummyUser; // Set user for offline login
+          user = dummyUser;
         });
-        print(
-            'Offline user: ${dummyUser.email}, status: ${dummyUser.status}'); // Debug log
         kindOfWork = dummyUser.kindOfWork;
         medicalSpecialist = dummyUser.medicalSpecialist;
         isAdmin = dummyUser.isAdmin;
+        status = dummyUser.status;
+
+        // Debug logs
 
         await prefs.setString('user_id', userId);
-        await prefs.setString('kindOfWork', kindOfWork);
-        await prefs.setInt('status', user!.status);
+        await prefs.setString('kindOfWork', kindOfWork ?? '');
+        await prefs.setInt('status', status.index);
+        await prefs.setString('email', inputEmail);
         if (medicalSpecialist != null) {
           await prefs.setString('medicalSpecialist', medicalSpecialist);
         } else {
           await prefs.remove('medicalSpecialist');
         }
         await prefs.setBool('isAdmin', isAdmin);
+
+        // Check user status for blocked or pending accounts
+        if (status == 1 || status == 2) {
+          setState(() => _loggingIn = false);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AccountStatusScreen(
+                isBlocked: status == 1,
+                email: inputEmail,
+              ),
+            ),
+          );
+          return; // Exit to prevent further navigation
+        }
+
         context.read<UserCubit>().setUser(
               userId,
-              _emailCtrl.text.trim(),
-              kindOfWork,
+              inputEmail,
+              kindOfWork ?? '',
               medicalSpecialist,
               isAdmin,
             );
@@ -269,33 +301,16 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     setState(() => _loggingIn = false);
-    if (success && user != null) {
-      print('Final status check: ${user!.status}'); // Debug log
-      if (user!.status == 1 || user!.status == 2) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => AccountStatusScreen(
-              isBlocked: user!.status == 1,
-              email: _emailCtrl.text.trim(),
-            ),
-          ),
-        );
-        return;
-      }
 
+    if (success) {
       await prefs.setBool('isLoggedIn', true);
-      if (user!.isAdmin) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) => RoleSelectionScreen(
+                  initialKindOfWork: 'doctor',
+                )),
+      );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -343,6 +358,7 @@ class _LoginPageState extends State<LoginPage> {
           'createdAt': FieldValue.serverTimestamp(),
         });
 
+        setState(() => _loggingIn = false);
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -372,9 +388,11 @@ class _LoginPageState extends State<LoginPage> {
             throw Exception('Failed to fetch user data');
           }
 
+          // Debug logs
+
           await prefs.setString('user_id', userId);
           await prefs.setString('kindOfWork', user!.kindOfWork);
-          await prefs.setInt('status', user!.status);
+          await prefs.setInt('status', user!.status.index);
           if (user!.medicalSpecialist != null) {
             await prefs.setString(
                 'medicalSpecialist', user!.medicalSpecialist!);
@@ -395,8 +413,9 @@ class _LoginPageState extends State<LoginPage> {
                 user!.isAdmin,
               );
 
-          print('Google Sign-In status check: ${user!.status}'); // Debug log
+          // Check user status for blocked or pending accounts
           if (user!.status == 1 || user!.status == 2) {
+            setState(() => _loggingIn = false);
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -409,27 +428,20 @@ class _LoginPageState extends State<LoginPage> {
             return;
           }
 
-          if (user!.isAdmin) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomePage()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => HomePage()),
-            );
-          }
+          setState(() => _loggingIn = false);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
         } else {
           throw Exception('Backend sign-in failed: ${response.body}');
         }
       }
     } catch (e) {
+      setState(() => _loggingIn = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('${'google_sign_in_error'.tr()}: $e')),
       );
-    } finally {
-      setState(() => _loggingIn = false);
     }
   }
 
@@ -443,173 +455,291 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            children: [
-              Image.asset('assets/images/laboratory.png',
-                  width: 160, height: 160),
-              const SizedBox(height: 24),
-              Text('login'.tr(),
-                  style: const TextStyle(fontSize: 28, color: Colors.blue)),
-              const SizedBox(height: 8),
-              Text('login_continue'.tr()),
-              const SizedBox(height: 24),
-              TextField(
-                controller: _emailCtrl,
-                decoration: InputDecoration(
-                  hintText: 'email'.tr(),
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  errorText: _emailErr,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue, width: 2),
-                  ),
-                ),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passCtrl,
-                decoration: InputDecoration(
-                  hintText: 'password'.tr(),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+      body: SingleChildScrollView(
+        child: Container(
+          height: size.height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isDark
+                  ? [Colors.black, Color(0xFF1A1A1A)]
+                  : [Color(0xFF3B8FDA).withOpacity(0.1), Colors.white],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 50),
+                  // Logo and Welcome Text
+                  Center(
+                    child: Image.asset(
+                      'assets/images/AppIcon.png',
+                      height: 100,
                     ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
+                  ),
+                  const SizedBox(height: 40),
+                  Text(
+                    'Welcome Back'.tr(),
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    'Sign in to continue'.tr(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  // Email Field
+                  _buildTextField(
+                    controller: _emailCtrl,
+                    label: 'Email'.tr(),
+                    prefixIcon: Icons.email_outlined,
+                    error: _emailErr,
+                  ),
+                  const SizedBox(height: 20),
+                  // Password Field
+                  _buildTextField(
+                    controller: _passCtrl,
+                    label: 'Password'.tr(),
+                    prefixIcon: Icons.lock_outline,
+                    error: _passErr,
+                    isPassword: true,
+                    obscureText: _obscurePassword,
+                    onToggleVisibility: () {
+                      setState(() => _obscurePassword = !_obscurePassword);
                     },
                   ),
-                  errorText: _passErr,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.blue, width: 2),
-                  ),
-                ),
-                obscureText: _obscurePassword,
-              ),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const ForgottenPasswordScreen()),
-                  ),
-                  child: Text('forgot_password'.tr()),
-                ),
-              ),
-              if (!_serverOnline) ...[
-                const SizedBox(height: 16),
-                Text('server_offline_retrying'.tr(),
-                    style: const TextStyle(color: Colors.red)),
-                const SizedBox(height: 8),
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 60,
-                      height: 60,
-                      child: CircularProgressIndicator(
-                        value: _count / 10,
-                        color: Colors.red,
+                  const SizedBox(height: 12),
+                  // Forgot Password
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ForgottenPasswordScreen(),
+                        ),
+                      ),
+                      child: Text(
+                        'Forgot Password?'.tr(),
+                        style: TextStyle(
+                          color: Color(0xFF3B8FDA),
+                        ),
                       ),
                     ),
-                    Text('$_count', style: const TextStyle(fontSize: 18)),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '${'dummy_credentials'.tr()}\nEmail: $_dummyEmail\nPassword: $_dummyPassword',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ],
-              const SizedBox(height: 24),
-              if (_serverOnline || _allowOfflineLogin)
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _loggingIn ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  ),
+                  const SizedBox(height: 24),
+                  // Login Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _loggingIn ? null : _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF3B8FDA),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
                       ),
-                      elevation: 5,
-                    ),
-                    child: _loggingIn
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                      child: _loggingIn
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              'Login'.tr(),
+                              style: TextStyle(fontSize: 18),
                             ),
-                          )
-                        : Text(
-                            _allowOfflineLogin && !_serverOnline
-                                ? 'login_offline'.tr()
-                                : 'login'.tr(),
-                            style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Divider
+                  Row(
+                    children: [
+                      Expanded(child: Divider()),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Or continue with'.tr(),
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black54,
                           ),
-                  ),
-                ),
-              const SizedBox(height: 16),
-              if (_serverOnline)
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: OutlinedButton.icon(
-                    onPressed: _loggingIn ? null : _loginWithGoogle,
-                    icon: Image.asset('assets/images/google.png',
-                        width: 24, height: 24),
-                    label: Text(
-                      'sign_in_with_google'.tr(),
-                      style: const TextStyle(color: Colors.black),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.grey),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                      elevation: 5,
+                      Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Social Login Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildSocialButton(
+                        'assets/images/google.png',
+                        onTap: () {
+                          // Implement Google sign in
+                        },
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  // Register Link
+                  Center(
+                    child: TextButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterForm(),
+                        ),
+                      ),
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                          children: [
+                            TextSpan(text: "Don't have an account? ".tr()),
+                            TextSpan(
+                              text: 'Register'.tr(),
+                              style: TextStyle(
+                                color: Color(0xFF3B8FDA),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('no_account'.tr()),
-                  TextButton(
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const RegisterForm()),
-                    ),
-                    child: Text('register'.tr()),
-                  ),
+                  const SizedBox(height: 24),
                 ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData prefixIcon,
+    String? error,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: error != null ? Colors.red : Colors.transparent,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: Offset(0, 5),
               ),
             ],
           ),
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword && obscureText,
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black87,
+            ),
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black54,
+              ),
+              prefixIcon: Icon(
+                prefixIcon,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Color(0xFF3B8FDA),
+              ),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        obscureText
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : Colors.black54,
+                      ),
+                      onPressed: onToggleVisibility,
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+            ),
+          ),
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 16),
+            child: Text(
+              error,
+              style: TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSocialButton(String iconPath, {required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white.withOpacity(0.1)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(15),
+          child: Image.asset(iconPath),
         ),
       ),
     );

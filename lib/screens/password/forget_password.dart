@@ -1,9 +1,11 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:graduation_project/screens/Auth/login_page.dart';
 import 'package:graduation_project/screens/password/Password%20Reset%20Screen%20.dart';
 import 'package:graduation_project/services/passwordReset.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ForgottenPasswordScreen extends StatefulWidget {
   const ForgottenPasswordScreen({Key? key}) : super(key: key);
@@ -15,37 +17,43 @@ class ForgottenPasswordScreen extends StatefulWidget {
 class _ForgotPasswordScreenState extends State<ForgottenPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  String _message = '';
-  bool _isLoading = false;
   final ForgotPasswordService _forgotPasswordService =
       ForgotPasswordService(dio: Dio());
+  String? _emailErr;
+  bool _isLoading = false;
 
   bool _isValidEmail(String email) {
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     return emailRegex.hasMatch(email);
   }
 
+  void _validate() {
+    setState(() {
+      _emailErr = null;
+      final email = _emailController.text.trim();
+      if (email.isEmpty) {
+        _emailErr = 'email_empty'.tr();
+      } else if (!_isValidEmail(email)) {
+        _emailErr = 'email_invalid'.tr();
+      }
+    });
+  }
+
   Future<void> _sendOtp() async {
-    final email = _emailController.text.trim();
-
-    if (email.isEmpty) {
-      setState(() => _message = 'Please enter your email address');
-      return;
-    }
-
-    if (!_isValidEmail(email)) {
-      setState(() => _message = 'Please enter a valid email address');
+    _validate();
+    if (_emailErr != null) {
       return;
     }
 
     setState(() {
       _isLoading = true;
-      _message = '';
     });
 
     try {
-      debugPrint('Checking Firebase user for email: $email');
-      final methods = await _auth.fetchSignInMethodsForEmail(email);
+      debugPrint(
+          'Checking Firebase user for email: ${_emailController.text.trim()}');
+      final methods =
+          await _auth.fetchSignInMethodsForEmail(_emailController.text.trim());
       final isFirebaseUser = methods.isNotEmpty;
       debugPrint('Is Firebase user: $isFirebaseUser');
 
@@ -56,47 +64,67 @@ class _ForgotPasswordScreenState extends State<ForgottenPasswordScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => PasswordResetScreen(
-              email: email,
+              email: _emailController.text.trim(),
               isFirebaseUser: true,
             ),
           ),
         );
       } else {
-        debugPrint('Sending OTP for email: $email');
-        var response = await _forgotPasswordService.sendOtp(email);
+        debugPrint('Sending OTP for email: ${_emailController.text.trim()}');
+        var response =
+            await _forgotPasswordService.sendOtp(_emailController.text.trim());
         debugPrint('Send OTP response: $response');
 
         if (!mounted) return;
 
-        setState(() {
-          _isLoading = false;
-          if (response['success'] == true) {
-            debugPrint('Navigating to PasswordResetScreen for OTP flow');
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => PasswordResetScreen(email: email),
-              ),
-            );
-            _emailController.clear();
-          } else {
-            _message =
-                response['message'] ?? 'An error occurred. Please try again.';
-          }
-        });
+        if (response['success'] == true) {
+          debugPrint('Navigating to PasswordResetScreen for OTP flow');
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  PasswordResetScreen(email: _emailController.text.trim()),
+            ),
+          );
+          _emailController.clear();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('OTP sent to ${_emailController.text.trim()}'.tr()),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['message'] ??
+                  'An error occurred. Please try again.'.tr()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     } on FirebaseAuthException catch (e) {
       debugPrint('FirebaseAuthException: ${e.code}, ${e.message}');
-      setState(() {
-        _isLoading = false;
-        _message = _getFirebaseErrorMessage(e);
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_getFirebaseErrorMessage(e).tr()),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       debugPrint('General error: ${e.toString()}');
       if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Failed to connect to server. Please check your connection.'
+                  .tr()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
       setState(() {
         _isLoading = false;
-        _message = 'Failed to connect to server. Please check your connection.';
       });
     }
   }
@@ -116,112 +144,191 @@ class _ForgotPasswordScreenState extends State<ForgottenPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              const SizedBox(height: 16),
-              Row(
+      body: SingleChildScrollView(
+        child: Container(
+          height: size.height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isDark
+                  ? [Colors.black, const Color(0xFF1A1A1A)]
+                  : [const Color(0xFF3B8FDA).withOpacity(0.1), Colors.white],
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new),
-                    onPressed: () {
-                      debugPrint('Navigating back to LoginPage');
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginPage()));
-                    },
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          Icons.arrow_back_ios_new,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                        onPressed: () {
+                          debugPrint('Navigating back to LoginPage');
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const LoginPage()),
+                          );
+                        },
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 40),
+                  Center(
+                    child: Image.asset(
+                      'assets/images/AppIcon.png',
+                      height: 100,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  Text(
+                    'Forgot Password'.tr(),
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  Text(
+                    'Please enter your email to reset your password'.tr(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  _buildTextField(
+                    controller: _emailController,
+                    label: 'Email'.tr(),
+                    prefixIcon: Icons.email_outlined,
+                    error: _emailErr,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _sendOtp,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3B8FDA),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Text(
+                              'Continue'.tr(),
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                    ),
+                  ),
+                  const Spacer(),
                 ],
               ),
-              const SizedBox(height: 10),
-              const Text(
-                "Forgot Password",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "Please enter your email to reset your password",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.black54),
-              ),
-              const SizedBox(height: 30),
-              Image.asset(
-                  'assets/images/computer-security-with-login-password-padlock.jpg',
-                  height: 160),
-              const SizedBox(height: 40),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Email",
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
-                  color: Colors.white,
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.email_outlined, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          hintText: "Enter your email",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _sendOtp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0D6EFD),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Continue", style: TextStyle(fontSize: 16)),
-                ),
-              ),
-              const SizedBox(height: 30),
-              if (_message.isNotEmpty)
-                Text(
-                  _message,
-                  style: TextStyle(
-                    color: _message.toLowerCase().contains('error') ||
-                            _message.toLowerCase().contains('invalid')
-                        ? Colors.red
-                        : Colors.green,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData prefixIcon,
+    String? error,
+    bool isPassword = false,
+    bool obscureText = false,
+    VoidCallback? onToggleVisibility,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white.withOpacity(0.1)
+                : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: error != null ? Colors.red : Colors.transparent,
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: controller,
+            obscureText: isPassword && obscureText,
+            style: TextStyle(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black87,
+            ),
+            decoration: InputDecoration(
+              labelText: label,
+              labelStyle: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : Colors.black54,
+              ),
+              prefixIcon: Icon(
+                prefixIcon,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white70
+                    : const Color(0xFF3B8FDA),
+              ),
+              suffixIcon: isPassword
+                  ? IconButton(
+                      icon: Icon(
+                        obscureText
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white70
+                            : Colors.black54,
+                      ),
+                      onPressed: onToggleVisibility,
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.transparent,
+            ),
+          ),
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, left: 16),
+            child: Text(
+              error,
+              style: const TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 
