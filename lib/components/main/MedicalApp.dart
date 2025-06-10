@@ -10,6 +10,7 @@ import 'package:graduation_project/screens/homepage.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/routes.dart';
 
 class MedicalApp extends StatelessWidget {
   final bool isLoggedIn;
@@ -28,16 +29,7 @@ class MedicalApp extends StatelessWidget {
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
       home: isLoggedIn ? const HomePage() : const LoginPage(),
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          case '/':
-            return MaterialPageRoute(
-              builder: (_) => isLoggedIn ? const HomePage() : const LoginPage(),
-            );
-          default:
-            return null;
-        }
-      }, // Add this line
+      onGenerateRoute: AppRoutes.generateRoute,
       routes: {
         '/dashboard': (context) => DashboardScreen(),
         '/products': (context) => ProductsPage(),

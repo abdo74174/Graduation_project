@@ -71,20 +71,26 @@ class ProductCard extends StatelessWidget {
                     topLeft: Radius.circular(_Dim.borderRadius),
                     topRight: Radius.circular(_Dim.borderRadius),
                   ),
-                  child: Image.network(
-                    product.images?.isNotEmpty == true
-                        ? product.images[0]
-                        : defaultProductImage,
-                    width: double.infinity,
-                    height: _Dim.imageHeight,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      defaultProductImage,
-                      width: double.infinity,
-                      height: _Dim.imageHeight,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
+                  child: product.images?.isNotEmpty == true
+                      ? Image.network(
+                          product.images[0],
+                          width: double.infinity,
+                          height: _Dim.imageHeight,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Image.asset(
+                            defaultProductImage,
+                            width: double.infinity,
+                            height: _Dim.imageHeight,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Image.asset(
+                          defaultProductImage,
+                          width: double.infinity,
+                          height: _Dim.imageHeight,
+                          fit: BoxFit.cover,
+                        ),
                 ),
                 if (product.discount > 0)
                   Positioned(

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:graduation_project/components/home_page/notched_navigation_bar.dart';
 import 'package:graduation_project/components/home_page/searchbar.dart';
@@ -93,7 +92,7 @@ class _HomePageState extends State<HomePage> {
           ),
         );
       },
-      child: Container(
+      child: SizedBox(
         width: double.infinity,
         height: 200,
         child: Stack(
@@ -105,6 +104,7 @@ class _HomePageState extends State<HomePage> {
                 border: Border.all(color: Color(pkColor.value), width: 1.0),
                 boxShadow: [
                   BoxShadow(
+                    // ignore: deprecated_member_use
                     color: Color(pkColor.value).withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
@@ -462,7 +462,7 @@ class _HomePageState extends State<HomePage> {
     final currentScreens = [
       _buildHomeContent(),
       const CategoryScreen(),
-      const ShoppingCartPage(),
+      const FavouritePage(),
       const ProfilePage(),
     ];
 
@@ -486,7 +486,7 @@ class _HomePageState extends State<HomePage> {
             color: Colors.white,
           ),
           Icon(
-            Icons.shopping_cart_outlined,
+            Icons.favorite_border_outlined,
             size: 30,
             color: Colors.white,
           ),
@@ -532,16 +532,6 @@ class _HomePageState extends State<HomePage> {
             color: isDark ? Colors.white : Colors.black,
           ),
           tooltip: 'Chat with Support',
-        ),
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavouritePage()),
-            );
-          },
-          icon: Icon(Icons.favorite_border_outlined,
-              color: isDark ? Colors.white : Colors.black),
         ),
         IconButton(
           onPressed: () {

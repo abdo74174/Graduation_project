@@ -50,19 +50,17 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       final confirmPassword = _confirmPasswordController.text.trim();
 
       if (!widget.isFirebaseUser && otp.isEmpty) {
-        _otpErr = 'otp_empty'.tr();
+        _otpErr = 'password_reset.otp_empty'.tr();
       }
       if (newPassword.isEmpty) {
         _newPasswordErr = 'password_empty'.tr();
       } else if (!isPasswordValid(newPassword)) {
-        _newPasswordErr =
-            'Password must contain 8+ chars, 1 letter, 1 number, and 1 special character'
-                .tr();
+        _newPasswordErr = 'password_reset.password_pattern_error'.tr();
       }
       if (confirmPassword.isEmpty) {
-        _confirmPasswordErr = 'confirm_password_empty'.tr();
+        _confirmPasswordErr = 'password_reset.confirm_password_error'.tr();
       } else if (newPassword != confirmPassword) {
-        _confirmPasswordErr = 'passwords_do_not_match'.tr();
+        _confirmPasswordErr = 'password_reset.passwords_do_not_match'.tr();
       }
     });
   }
@@ -91,8 +89,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       await _auth.sendPasswordResetEmail(email: widget.email);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('Password reset email sent. Please check your inbox.'.tr()),
+          content: Text('password_reset.password_reset_email_sent'.tr()),
           backgroundColor: Colors.green,
         ),
       );
@@ -116,7 +113,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       debugPrint('General error: ${e.toString()}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('An error occurred: ${e.toString()}'.tr()),
+          content: Text('password_reset.general_error_occurred'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -170,7 +167,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
           await user.updatePassword(_newPasswordController.text.trim());
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Password reset successfully'.tr()),
+              content: Text('password_reset.password_reset_success'.tr()),
               backgroundColor: Colors.green,
             ),
           );
@@ -195,7 +192,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(response['message'] ??
-                'Failed to reset password. Please try again.'.tr()),
+                'password_reset.failed_to_reset_password'.tr()),
             backgroundColor: Colors.red,
           ),
         );
@@ -213,9 +210,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-              'An error occurred. Please check your connection or try again.'
-                  .tr()),
+          content: Text('password_reset.general_error_occurred'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -229,21 +224,21 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
   String _getFirebaseErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'invalid-custom-token':
-        return 'Invalid authentication token. Please try again.';
+        return 'invalid-custom-token';
       case 'user-mismatch':
-        return 'User email does not match. Please contact support.';
+        return 'user-mismatch';
       case 'requires-recent-login':
-        return 'This operation requires recent authentication. Please sign in again.';
+        return 'requires-recent-login';
       case 'user-not-found':
-        return 'No user found with this email.';
+        return 'user-not-found';
       case 'too-many-requests':
-        return 'Too many attempts. Please try again later.';
+        return 'too-many-requests';
       case 'weak-password':
-        return 'Password is too weak. Please choose a stronger password.';
+        return 'weak-password';
       case 'invalid-credential':
-        return 'The authentication credential is invalid or expired. Please try again.';
+        return 'invalid-credential';
       default:
-        return 'An error occurred: ${e.message}';
+        return 'general_error_occurred';
     }
   }
 
@@ -304,7 +299,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   Text(
                     widget.isFirebaseUser
                         ? 'Enter new password for ${widget.email}'.tr()
-                        : 'Enter the OTP sent to ${widget.email}'.tr(),
+                        : 'password_reset.enter_otp_sent_to_email'
+                            .tr(args: [widget.email]),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
@@ -315,8 +311,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   if (!widget.isFirebaseUser) ...[
                     _buildTextField(
                       controller: _otpController,
-                      label: 'OTP Code'.tr(),
-                      prefixIcon: Icons.lock_outline,
+                      label: 'password_reset.otp_code_label'.tr(),
+                      prefixIcon: Icons.vpn_key,
                       error: _otpErr,
                       keyboardType: TextInputType.number,
                       maxLength: 6,
@@ -325,8 +321,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   ],
                   _buildTextField(
                     controller: _newPasswordController,
-                    label: 'New Password'.tr(),
-                    prefixIcon: Icons.lock_outline,
+                    label: 'password_reset.new_password_label'.tr(),
+                    prefixIcon: Icons.lock,
                     error: _newPasswordErr,
                     isPassword: true,
                     obscureText: _obscurePassword,
@@ -346,8 +342,8 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                   const SizedBox(height: 20),
                   _buildTextField(
                     controller: _confirmPasswordController,
-                    label: 'Confirm Password'.tr(),
-                    prefixIcon: Icons.lock_outline,
+                    label: 'password_reset.confirm_password_label'.tr(),
+                    prefixIcon: Icons.lock,
                     error: _confirmPasswordErr,
                     isPassword: true,
                     obscureText: _obscureConfirmPassword,
@@ -372,7 +368,7 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : Text(
-                              'Reset Password'.tr(),
+                              'password_reset.reset_password_button'.tr(),
                               style: const TextStyle(fontSize: 18),
                             ),
                     ),

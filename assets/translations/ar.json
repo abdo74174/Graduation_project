@@ -23,7 +23,17 @@
         "email": "البريد الإلكتروني",
         "password": "كلمة المرور",
         "confirm_password": "تأكيد كلمة المرور",
-        "username": "اسم المستخدم"
+        "username": "اسم المستخدم",
+        "forgot_password_messages": {
+            "otp_sent_to_email": "تم إرسال رمز OTP إلى %s",
+            "general_error_occurred": "حدث خطأ. يرجى المحاولة مرة أخرى.",
+            "failed_to_connect_server": "فشل الاتصال بالخادم. يرجى التحقق من اتصالك.",
+            "email_not_valid": "عنوان البريد الإلكتروني غير صالح.",
+            "no_user_found": "لم يتم العثور على مستخدم بهذا البريد الإلكتروني.",
+            "too_many_requests": "الكثير من المحاولات. يرجى المحاولة مرة أخرى لاحقًا.",
+            "firebase_general_error": "حدث خطأ: %s",
+            "enter_email_to_reset_password": "يرجى إدخال بريدك الإلكتروني لإعادة تعيين كلمة المرور"
+        }
     },
     "product": {
         "name": "اسم المنتج",
@@ -46,7 +56,12 @@
         "total": "الإجمالي",
         "checkout": "الدفع",
         "remove_item": "إزالة العنصر",
-        "clear_cart": "تفريغ السلة"
+        "clear_cart": "تفريغ السلة",
+        "remove_item_confirmation": "هل أنت متأكد أنك تريد إزالة هذا العنصر؟",
+        "enter_discount_code": "أدخل رمز الخصم",
+        "apply": "تطبيق",
+        "proceed_to_checkout": "المتابعة للدفع",
+        "you_are_offline": "أنت غير متصل. عرض بيانات سلة التسوق الوهمية."
     },
     "profile": {
         "title": "الملف الشخصي",
@@ -54,7 +69,14 @@
         "settings": "الإعدادات",
         "orders": "الطلبات",
         "favorites": "المفضلات",
-        "addresses": "العناوين"
+        "addresses": "العناوين",
+        "edit_profile": "تعديل الملف الشخصي",
+        "user_name": "اسم المستخدم",
+        "phone": "الهاتف",
+        "address": "العنوان",
+        "save_changes": "حفظ التغييرات",
+        "updated_successfully": "تم التحديث بنجاح",
+        "update_failed": "فشل التحديث"
     },
     "settings": {
         "title": "الإعدادات",
@@ -81,6 +103,23 @@
     "server_offline_msg": "الخادم غير متصل، بدء العد التنازلي للدخول بدون اتصال",
     "offline_login_fail": "فشل تسجيل الدخول (بدون اتصال): بريد إلكتروني أو كلمة مرور غير صحيحة\n\nبيانات تجريبية:\nالبريد: user@gmail.com\nكلمة المرور: user",
     "login_fail": "فشل تسجيل الدخول: بيانات اعتماد خاطئة",
+    "password_reset": {
+        "otp_empty": "رمز OTP لا يمكن أن يكون فارغًا",
+        "password_pattern_error": "يجب أن تحتوي كلمة المرور على الأقل على 8 أحرف، بما في ذلك حرف ورقم ورمز خاص.",
+        "confirm_password_error": "تأكيد كلمة المرور لا يمكن أن يكون فارغًا",
+        "passwords_do_not_match": "كلمات المرور غير متطابقة",
+        "password_reset_email_sent": "تم إرسال بريد إعادة تعيين كلمة المرور. يرجى التحقق من بريدك الوارد.",
+        "password_reset_success": "تم إعادة تعيين كلمة المرور بنجاح",
+        "failed_to_reset_password": "فشل في إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.",
+        "authentication_token_missing": "رمز المصادقة مفقود من استجابة الخادم. يرجى المحاولة مرة أخرى.",
+        "general_error_occurred": "حدث خطأ. يرجى التحقق من اتصالك أو المحاولة مرة أخرى.",
+        "otp_code_label": "رمز OTP",
+        "new_password_label": "كلمة المرور الجديدة",
+        "confirm_password_label": "تأكيد كلمة المرور",
+        "reset_password_button": "إعادة تعيين كلمة المرور",
+        "enter_new_password_for_email": "أدخل كلمة مرور جديدة لـ %s",
+        "enter_otp_sent_to_email": "أدخل رمز OTP المرسل إلى %s"
+    },
     "drawer": {
         "profile": "الملف الشخصي",
         "settings": "الإعدادات",

@@ -7,7 +7,6 @@ import 'package:graduation_project/screens/setting_page.dart';
 import 'package:graduation_project/screens/adding_pr_cat_sub.dart/add_product.dart';
 import 'package:graduation_project/screens/contact_us.dart';
 import 'package:graduation_project/screens/userInfo/profile.dart';
-import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/screens/user_products_page.dart';
 import 'drawer.dart';
 
@@ -46,17 +45,6 @@ class DrawerItems extends StatelessWidget {
       ),
     );
 
-    items.add(
-      ListTile(
-        leading: const Icon(Icons.settings),
-        title: Text('drawer.settings'.tr()),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SettingsPage()),
-        ),
-      ),
-    );
-
     // Conditional items based on drawer type
     switch (drawerType) {
       case DrawerType.main:
@@ -67,14 +55,6 @@ class DrawerItems extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ContactUsPage()),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.favorite_border),
-            title: Text('drawer.favorites'.tr()),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavouritePage()),
             ),
           ),
           ListTile(
@@ -118,14 +98,6 @@ class DrawerItems extends StatelessWidget {
       case DrawerType.buyer:
         items.addAll([
           ListTile(
-            leading: const Icon(Icons.favorite_border),
-            title: Text('drawer.favorites'.tr()),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FavouritePage()),
-            ),
-          ),
-          ListTile(
             leading: const Icon(Icons.phone),
             title: Text('drawer.contact_us'.tr()),
             onTap: () => Navigator.push(
@@ -150,6 +122,18 @@ class DrawerItems extends StatelessWidget {
         ),
       );
     }
+
+    // Add Settings just before Logout
+    items.add(
+      ListTile(
+        leading: const Icon(Icons.settings),
+        title: Text('drawer.settings'.tr()),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SettingsPage()),
+        ),
+      ),
+    );
 
     // Logout always appears last
     items.add(

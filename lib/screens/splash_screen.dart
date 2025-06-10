@@ -93,7 +93,7 @@ class WelcomePage extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      'Login'.tr(),
+                      'auth.login'.tr(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -124,7 +124,7 @@ class WelcomePage extends StatelessWidget {
                     side: const BorderSide(color: Color(0xFF3E84D7)),
                   ),
                   child: Text(
-                    'Register'.tr(),
+                    'auth.register'.tr(),
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,

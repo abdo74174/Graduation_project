@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:graduation_project/components/main/MedicalApp.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -20,7 +21,7 @@ Future<void> main() async {
   await AndroidAlarmManager.initialize();
   await NotificationService.init();
   await EasyLocalization.ensureInitialized();
-
+  Stripe.publishableKey = 'your_stripe_publishable_key_here';
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }

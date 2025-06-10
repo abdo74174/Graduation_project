@@ -19,7 +19,8 @@ class ImageWidget extends StatefulWidget {
   State<ImageWidget> createState() => _ImageWidgetState();
 }
 
-class _ImageWidgetState extends State<ImageWidget> with SingleTickerProviderStateMixin {
+class _ImageWidgetState extends State<ImageWidget>
+    with SingleTickerProviderStateMixin {
   bool isFavourite = false;
   late SharedPreferences _prefs;
   bool _isPrefsInitialized = false;
@@ -84,7 +85,9 @@ class _ImageWidgetState extends State<ImageWidget> with SingleTickerProviderStat
     if (!_isPrefsInitialized) return;
 
     HapticFeedback.lightImpact();
-    _favAnimationController.forward().then((_) => _favAnimationController.reverse());
+    _favAnimationController
+        .forward()
+        .then((_) => _favAnimationController.reverse());
 
     final newStatus = !isFavourite;
     setState(() => isFavourite = newStatus);
@@ -126,53 +129,53 @@ class _ImageWidgetState extends State<ImageWidget> with SingleTickerProviderStat
           decoration: BoxDecoration(
             image: _isImageError
                 ? const DecorationImage(
-              image: AssetImage(defaultProductImage),
-              fit: BoxFit.cover,
-            )
+                    image: AssetImage(defaultProductImage),
+                    fit: BoxFit.cover,
+                  )
                 : null,
           ),
           child: _isImageError
               ? null
               : Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.network(
-                widget.image,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    child: Container(color: Colors.grey[300]),
-                  );
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (mounted) setState(() => _isImageError = true);
-                  });
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Icon(Icons.error_outline, size: 48, color: Colors.grey),
-                  );
-                },
-              ),
-              // Gradient overlay
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.3),
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.3),
-                    ],
-                  ),
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(
+                      widget.image,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Shimmer.fromColors(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                          child: Container(color: Colors.grey[300]),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) setState(() => _isImageError = true);
+                        });
+                        return Image.asset(
+                          defaultProductImage,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
+                    // Gradient overlay
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.3),
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.3),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
 
         // Favorite Button

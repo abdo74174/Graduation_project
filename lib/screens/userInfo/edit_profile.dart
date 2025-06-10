@@ -136,7 +136,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             TextFormField(
               controller: _nameController,
               decoration: InputDecoration(
-                labelText: "user_name".tr(),
+                labelText: "profile.user_name".tr(),
                 prefixIcon: const Icon(Icons.person),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -148,7 +148,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             TextFormField(
               controller: _emailController,
               decoration: InputDecoration(
-                labelText: "email".tr(),
+                labelText: "auth.email".tr(),
                 prefixIcon: const Icon(Icons.email),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -161,7 +161,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             DropdownButtonFormField<String>(
               value: _selectedCategory,
               decoration: InputDecoration(
-                labelText: "category".tr(),
+                labelText: "product.category".tr(),
                 prefixIcon: const Icon(Icons.medical_services),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -184,7 +184,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             TextFormField(
               controller: _phoneController,
               decoration: InputDecoration(
-                labelText: "Phone".tr(),
+                labelText: "profile.phone".tr(),
                 prefixIcon: const Icon(Icons.phone),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -197,7 +197,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
             TextFormField(
               controller: _addressController,
               decoration: InputDecoration(
-                labelText: "Address".tr(),
+                labelText: "profile.address".tr(),
                 prefixIcon: const Icon(Icons.home),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -219,7 +219,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 onPressed: _saveProfile,
                 child: Text(
-                  "save_changes".tr(),
+                  "profile.save_changes".tr(),
                   style: const TextStyle(color: Colors.white, fontSize: 18),
                 ),
               ),
@@ -265,14 +265,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (!mounted) return;
-      showSnackbar(context, "updated_successfully".tr());
+      showSnackbar(context, "profile.updated_successfully".tr());
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const ProfilePage()),
       );
     } catch (e) {
       if (!mounted) return;
-      showSnackbar(context, "update_failed".tr());
+      showSnackbar(context, "profile.update_failed".tr());
       debugPrint("Profile update error: $e");
     }
   }

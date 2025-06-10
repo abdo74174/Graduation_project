@@ -53,7 +53,7 @@ dependencies:
   flutter_local_notifications: ^19.1.0
   easy_localization: ^3.0.7+1
   flutter_launcher_icons: ^0.14.3
-  fl_chart: ^0.71.0
+  fl_chart: ^1.0.0
   flutter_bloc: ^9.1.0
   speech_to_text: ^7.0.0
   wave: ^0.2.2
@@ -64,6 +64,8 @@ dependencies:
   permission_handler: ^12.0.0+1
   google_sign_in: ^6.3.0
   curved_navigation_bar: ^1.0.6
+  flutter_stripe: ^11.5.0
+  carousel_slider: ^5.1.1
 
 dev_dependencies:
   flutter_test:

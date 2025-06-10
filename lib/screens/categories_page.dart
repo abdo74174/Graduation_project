@@ -89,6 +89,7 @@ class _CategoryScreenState extends State<CategoryScreen>
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         categories = dummyCategories;
         isLoading = false;
@@ -116,6 +117,7 @@ class _CategoryScreenState extends State<CategoryScreen>
       }
     } catch (e) {
       setState(() {
+        if (!mounted) return;
         subcategories = dummySubCategories;
         isLoading = false;
       });

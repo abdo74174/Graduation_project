@@ -18,6 +18,8 @@ import 'package:graduation_project/components/productc/pricing_section.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:shimmer/main.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/screens/chat/chat_page.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -33,6 +35,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _StockQuantity = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
 
   final List<File> _imageFiles = [];
   final ImagePicker _picker = ImagePicker();
@@ -141,62 +145,66 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildSectionTitle("Basic Information"),
-                    Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.only(bottom: 24),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            BuildTextField(
-                              controller: _productNameController,
-                              label: "Product Name",
-                            ),
-                            const SizedBox(height: 16),
+                    Form(
+                      key: _formKey,
+                      child: Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              BuildTextField(
+                                controller: _productNameController,
+                                label: "Product Name",
+                              ),
+                              const SizedBox(height: 16),
 
-                            // Product Status
-                            _buildStatusSelector(),
-                            const SizedBox(height: 16),
+                              // Product Status
+                              _buildStatusSelector(),
+                              const SizedBox(height: 16),
 
-                            // Category and Subcategory
-                            BuildDropdown(
-                              label: "Product Category",
-                              options: productCategories,
-                              selectedValue: selectedCategory,
-                              onChanged: (value) {
-                                _updateSubcategories(value);
-                              },
-                            ),
-                            const SizedBox(height: 16),
+                              // Category and Subcategory
+                              BuildDropdown(
+                                label: "Product Category",
+                                options: productCategories,
+                                selectedValue: selectedCategory,
+                                onChanged: (value) {
+                                  _updateSubcategories(value);
+                                },
+                              ),
+                              const SizedBox(height: 16),
 
-                            BuildDropdown(
-                              label: "Product SubCategory",
-                              options: productSubCategories,
-                              selectedValue: selectedSubCategory,
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedSubCategory = value;
-                                });
-                              },
-                              enabled: !_isLoading && selectedCategory != null,
-                              hint: _isLoading
-                                  ? "Loading subcategories..."
-                                  : selectedCategory == null
-                                      ? "Select a category first"
-                                      : productSubCategories.isEmpty
-                                          ? "No subcategories available"
-                                          : "Select a subcategory",
-                            ),
-                            const SizedBox(height: 16),
+                              BuildDropdown(
+                                label: "Product SubCategory",
+                                options: productSubCategories,
+                                selectedValue: selectedSubCategory,
+                                onChanged: (value) {
+                                  setState(() {
+                                    selectedSubCategory = value;
+                                  });
+                                },
+                                enabled:
+                                    !_isLoading && selectedCategory != null,
+                                hint: _isLoading
+                                    ? "Loading subcategories..."
+                                    : selectedCategory == null
+                                        ? "Select a category first"
+                                        : productSubCategories.isEmpty
+                                            ? "No subcategories available"
+                                            : "Select a subcategory",
+                              ),
+                              const SizedBox(height: 16),
 
-                            BuildTextField(
-                              controller: _StockQuantity,
-                              label: "Product Quantity",
-                            ),
-                          ],
+                              BuildTextField(
+                                controller: _StockQuantity,
+                                label: "Product Quantity",
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -308,7 +316,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submitProduct,
+                        onPressed: _isSubmitting ? null : _submitForm,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.primaryColor,
                           foregroundColor: Colors.white,
@@ -445,6 +453,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
       ),
     );
+  }
+
+  void _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      if (_discountController.text.isEmpty) {
+        showSnackbar(context, "Please enter a discount percentage");
+        return;
+      } else if (double.tryParse(_discountController.text) == null) {
+        showSnackbar(context, "Please enter a valid discount percentage");
+        return;
+      } else if (double.tryParse(_discountController.text)! > 100) {
+        showSnackbar(context, "Discount percentage cannot be greater than 100");
+        return;
+      }
+
+      await _submitProduct();
+    }
   }
 
   Future<void> _submitProduct() async {

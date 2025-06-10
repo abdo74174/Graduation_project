@@ -179,10 +179,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                 padding: const EdgeInsets.all(16.0),
                                 child: Column(
                                   children: [
-                                    buildProfileTextField("name".tr(),
-                                        user?.name ?? "Unknown", Icons.person),
+                                    buildProfileTextField(
+                                        "profile.user_name".tr(),
+                                        user?.name ?? "Unknown",
+                                        Icons.person),
                                     const SizedBox(height: 20),
-                                    buildProfileTextField("email".tr(),
+                                    buildProfileTextField("auth.email".tr(),
                                         user?.email ?? "Unknown", Icons.email),
                                     const SizedBox(height: 20),
                                     buildProfileTextField(
@@ -190,11 +192,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                         user?.medicalSpecialist ?? "Unknown",
                                         Icons.medical_services),
                                     const SizedBox(height: 20),
-                                    buildProfileTextField("phone".tr(),
+                                    buildProfileTextField("profile.phone".tr(),
                                         user?.phone ?? "Unknown", Icons.phone),
                                     const SizedBox(height: 20),
-                                    buildProfileTextField("address".tr(),
-                                        user?.address ?? "Unknown", Icons.home),
+                                    buildProfileTextField(
+                                        "profile.address".tr(),
+                                        user?.address ?? "Unknown",
+                                        Icons.home),
                                   ],
                                 ),
                               ),
@@ -224,13 +228,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                 foregroundColor: Colors.white,
                               ),
                               child: Text(
-                                'edit_profile'.tr(),
+                                'profile.edit_profile'.tr(),
                                 style: const TextStyle(
                                     fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
                         ],
                       ),
                     ),

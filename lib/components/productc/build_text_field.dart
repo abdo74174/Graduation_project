@@ -7,6 +7,7 @@ class BuildTextField extends StatelessWidget {
   final bool isPercentage;
   final bool isStrikethrough;
   final readOnly;
+  final String? Function(String?)? validator;
 
   const BuildTextField({
     this.readOnly = false,
@@ -15,13 +16,15 @@ class BuildTextField extends StatelessWidget {
     required this.label,
     this.isPercentage = false,
     this.isStrikethrough = false,
+    this.validator,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       readOnly: readOnly,
       controller: controller,
+      validator: validator,
       decoration: InputDecoration(
         labelText: label.tr(), // Use the label with localization
         labelStyle: TextStyle(color: Colors.grey.shade600),

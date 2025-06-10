@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/dashboard/orders_page.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/screens/payment/order_page.dart';
 
 class PaymentSuccessScreen extends StatelessWidget {
   const PaymentSuccessScreen({super.key});
@@ -66,7 +67,7 @@ class PaymentSuccessScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => OrdersPage()),
+                      MaterialPageRoute(builder: (context) => OrderPage()),
                     );
                   },
                   style: ElevatedButton.styleFrom(

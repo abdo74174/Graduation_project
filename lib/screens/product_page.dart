@@ -67,7 +67,6 @@ class _ProductPageState extends State<ProductPage> {
         });
       }
     } catch (e) {
-      print("⚠️ Error loading recommendations: $e");
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -88,7 +87,7 @@ class _ProductPageState extends State<ProductPage> {
     try {
       final ratings = await RatingService()
           .getRatings(productId: widget.product.productId.toString());
-      print("Fetched ratings: $ratings"); // Debug log
+      // Debug log
       if (ratings.isNotEmpty) {
         double total = ratings.fold(
             0.0, (sum, item) => sum + (item['ratingValue'] as int).toDouble());
@@ -98,7 +97,7 @@ class _ProductPageState extends State<ProductPage> {
         _comments = await Future.wait(ratings.map((item) async {
           final email = await getEmailFromUserId(item['userId']);
           final userData = await USerService().fetchUserByEmail(email);
-          print("Comment data: $item"); // Debug log
+          // Debug log
           return {
             'comment': item['comment']?.isNotEmpty == true
                 ? item['comment']
@@ -109,14 +108,13 @@ class _ProductPageState extends State<ProductPage> {
                 null, // Changed to null to trigger local asset
           };
         }).toList());
-        print("Processed comments: $_comments"); // Debug log
+        // Debug log
       } else {
         setState(() {
           _comments = [];
         });
       }
     } catch (e) {
-      print("⚠️ Error fetching ratings: $e");
       setState(() {
         _comments = [];
       });
@@ -146,6 +144,7 @@ class _ProductPageState extends State<ProductPage> {
       // Refresh comments after submission
       await fetchAverageRatingAndComments();
     } catch (e) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to submit rating: $e')),
       );
@@ -274,13 +273,31 @@ class _ProductPageState extends State<ProductPage> {
                         color: Color(0xFFEDEDED),
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      width: 100,
+                      width: 130,
                       height: 40,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: widget.product.isNew
+                                    ? Colors.green
+                                    : Colors.grey,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                widget.product.isNew ? "New" : "Used",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
                             Padding(
                               padding: EdgeInsets.all(4),
                               child: Icon(

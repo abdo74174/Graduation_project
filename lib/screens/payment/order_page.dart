@@ -3,14 +3,14 @@ import 'package:graduation_project/Models/order_model.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/Order/order_service.dart';
 
-class OrdersPage extends StatefulWidget {
-  const OrdersPage({super.key});
+class OrderPage extends StatefulWidget {
+  const OrderPage({super.key});
 
   @override
   _OrdersPageState createState() => _OrdersPageState();
 }
 
-class _OrdersPageState extends State<OrdersPage> {
+class _OrdersPageState extends State<OrderPage> {
   List<OrderModel> orders = [];
   bool isLoading = true;
 
@@ -23,7 +23,7 @@ class _OrdersPageState extends State<OrdersPage> {
   Future<void> _loadOrders() async {
     try {
       final fetchedOrders =
-          await OrderService().getAllOrders(1); // Replace with actual userId
+          await OrderService().getAllOrders(); // Replace with actual userId
       setState(() {
         orders = fetchedOrders;
         isLoading = false;

@@ -45,6 +45,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
           cartModel = cart;
         });
       } catch (_) {
+        if (!mounted) return;
         setState(() {
           cartModel = dummyCart;
           productMap = {for (var p in dummyProducts) p.productId: p};
@@ -335,12 +336,13 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                for (var item in cartModel!.cartItems) {
-                  await CartService().deleteFromCart(item.productId);
-                }
-                setState(() {
-                  cartModel!.cartItems.clear();
-                });
+                // for (var item in cartModel!.cartItems) {
+                //   await CartService().deleteFromCart(item.productId);
+                // }
+                // setState(() {
+                //   cartModel!.cartItems.clear();
+                // });
+                // ignore: use_build_context_synchronously
                 Navigator.push(context, MaterialPageRoute(builder: (con) {
                   return Paymentscreen(
                       total: total, cartItems: cartModel!.cartItems);

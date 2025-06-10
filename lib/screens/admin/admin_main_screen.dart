@@ -2,8 +2,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/adding_pr_cat_sub.dart/addCatandSub.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
+import 'package:graduation_project/screens/dashboard/customers_page.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
 import 'package:graduation_project/screens/homepage.dart';
+import 'package:graduation_project/components/dashboard/navigation_card.dart';
 
 class AdminDashboardApp extends StatelessWidget {
   const AdminDashboardApp({super.key});
@@ -63,8 +65,7 @@ class AdminDashboardScreen extends StatelessWidget {
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: [
-            _buildDashboardCard(
-              context,
+            NavigationCard(
               icon: Icons.analytics,
               title: 'Analysis Dashboard',
               onTap: () {
@@ -74,8 +75,7 @@ class AdminDashboardScreen extends StatelessWidget {
                 );
               },
             ),
-            _buildDashboardCard(
-              context,
+            NavigationCard(
               icon: Icons.home,
               title: 'Homepage',
               onTap: () {
@@ -85,10 +85,9 @@ class AdminDashboardScreen extends StatelessWidget {
                 );
               },
             ),
-            _buildDashboardCard(
-              context,
+            NavigationCard(
               icon: Icons.category,
-              title: 'Add Category',
+              title: 'Add Category & Sub Category',
               onTap: () {
                 Navigator.push(
                   context,
@@ -97,19 +96,17 @@ class AdminDashboardScreen extends StatelessWidget {
                 );
               },
             ),
-            _buildDashboardCard(
-              context,
+            NavigationCard(
               icon: Icons.admin_panel_settings,
               title: 'Assign Admin',
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const HomePage()),
+                  MaterialPageRoute(builder: (_) => CustomersPage()),
                 );
               },
             ),
-            _buildDashboardCard(
-              context,
+            NavigationCard(
               icon: Icons.admin_panel_settings,
               title: 'Chat List ',
               onTap: () {
@@ -118,42 +115,6 @@ class AdminDashboardScreen extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => ChatListPage()),
                 );
               },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDashboardCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 48,
-              color: Colors.blue,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
