@@ -18,7 +18,7 @@ class EditProfilePage extends StatefulWidget {
 }
 
 class _EditProfilePageState extends State<EditProfilePage> {
-  String? _selectedCategory;
+  String? _selectedSpecialist;
   File? _profileImage;
   bool _hasExistingImage = false;
   final ImagePicker _picker = ImagePicker();
@@ -29,17 +29,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  final List<String> _specialists = [
-    "Cardiology",
-    "Neurology",
-    "Orthopedics",
-    "General"
-  ];
+  List<String> _specialists = [];
+  bool _isLoadingSpecialties = true;
 
   @override
   void initState() {
     super.initState();
     _initializeData();
+    _fetchSpecialties(); // Call this method directly
   }
 
   void _initializeData() {
@@ -48,15 +45,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
     _passwordController.text = widget.user.password ?? '';
     _phoneController.text = widget.user.phone ?? '';
     _addressController.text = widget.user.address ?? '';
-    _selectedCategory = _specialists.contains(widget.user.medicalSpecialist)
-        ? widget.user.medicalSpecialist
-        : null;
     _hasExistingImage = widget.user.profileImage?.isNotEmpty ?? false;
+  }
+
+  Future<void> _fetchSpecialties() async {
+    setState(() => _isLoadingSpecialties = true);
+    try {
+      final fetchedSpecialties = await USerService().fetchSpecialties();
+      if (mounted) {
+        setState(() {
+          _specialists = fetchedSpecialties;
+          // Set the selected specialist only after we have the list
+          _selectedSpecialist =
+              _specialists.contains(widget.user.medicalSpecialist)
+                  ? widget.user.medicalSpecialist
+                  : null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load specialties: $e'.tr())),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingSpecialties = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -158,27 +180,29 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
             const SizedBox(height: 20),
             // Category Dropdown
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              decoration: InputDecoration(
-                labelText: "product.category".tr(),
-                prefixIcon: const Icon(Icons.medical_services),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              items: _specialists.map((String category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedCategory = newValue;
-                });
-              },
-            ),
+            _isLoadingSpecialties
+                ? const CircularProgressIndicator()
+                : DropdownButtonFormField<String>(
+                    value: _selectedSpecialist,
+                    decoration: InputDecoration(
+                      labelText: "product.specialist".tr(),
+                      prefixIcon: const Icon(Icons.medical_services),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    items: _specialists.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedSpecialist = newValue;
+                      });
+                    },
+                  ),
             const SizedBox(height: 20),
             // Phone Field
             TextFormField(
@@ -260,7 +284,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         name: _nameController.text,
         address: _addressController.text,
         phone: _phoneController.text,
-        medicalSpecialist: _selectedCategory ?? "",
+        medicalSpecialist: _selectedSpecialist ?? "",
         profileImage: base64Image,
       );
 

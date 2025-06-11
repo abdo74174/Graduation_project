@@ -8,6 +8,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/Cart/car_service.dart';
 import 'package:graduation_project/services/Order/order_service.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 
 class Paymentscreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class Paymentscreen extends StatefulWidget {
 
 class _PaymentscreenState extends State<Paymentscreen> {
   String _selectedPaymentMethod = 'card';
+  bool _isProcessing = false;
 
   Future<bool> _processPayment(BuildContext context, double amount) async {
     try {
@@ -54,6 +56,33 @@ class _PaymentscreenState extends State<Paymentscreen> {
     }
   }
 
+  Future<bool> _validateStock() async {
+    try {
+      // Fetch current stock for all products in cart
+      final products = await ProductService().fetchAllProducts();
+      final productMap = {for (var p in products) p.productId: p};
+
+      for (var item in widget.cartItems) {
+        final product = productMap[item.productId];
+        if (product == null) {
+          throw Exception('Product ${item.productId} not found');
+        }
+        if (product.StockQuantity < item.quantity) {
+          throw Exception(
+              'Not enough stock for ${product.name}. Available: ${product.StockQuantity}, Requested: ${item.quantity}');
+        }
+      }
+      return true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Validation failed: $e')),
+        );
+      }
+      return false;
+    }
+  }
+
   Future<Map<String, dynamic>> _createPaymentIntent(double amount) async {
     // Implement this function to call your backend to create a payment intent
     // Example using Dio or http to call your server
@@ -68,6 +97,50 @@ class _PaymentscreenState extends State<Paymentscreen> {
     );
 
     return response.data;
+  }
+
+  Future<void> _createOrder() async {
+    try {
+      setState(() {
+        _isProcessing = true;
+      });
+
+      int userId = int.parse(await UserServicee().getUserId() ?? '0');
+      List<Map<String, dynamic>> items = widget.cartItems
+          .map((item) => {
+                'productId': item.productId,
+                'quantity': item.quantity,
+              })
+          .toList();
+
+      await OrderService().createOrder(userId, items);
+
+      // Clear cart only after successful order creation
+      for (var item in widget.cartItems) {
+        await CartService().deleteFromCart(item.productId);
+      }
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (c) => const PaymentSuccessScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create order: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
   }
 
   @override
@@ -242,48 +315,20 @@ class _PaymentscreenState extends State<Paymentscreen> {
           SizedBox(
             width: 200,
             child: ElevatedButton(
-              onPressed: () async {
-                bool paymentSuccessful = false;
-                if (_selectedPaymentMethod == 'card') {
-                  paymentSuccessful =
-                      await _processPayment(context, total + 5.0);
-                } else {
-                  paymentSuccessful = true; // Assume COD always succeeds
-                }
-                if (paymentSuccessful) {
-                  try {
-                    int userId = int.parse(await UserServicee().getUserId() ??
-                        '0'); // Replace with actual user ID
-                    List<Map<String, dynamic>> items = cartItems
-                        .map((item) => {
-                              'productId': item.productId,
-                              'quantity': item.quantity,
-                            })
-                        .toList();
-
-                    await OrderService().createOrder(userId, items);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (c) {
-                          return const PaymentSuccessScreen();
-                        },
-                      ),
-                    ).then((_) async {
-                      for (var item in items) {
-                        await CartService().deleteFromCart(item['productId']);
+              onPressed: _isProcessing
+                  ? null
+                  : () async {
+                      bool paymentSuccessful = false;
+                      if (_selectedPaymentMethod == 'card') {
+                        paymentSuccessful =
+                            await _processPayment(context, total + 5.0);
+                      } else {
+                        paymentSuccessful = true; // Assume COD always succeeds
                       }
-                      setState(() {
-                        widget.cartItems.clear();
-                      });
-                    });
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to create order: \$e')),
-                    );
-                  }
-                }
-              },
+                      if (paymentSuccessful) {
+                        await _createOrder();
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4285F4),
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -291,12 +336,14 @@ class _PaymentscreenState extends State<Paymentscreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: Text(
-                _selectedPaymentMethod == 'card'
-                    ? 'pay_now'.tr()
-                    : 'confirm_order'.tr(),
-                style: const TextStyle(color: Colors.white, fontSize: 16),
-              ),
+              child: _isProcessing
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text(
+                      _selectedPaymentMethod == 'card'
+                          ? 'pay_now'.tr()
+                          : 'confirm_order'.tr(),
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
             ),
           ),
         ],

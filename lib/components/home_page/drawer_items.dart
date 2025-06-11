@@ -4,13 +4,15 @@ import 'package:graduation_project/screens/Auth/login_page.dart';
 import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
 import 'package:graduation_project/screens/setting_page.dart';
-import 'package:graduation_project/screens/adding_pr_cat_sub.dart/add_product.dart';
-import 'package:graduation_project/screens/contact_us.dart';
+import 'package:graduation_project/screens/pr_cat_sub.dart/add_product.dart';
+import 'package:graduation_project/screens/contac_us/contact_us.dart';
 import 'package:graduation_project/screens/userInfo/profile.dart';
+import 'package:graduation_project/screens/user_coupons.dart';
 import 'package:graduation_project/screens/user_products_page.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'drawer.dart';
 
-class DrawerItems extends StatelessWidget {
+class DrawerItems extends StatefulWidget {
   final DrawerType drawerType;
   final bool isAdmin;
   final VoidCallback onLogout;
@@ -23,6 +25,26 @@ class DrawerItems extends StatelessWidget {
   });
 
   @override
+  State<DrawerItems> createState() => _DrawerItemsState();
+}
+
+class _DrawerItemsState extends State<DrawerItems> {
+  String? userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    String? id = await UserServicee().getUserId();
+    setState(() {
+      userId = id;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.zero,
@@ -33,7 +55,7 @@ class DrawerItems extends StatelessWidget {
   List<Widget> _buildDrawerItems(BuildContext context) {
     final List<Widget> items = [];
 
-    // Main items that appear in all drawer types
+    // Main items
     items.add(
       ListTile(
         leading: const Icon(Icons.person),
@@ -45,8 +67,8 @@ class DrawerItems extends StatelessWidget {
       ),
     );
 
-    // Conditional items based on drawer type
-    switch (drawerType) {
+    // Conditional items
+    switch (widget.drawerType) {
       case DrawerType.main:
         items.addAll([
           ListTile(
@@ -69,7 +91,7 @@ class DrawerItems extends StatelessWidget {
         break;
 
       case DrawerType.admin:
-        items.addAll([
+        items.add(
           ListTile(
             leading: const Icon(Icons.admin_panel_settings),
             title: Text('drawer.admin_dashboard'.tr()),
@@ -79,7 +101,7 @@ class DrawerItems extends StatelessWidget {
                   builder: (context) => const AdminDashboardApp()),
             ),
           ),
-        ]);
+        );
         break;
 
       case DrawerType.seller:
@@ -92,11 +114,23 @@ class DrawerItems extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const UserProductsPage()),
             ),
           ),
+          if (userId != null)
+            ListTile(
+              leading: const Icon(Icons.card_giftcard),
+              title: Text('drawer.my_coupons'.tr()),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => UserCouponsPage(
+                          userId: userId.toString(),
+                        )),
+              ),
+            ),
         ]);
         break;
 
       case DrawerType.buyer:
-        items.addAll([
+        items.add(
           ListTile(
             leading: const Icon(Icons.phone),
             title: Text('drawer.contact_us'.tr()),
@@ -105,12 +139,12 @@ class DrawerItems extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const ContactUsPage()),
             ),
           ),
-        ]);
+        );
         break;
     }
 
-    // Admin panel for all drawer types if user is admin
-    if (isAdmin) {
+    // Admin access for all types
+    if (widget.isAdmin) {
       items.add(
         ListTile(
           leading: const Icon(Icons.admin_panel_settings),
@@ -123,7 +157,7 @@ class DrawerItems extends StatelessWidget {
       );
     }
 
-    // Add Settings just before Logout
+    // Settings
     items.add(
       ListTile(
         leading: const Icon(Icons.settings),
@@ -135,12 +169,12 @@ class DrawerItems extends StatelessWidget {
       ),
     );
 
-    // Logout always appears last
+    // Logout
     items.add(
       ListTile(
         leading: const Icon(Icons.logout),
         title: Text('drawer.logout'.tr()),
-        onTap: onLogout,
+        onTap: widget.onLogout,
       ),
     );
 

@@ -131,6 +131,65 @@ class SubCategoryService {
     }
   }
 
+  Future<void> updateSubCategory({
+    required int id,
+    required String name,
+    required String description,
+    required int categoryId,
+    File? imageFile,
+  }) async {
+    try {
+      print('📝 Updating subcategory: $id with name: $name');
+
+      // Create form data map
+      Map<String, dynamic> formDataMap = {
+        'Name': name,
+        'Description': description,
+        'CategoryId': categoryId,
+      };
+
+      // Add image only if provided
+      if (imageFile != null) {
+        print('📷 Including new image in update');
+        formDataMap['Image'] = await MultipartFile.fromFile(
+          imageFile.path,
+          filename: path.basename(imageFile.path),
+        );
+      }
+
+      final formData = FormData.fromMap(formDataMap);
+
+      final response = await dio.put('Subcategories/$id', data: formData);
+
+      if (response.statusCode == 200) {
+        print('✅ Subcategory updated successfully');
+      } else {
+        print('❌ Failed to update subcategory: ${response.statusCode}');
+        print('❌ Response data: ${response.data}');
+        throw Exception('Failed to update subcategory: ${response.data}');
+      }
+    } catch (e) {
+      print('❌ Error updating subcategory: $e');
+      if (e is DioException) {
+        print('❌ DioException details:');
+        print('❌ Status: ${e.response?.statusCode}');
+        print('❌ Data: ${e.response?.data}');
+        print('❌ Message: ${e.message}');
+
+        // Handle specific error cases
+        if (e.response?.statusCode == 400) {
+          final errorMessage = e.response?.data?.toString() ?? 'Bad request';
+          throw Exception('Update failed: $errorMessage');
+        } else if (e.response?.statusCode == 404) {
+          throw Exception('Subcategory not found');
+        } else if (e.response?.statusCode == 403) {
+          throw Exception('Access denied');
+        }
+      }
+      throw Exception('Failed to update subcategory: $e');
+    }
+  }
+
   Future<void> deleteSubCategory(int subCategoryId) async {
     try {
       print('🗑️ Deleting subcategory: $subCategoryId');
@@ -140,11 +199,59 @@ class SubCategoryService {
         print('✅ Subcategory deleted successfully');
       } else {
         print('❌ Failed to delete subcategory: ${response.statusCode}');
-        throw Exception('Failed to delete subcategory');
+        print('❌ Response data: ${response.data}');
+
+        // Handle specific error cases for delete
+        if (response.statusCode == 400) {
+          final errorMessage = response.data?.toString() ?? 'Bad request';
+          throw Exception('Delete failed: $errorMessage');
+        } else if (response.statusCode == 404) {
+          throw Exception('Subcategory not found');
+        }
+
+        throw Exception('Failed to delete subcategory: ${response.data}');
       }
     } catch (e) {
       print('❌ Error deleting subcategory: $e');
+      if (e is DioException) {
+        print('❌ DioException details:');
+        print('❌ Status: ${e.response?.statusCode}');
+        print('❌ Data: ${e.response?.data}');
+
+        // Handle specific HTTP status codes
+        if (e.response?.statusCode == 400) {
+          final errorMessage =
+              e.response?.data?.toString() ?? 'Cannot delete subcategory';
+          throw Exception(errorMessage);
+        } else if (e.response?.statusCode == 404) {
+          throw Exception('Subcategory not found');
+        } else if (e.response?.statusCode == 403) {
+          throw Exception('Access denied');
+        }
+      }
       throw Exception('Failed to delete subcategory: $e');
+    }
+  }
+
+  // Helper method to get subcategory by ID
+  Future<SubCategory?> fetchSubCategoryById(int id) async {
+    try {
+      print('🔍 Fetching subcategory by ID: $id');
+      final response = await dio.get('Subcategories/$id');
+
+      if (response.statusCode == 200) {
+        print('✅ Subcategory fetched successfully');
+        return SubCategory.fromJson(response.data);
+      } else if (response.statusCode == 404) {
+        print('❌ Subcategory not found: $id');
+        return null;
+      } else {
+        print('❌ Failed to fetch subcategory: ${response.statusCode}');
+        throw Exception('Failed to fetch subcategory');
+      }
+    } catch (e) {
+      print('❌ Error fetching subcategory by ID: $e');
+      throw Exception('Failed to fetch subcategory: $e');
     }
   }
 }

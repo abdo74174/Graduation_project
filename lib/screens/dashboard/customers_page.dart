@@ -1,4 +1,3 @@
-// Customers Page
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
@@ -192,7 +191,7 @@ class _CustomersPageState extends State<CustomersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Customers'),
+        title: const Text('Users'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -277,26 +276,9 @@ class _CustomersPageState extends State<CustomersPage> {
                                 icon: const Icon(Icons.more_vert),
                                 onSelected: (value) =>
                                     _handleAction(value, user),
-                                itemBuilder: (context) => [
-                                  if (!user.isAdmin)
-                                    _buildMenuItem(
-                                        "Assign Admin", Icons.person),
-                                  if (user.isAdmin)
-                                    _buildMenuItem("Remove Admin", Icons.delete,
-                                        Colors.red),
-                                  if (user.status == 1)
-                                    _buildMenuItem("Unblock User",
-                                        Icons.lock_open, Colors.green),
-                                  if (user.status != 1)
-                                    _buildMenuItem(
-                                        "Block User", Icons.block, Colors.red),
-                                  if (user.status == 2)
-                                    _buildMenuItem("Activate User",
-                                        Icons.check_circle, Colors.green),
-                                  if (user.status != 2)
-                                    _buildMenuItem("Deactivate User",
-                                        Icons.do_not_disturb_on, Colors.red),
-                                ],
+                                itemBuilder: (context) {
+                                  return _buildPopupMenuItems(user);
+                                },
                               ),
                           ],
                         ),
@@ -309,6 +291,49 @@ class _CustomersPageState extends State<CustomersPage> {
         child: const Icon(Icons.refresh),
       ),
     );
+  }
+
+  List<PopupMenuEntry<String>> _buildPopupMenuItems(UserModel user) {
+    List<PopupMenuEntry<String>> menuItems = [];
+
+    // Admin role actions
+    if (!user.isAdmin) {
+      menuItems.add(
+        _buildMenuItem("Assign Admin", Icons.person_add),
+      );
+    } else {
+      menuItems.add(
+        _buildMenuItem("Remove Admin", Icons.person_remove, Colors.red),
+      );
+    }
+
+    // Status-based actions
+    switch (user.status) {
+      case UserStatus.active:
+        // For active users, show block and deactivate options
+        menuItems.addAll([
+          const PopupMenuDivider(),
+          _buildMenuItem("Block User", Icons.block, Colors.red),
+          _buildMenuItem("Deactivate User", Icons.person_off, Colors.orange),
+        ]);
+        break;
+      case UserStatus.blocked:
+        // For blocked users, only show unblock option
+        menuItems.addAll([
+          const PopupMenuDivider(),
+          _buildMenuItem("Unblock User", Icons.lock_open, Colors.green),
+        ]);
+        break;
+      case UserStatus.deactivated:
+        // For deactivated users, only show activate option
+        menuItems.addAll([
+          const PopupMenuDivider(),
+          _buildMenuItem("Activate User", Icons.person_add_alt_1, Colors.green),
+        ]);
+        break;
+    }
+
+    return menuItems;
   }
 
   String _getStatusLabel(int status) {

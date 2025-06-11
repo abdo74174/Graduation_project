@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/user_model.dart';
+import 'package:graduation_project/screens/contac_us/contact_us.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 
 class AccountStatusScreen extends StatelessWidget {
-  final bool isBlocked;
-  final String email;
-
+  final UserStatus status;
   const AccountStatusScreen({
     Key? key,
-    required this.isBlocked,
-    required this.email,
+    required this.status,
   }) : super(key: key);
+
+  bool get isBlocked => status == UserStatus.blocked;
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +30,9 @@ class AccountStatusScreen extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: isBlocked ? Colors.red.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+                  color: isBlocked
+                      ? Colors.red.withOpacity(0.1)
+                      : Colors.orange.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -42,9 +45,9 @@ class AccountStatusScreen extends StatelessWidget {
               Text(
                 isBlocked ? 'Account Blocked' : 'Account Not Activated',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isBlocked ? Colors.red : Colors.orange,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: isBlocked ? Colors.red : Colors.orange,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -60,7 +63,10 @@ class AccountStatusScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/contact_us');
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                      return ContactUsPage();
+                    }));
                   },
                   icon: const Icon(Icons.support_agent),
                   label: const Text('Contact Support'),
@@ -81,7 +87,8 @@ class AccountStatusScreen extends StatelessWidget {
                     if (context.mounted) {
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (context) => const LoginPage()),
+                        MaterialPageRoute(
+                            builder: (context) => const LoginPage()),
                         (route) => false,
                       );
                     }

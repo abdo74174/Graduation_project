@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/components/dashboard/navigation_card.dart';
-import 'package:graduation_project/screens/adding_pr_cat_sub.dart/add_category_page.dart';
-import 'package:graduation_project/screens/adding_pr_cat_sub.dart/add_subcategory_page.dart';
+import 'package:graduation_project/screens/pr_cat_sub.dart/add_category_page.dart';
+import 'package:graduation_project/screens/pr_cat_sub.dart/add_subcategory_page.dart';
+import 'package:graduation_project/screens/pr_cat_sub.dart/category_management.dart'
+    hide AddCategoryPage;
+import 'package:graduation_project/screens/pr_cat_sub.dart/ManageSubCategoriesPage.dart';
 
 class AddCategorySubCategoryPage extends StatelessWidget {
   const AddCategorySubCategoryPage({super.key});
@@ -66,7 +69,9 @@ class AddCategorySubCategoryPage extends StatelessWidget {
                           children: [
                             Icon(Icons.category, size: 48, color: Colors.blue),
                             const SizedBox(height: 12),
-                            Text('Add Category'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                            Text('Add Category'.tr(),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),
@@ -91,9 +96,71 @@ class AddCategorySubCategoryPage extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.subtitles, size: 48, color: Colors.green),
+                            Icon(Icons.subtitles,
+                                size: 48, color: Colors.green),
                             const SizedBox(height: 12),
-                            Text('Add Subcategory'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                            Text('Add Subcategory'.tr(),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ManageCategoriesPage(),
+                          ),
+                        );
+                      },
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete, size: 48, color: Colors.red),
+                            const SizedBox(height: 12),
+                            Text('ManageCategories'.tr(),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const ManageSubCategoriesPage(),
+                          ),
+                        );
+                      },
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.delete_forever,
+                                size: 48, color: Colors.orange),
+                            const SizedBox(height: 12),
+                            Text('ManageSubcategory'.tr(),
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.w600)),
                           ],
                         ),
                       ),

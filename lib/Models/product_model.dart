@@ -11,6 +11,7 @@ class ProductModel {
   final int categoryId;
   final int userId;
   final int StockQuantity;
+  final bool installmentAvailable; // New field
   final List<String> images; // URLs of images
   static const String defaultProductImage = "assets/images/equip2.png";
   // Default image for product
@@ -27,6 +28,7 @@ class ProductModel {
     required this.discount,
     required this.subCategoryId,
     required this.categoryId,
+    required this.installmentAvailable,
     required this.StockQuantity,
     required this.userId,
     required this.images,
@@ -55,6 +57,7 @@ class ProductModel {
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
       subCategoryId: json['subCategoryId'] ?? 0,
       categoryId: json['categoryId'] ?? 0,
+      installmentAvailable: json['installmentAvailable'] ?? false,
       StockQuantity: json['stockQuantity'] ?? 0, // lowercase!
       userId: json['userId'] ?? 0,
       images: List<String>.from(
@@ -73,6 +76,7 @@ class ProductModel {
         subCategoryId = 0,
         categoryId = 0,
         userId = 0,
+        installmentAvailable = false,
         images = [];
 
   Map<String, dynamic> toJson() {
@@ -85,6 +89,7 @@ class ProductModel {
       'discount': discount,
       'subCategoryId': subCategoryId,
       'categoryId': categoryId,
+      'installmentAvailable': installmentAvailable,
       'StockQuantity': StockQuantity,
       'userId': userId,
       'imageUrls': images,

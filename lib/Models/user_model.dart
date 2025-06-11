@@ -3,11 +3,7 @@ import 'package:graduation_project/Models/contact_us_model.dart';
 import 'product_model.dart';
 
 // Add UserStatus enum to match backend
-enum UserStatus {
-  active,
-  blocked,
-  deactivated
-}
+enum UserStatus { active, blocked, deactivated }
 
 class UserModel {
   final int id;
@@ -23,10 +19,10 @@ class UserModel {
   final String? profileImage;
   final DateTime createdAt;
   final String kindOfWork;
-  final UserStatus status; // Changed from int to UserStatus
+  late final UserStatus status; // Changed from int to UserStatus
   final bool isAdmin;
   final List<ProductModel> products;
-  final List<ContactUs> contactUsMessages;
+  final List<ContactUsModel> contactUsMessages;
 
   UserModel({
     required this.id,
@@ -76,7 +72,7 @@ class UserModel {
               .toList() ??
           [],
       contactUsMessages: (json['contactUsMessages'] as List?)
-              ?.map((item) => ContactUs.fromJson(item))
+              ?.map((item) => ContactUsModel.fromJson(item))
               .toList() ??
           [],
     );

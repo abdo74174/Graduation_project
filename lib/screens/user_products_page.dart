@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/components/productc/product.dart';
-import 'package:graduation_project/screens/adding_pr_cat_sub.dart/add_product.dart';
+import 'package:graduation_project/screens/pr_cat_sub.dart/add_product.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:easy_localization/easy_localization.dart';

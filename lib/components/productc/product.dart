@@ -46,6 +46,7 @@ class ProductCard extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onDelete,
       child: Container(
         width: _Dim.cardWidth,
         height: _Dim.cardHeight,

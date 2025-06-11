@@ -5,16 +5,14 @@ import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/components/category/Category_view.dart';
-import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/category/subcategory.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/services/Product/category_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
-
 import 'package:graduation_project/services/Server/server_status_service.dart';
-
-import '../services/Product/subcategory_service.dart';
+import 'package:graduation_project/services/Product/subcategory_service.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key, this.id});
@@ -159,7 +157,6 @@ class _CategoryScreenState extends State<CategoryScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final screenWidth = MediaQuery.of(context).size.width;
 
     List<SubCategory> filteredSubCategories = selectedCategoryId == null
         ? []
@@ -174,10 +171,10 @@ class _CategoryScreenState extends State<CategoryScreen>
             .toList();
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
+      backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: isDark ? Colors.black : const Color(0xFFF5F5F5),
+        backgroundColor: isDark ? Colors.black : Colors.white,
         title: Text(
           "Categories",
           style: TextStyle(
@@ -355,7 +352,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                           if (index >= filteredProducts.length) return null;
                           return FadeTransition(
                             opacity: _fadeAnimation,
-                            child: ProductCard(
+                            child: CustomProductTile(
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -405,6 +402,164 @@ class _CategoryScreenState extends State<CategoryScreen>
                 ),
               ],
             ),
+    );
+  }
+}
+
+class CustomProductTile extends StatefulWidget {
+  final ProductModel product;
+  final VoidCallback onTap;
+
+  const CustomProductTile({
+    super.key,
+    required this.product,
+    required this.onTap,
+  });
+
+  @override
+  _CustomProductTileState createState() => _CustomProductTileState();
+}
+
+class _CustomProductTileState extends State<CustomProductTile> {
+  bool isHovered = false;
+  bool isFavorite = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => isHovered = true),
+        onExit: (_) => setState(() => isHovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[850] : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: isDark ? Colors.black54 : Colors.grey.withOpacity(0.3),
+                blurRadius: isHovered ? 12 : 8,
+                offset: isHovered ? const Offset(0, 4) : const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Product Image
+              Expanded(
+                child: ClipRRect(
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      AnimatedScale(
+                        scale: isHovered ? 1.05 : 1.0,
+                        duration: const Duration(milliseconds: 300),
+                        child: Image.network(
+                          widget.product.images[0].toString(),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                            Icons.broken_image,
+                            size: 50,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                      // Favorite Button
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              isFavorite = !isFavorite;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: isDark ? Colors.black54 : Colors.white70,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              isFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: isFavorite
+                                  ? Colors.redAccent
+                                  : isDark
+                                      ? Colors.white70
+                                      : Colors.black54,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Product Details
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.product.name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.product.price.toStringAsFixed(2),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      decoration: BoxDecoration(
+                          color: pkColor,
+                          borderRadius: BorderRadius.circular(12)),
+                      width: 40,
+                      height: 30,
+                      child: Center(
+                        child: Container(
+                          decoration: BoxDecoration(
+                              color: pkColor,
+                              borderRadius: BorderRadius.circular(8)),
+                          child: Text(
+                            widget.product.isNew == true ? 'New' : 'Old',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: isDark ? Colors.black : Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

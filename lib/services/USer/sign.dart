@@ -53,18 +53,18 @@ class USerService {
   Future<List<String>> fetchSpecialties() async {
     try {
       final response = await dio.get('/specialties');
+      print('Specialties response: \${response.data}'); // Add this line
       if (response.statusCode == 200) {
         return List<String>.from(response.data['specialties']).toSet().toList();
       } else {
-        print(
-            'Failed to fetch specialties. Status code: ${response.statusCode}');
+        print('Failed to fetch specialties. Status code: \${response.statusCode}');
         return [];
       }
     } on DioException catch (e) {
-      print('DioException: ${e.message}');
+      print('DioException: \${e.message}');
       return [];
     } catch (e) {
-      print('Unexpected error: $e');
+      print('Unexpected error: \$e');
       return [];
     }
   }

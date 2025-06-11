@@ -29,15 +29,13 @@ class ForgotPasswordService {
       };
     }
 
-    dio.interceptors
-        .clear(); // Clear any existing interceptors to avoid overrides
+    dio.interceptors.clear();
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) {
         debugPrint('Sending request to ${options.uri}');
         debugPrint('Request data: ${options.data}');
         debugPrint('Base URL: ${dio.options.baseUrl}');
         debugPrint('Full URL: ${options.uri.toString()}');
-        // Validate URL to catch malformed URLs early
         if (options.uri.toString().contains('https://https') ||
             options.uri.toString().contains(':7273/api/:7273')) {
           debugPrint('ERROR: Malformed URL detected: ${options.uri}');
@@ -74,6 +72,14 @@ class ForgotPasswordService {
   }
 
   Future<Map<String, dynamic>> sendOtp(String email) async {
+    if (email.isEmpty) {
+      debugPrint('Error: Email is empty in sendOtp');
+      return {
+        'success': false,
+        'message': 'Email is required',
+      };
+    }
+
     try {
       debugPrint('Preparing to send OTP for email: $email');
       final response = await dio.post(
@@ -131,6 +137,22 @@ class ForgotPasswordService {
 
   Future<Map<String, dynamic>> verifyOtp(
       String email, String otp, String newPassword) async {
+    if (email.isEmpty) {
+      debugPrint('Error: Email is empty in verifyOtp');
+      return {
+        'success': false,
+        'message': 'Email is required',
+      };
+    }
+
+    if (otp.isEmpty) {
+      debugPrint('Error: OTP is empty in verifyOtp');
+      return {
+        'success': false,
+        'message': 'OTP is required',
+      };
+    }
+
     try {
       debugPrint('Preparing to verify OTP for email: $email');
       final passwordRegex = RegExp(

@@ -14,6 +14,7 @@ const String defaultSubCategoryImage = "assets/images/category.jpg";
 final dummyProducts = [
   ProductModel(
     productId: 1,
+    installmentAvailable: false,
     name: "Blood Pressure Monitor",
     description: "Digital device with cuff and memory storage.",
     price: 450.0,
@@ -26,6 +27,7 @@ final dummyProducts = [
     images: [],
   ),
   ProductModel(
+    installmentAvailable: false,
     productId: 2,
     name: "Infrared Thermometer",
     description: "Non-contact, quick-reading thermometer.",

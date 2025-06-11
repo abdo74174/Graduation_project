@@ -287,49 +287,5 @@
       "related_products": "Related Products",
       "add_to_cart": "Add to Cart"
   },
-  "payment": {
-      "Payment": "Payment",
-      "Subtotal": "Subtotal",
-      "Shipping": "Shipping",
-      "Total": "Total",
-      "add_new_card": "Add New Card",
-      "pay_now": "Pay Now"
-  },
-  "my_products": "My Products",
-  "no_products_found": "No products found",
-  "Home Medical Equipment": "Home Medical Equipment",
-  "mstest": "Medical Supplies",
-  "Blood Pressure Monitors": "Blood Pressure Monitors",
-  "Blood Glucose Meters": "Blood Glucose Meters",
-  "medical sub": "Medical Supplies",
-  "Manual Wheelchairs": "Manual Wheelchairs",
-  "Electric Wheelchairs": "Electric Wheelchairs",
-  "Digital Monitors": "Digital Monitors",
-  "Manual Monitors": "Manual Monitors",
-  "product_card": {
-      "on_sale": "Sale",
-      "unnamed": "Unnamed Product",
-      "no_description": "No description",
-      "add_to_cart": "Add to Cart"
-  },
-  "dropdown": {
-      "select": "Select"
-  },
-  "user_not_logged_in": "Please login to view your products",
-  "invalid_user_id": "Invalid user ID",
-  "error_loading_products": "Error loading products",
-  "product_deleted_successfully": "Product deleted successfully",
-  "failed_to_delete_product": "Failed to delete product",
-  "error_deleting_product": "Error deleting product",
-  "category_types": {
-      "home_medical_equipment": "Home Medical Equipment",
-      "mstest": "Medical Test",
-      "blood_pressure_monitors": "Blood Pressure Monitors",
-      "blood_glucose_meters": "Blood Glucose Meters",
-      "medical_sub": "Medical Sub",
-      "manual_wheelchairs": "Manual Wheelchairs",
-      "electric_wheelchairs": "Electric Wheelchairs",
-      "digital_monitors": "Digital Monitors",
-      "manual_monitors": "Manual Monitors"
-  }
+  "payment": "Payment"
 }

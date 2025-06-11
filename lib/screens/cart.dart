@@ -46,20 +46,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
         });
       } catch (_) {
         if (!mounted) return;
-        setState(() {
-          cartModel = dummyCart;
-          productMap = {for (var p in dummyProducts) p.productId: p};
-        });
       }
-    } else {
-      setState(() {
-        cartModel = dummyCart;
-        productMap = {for (var p in dummyProducts) p.productId: p};
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('You are offline. Showing dummy cart data.')),
-      );
     }
   }
 
@@ -75,7 +62,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
 
   void _applyDiscount() {
     String enteredCode = discountController.text.trim().toUpperCase();
-    if (enteredCode == 'SAVE10') {
+    if (enteredCode == 'SAVE100') {
       setState(() {
         discountPercent = 1;
         appliedCode = enteredCode;
@@ -147,6 +134,13 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
       );
     }
 
+    // Filter out cart items where the product is not in productMap
+    final validCartItems = cartModel!.cartItems
+        .asMap()
+        .entries
+        .where((entry) => productMap.containsKey(entry.value.productId))
+        .toList();
+
     return Scaffold(
       backgroundColor: const Color(0xffF6F6F6),
       appBar: AppBar(
@@ -160,106 +154,106 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
               MaterialPageRoute(builder: (context) => const HomePage())),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView.builder(
-          itemCount: cartModel!.cartItems.length,
-          itemBuilder: (context, index) {
-            final cartItem = cartModel!.cartItems[index];
-            final product = productMap[cartItem.productId] ??
-                ProductModel(
-                  productId: -1,
-                  name: 'Unknown Product',
-                  description: 'This product is no longer available.',
-                  price: 0.0,
-                  images: ['https://via.placeholder.com/150'],
-                  discount: 0,
-                  categoryId: 0,
-                  subCategoryId: 0,
-                  userId: 0,
-                  isNew: false,
-                  StockQuantity: 0,
-                );
+      body: validCartItems.isEmpty
+          ? Center(
+              child: Text(
+                'your_cart_is_empty'.tr(),
+                style: const TextStyle(fontSize: 18, color: Colors.grey),
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ListView.builder(
+                itemCount: validCartItems.length,
+                itemBuilder: (context, index) {
+                  final entry = validCartItems[index];
+                  final cartItem = entry.value;
+                  final originalIndex = entry.key;
+                  final product = productMap[cartItem.productId]!;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: product.images.isNotEmpty
-                          ? Image.network(
-                              product.images[0],
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.asset(
-                              defaultProductImage,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.grey.shade300),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
                         children: [
-                          Text(product.name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16)),
-                          const SizedBox(height: 4),
-                          Text(product.description,
-                              style: const TextStyle(color: Colors.grey)),
-                          const SizedBox(height: 8),
-                          Row(
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: product.images.isNotEmpty
+                                ? Image.network(
+                                    product.images[0],
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    defaultProductImage,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(product.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16)),
+                                const SizedBox(height: 4),
+                                Text(product.description,
+                                    style: const TextStyle(color: Colors.grey)),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    _quantityButton(
+                                        icon: Icons.remove,
+                                        onPressed: () =>
+                                            _decrementQuantity(originalIndex)),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0),
+                                      child: Text('${cartItem.quantity}',
+                                          style: const TextStyle(fontSize: 16)),
+                                    ),
+                                    _quantityButton(
+                                        icon: Icons.add,
+                                        onPressed: () =>
+                                            _incrementQuantity(originalIndex)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
                             children: [
-                              _quantityButton(
-                                  icon: Icons.remove,
-                                  onPressed: () => _decrementQuantity(index)),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                child: Text('${cartItem.quantity}',
-                                    style: const TextStyle(fontSize: 16)),
+                              GestureDetector(
+                                onTap: () => _confirmRemoveItem(originalIndex),
+                                child: const Icon(Icons.delete_outline,
+                                    color: Colors.red),
                               ),
-                              _quantityButton(
-                                  icon: Icons.add,
-                                  onPressed: () => _incrementQuantity(index)),
+                              const SizedBox(height: 16),
+                              Text(
+                                '\$${(product.price * cartItem.quantity).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold),
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                    Column(
-                      children: [
-                        GestureDetector(
-                          onTap: () => _confirmRemoveItem(index),
-                          child: const Icon(Icons.delete_outline,
-                              color: Colors.red),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          '\$${(product.price * cartItem.quantity).toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
-            );
-          },
-        ),
-      ),
+            ),
       bottomNavigationBar: _buildBottomBar(),
     );
   }
@@ -336,13 +330,10 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                // for (var item in cartModel!.cartItems) {
-                //   await CartService().deleteFromCart(item.productId);
-                // }
-                // setState(() {
-                //   cartModel!.cartItems.clear();
-                // });
-                // ignore: use_build_context_synchronously
+                // First validate stock
+                final isValid = await _validateStock();
+                if (!isValid) return;
+
                 Navigator.push(context, MaterialPageRoute(builder: (con) {
                   return Paymentscreen(
                       total: total, cartItems: cartModel!.cartItems);
@@ -364,6 +355,42 @@ class _ShoppingCartPageState extends State<ShoppingCartPage> {
         ],
       ),
     );
+  }
+
+  Future<bool> _validateStock() async {
+    try {
+      final products = await ProductService().fetchAllProducts();
+      final productMap = {for (var p in products) p.productId: p};
+
+      for (var item in cartModel!.cartItems) {
+        final product = productMap[item.productId];
+        if (product == null) {
+          // Remove the item from cart if product doesn't exist
+          await CartService().deleteFromCart(item.productId);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Product ${item.productId} has been removed as it is no longer available')),
+          );
+          setState(() {
+            cartModel!.cartItems.removeWhere((cartItem) => cartItem.productId == item.productId);
+          });
+          return false;
+        }
+        if (product.StockQuantity < item.quantity) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Not enough stock for ${product.name}. Available: ${product.StockQuantity}')),
+          );
+          return false;
+        }
+      }
+      return true;
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error validating stock: $e')),
+      );
+      return false;
+    }
   }
 
   Widget _buildPriceRow(String label, String value, {bool isBold = false}) {

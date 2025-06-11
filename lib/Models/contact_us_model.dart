@@ -1,33 +1,39 @@
-import 'package:graduation_project/Models/user_model.dart';
+import 'package:intl/intl.dart';
 
-class ContactUs {
-  final int messageId;
+class ContactUsModel {
+  final int id;
+  final String userId;
   final String message;
-  final int userId;
-  final UserModel? user;
+  final DateTime createdAt;
+  final String? email;
 
-  ContactUs({
-    required this.messageId,
-    required this.message,
+  ContactUsModel({
+    required this.id,
     required this.userId,
-    this.user,
+    required this.message,
+    required this.createdAt,
+    this.email,
   });
 
-  factory ContactUs.fromJson(Map<String, dynamic> json) {
-    return ContactUs(
-      messageId: json['messageId'],
-      message: json['message'],
-      userId: json['userId'],
-      user: json['user'] != null ? UserModel.fromJson(json['user']) : null,
+  factory ContactUsModel.fromJson(Map<String, dynamic> json) {
+    return ContactUsModel(
+      id: json['id'],
+      userId: json['userId']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      email: json['email']?.toString(),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'messageId': messageId,
-      'message': message,
+      'id': id,
       'userId': userId,
-      'user': user?.toJson(),
+      'message': message,
+      'createdAt': createdAt.toIso8601String(),
+      if (email != null) 'email': email,
     };
   }
 }

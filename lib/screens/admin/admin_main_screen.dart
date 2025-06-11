@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:graduation_project/screens/adding_pr_cat_sub.dart/addCatandSub.dart';
+import 'package:graduation_project/screens/coupon_management.dart';
+import 'package:graduation_project/screens/contac_us/messages_list_page.dart';
+import 'package:graduation_project/screens/pr_cat_sub.dart/addCatandSub.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
 import 'package:graduation_project/screens/dashboard/customers_page.dart';
 import 'package:graduation_project/screens/dashboard/dashboard_screen.dart';
@@ -61,7 +63,7 @@ class AdminDashboardScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: GridView.count(
-          crossAxisCount: 2, // 2 cards per row
+          crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           children: [
@@ -87,7 +89,7 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
             NavigationCard(
               icon: Icons.category,
-              title: 'Add Category & Sub Category',
+              title: 'Category & Sub Category',
               onTap: () {
                 Navigator.push(
                   context,
@@ -108,11 +110,31 @@ class AdminDashboardScreen extends StatelessWidget {
             ),
             NavigationCard(
               icon: Icons.admin_panel_settings,
-              title: 'Chat List ',
+              title: 'Chat List',
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => ChatListPage()),
+                );
+              },
+            ),
+            NavigationCard(
+              icon: Icons.discount,
+              title: 'Manage Coupons',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => CouponManagementPage()),
+                );
+              },
+            ),
+            NavigationCard(
+              icon: Icons.message_outlined,
+              title: 'Contact US Message',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MessagesListPage()),
                 );
               },
             ),

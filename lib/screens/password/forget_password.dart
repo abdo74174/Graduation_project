@@ -50,53 +50,61 @@ class _ForgotPasswordScreenState extends State<ForgottenPasswordScreen> {
     });
 
     try {
-      debugPrint(
-          'Checking Firebase user for email: ${_emailController.text.trim()}');
-      final methods =
-          await _auth.fetchSignInMethodsForEmail(_emailController.text.trim());
+      final email = _emailController.text.trim();
+      debugPrint('Checking Firebase user for email: $email');
+
+      final methods = await _auth.fetchSignInMethodsForEmail(email);
       final isFirebaseUser = methods.isNotEmpty;
       debugPrint('Is Firebase user: $isFirebaseUser');
 
       if (isFirebaseUser) {
+        await _auth.sendPasswordResetEmail(email: email);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('password_reset.password_reset_email_sent'.tr()),
+            backgroundColor: Colors.green,
+          ),
+        );
         if (!mounted) return;
-        debugPrint('Navigating to PasswordResetScreen for Firebase user');
+        debugPrint(
+            'Navigating to PasswordResetScreen for Firebase user with email: $email');
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => PasswordResetScreen(
-              email: _emailController.text.trim(),
+              email: email,
               isFirebaseUser: true,
             ),
           ),
         );
       } else {
-        debugPrint('Sending OTP for email: ${_emailController.text.trim()}');
-        var response =
-            await _forgotPasswordService.sendOtp(_emailController.text.trim());
+        debugPrint('Sending OTP for email: $email');
+        final response = await _forgotPasswordService.sendOtp(email);
         debugPrint('Send OTP response: $response');
 
         if (!mounted) return;
 
         if (response['success'] == true) {
-          debugPrint('Navigating to PasswordResetScreen for OTP flow');
+          debugPrint(
+              'Navigating to PasswordResetScreen for OTP flow with email: $email');
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  PasswordResetScreen(email: _emailController.text.trim()),
+              builder: (context) => PasswordResetScreen(
+                email: email,
+              ),
             ),
           );
-          _emailController.clear();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('OTP sent to ${_emailController.text.trim()}'.tr()),
+              content: Text('OTP sent to $email'.tr()),
               backgroundColor: Colors.green,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(response['message'] ??
+              content: Text(response['message']?.toString() ??
                   'An error occurred. Please try again.'.tr()),
               backgroundColor: Colors.red,
             ),
@@ -126,6 +134,7 @@ class _ForgotPasswordScreenState extends State<ForgottenPasswordScreen> {
       setState(() {
         _isLoading = false;
       });
+      _emailController.clear();
     }
   }
 

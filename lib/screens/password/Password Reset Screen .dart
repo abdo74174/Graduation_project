@@ -73,6 +73,16 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
       return;
     }
 
+    if (widget.email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Email is missing. Please try again.'.tr()),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     if (widget.isFirebaseUser) {
       await _resetPasswordWithFirebase();
     } else {
@@ -130,84 +140,48 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
     });
 
     try {
+      debugPrint('Sending OTP verification for email: ${widget.email}');
       final response = await _forgotPasswordService.verifyOtp(
         widget.email,
         _otpController.text.trim(),
         _newPasswordController.text.trim(),
       );
-      debugPrint(
-          'Received verify OTP response in PasswordResetScreen: $response');
-
-      if (!mounted) return;
+      debugPrint('Received verify OTP response: $response');
 
       if (response['success'] == true) {
-        final customToken = response['customToken'] as String?;
-        if (customToken == null || customToken.isEmpty) {
-          debugPrint('Custom token is missing or empty');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Authentication token missing from server response. Please try again.'
-                      .tr()),
-              backgroundColor: Colors.red,
-            ),
-          );
-          setState(() {
-            _isLoading = false;
-          });
-          return;
-        }
-
-        debugPrint('Attempting to sign in with custom token');
-        await _auth.signInWithCustomToken(customToken);
-        final user = _auth.currentUser;
-
-        if (user != null && user.email == widget.email) {
-          debugPrint('Updating password for user: ${user.email}');
-          await user.updatePassword(_newPasswordController.text.trim());
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('password_reset.password_reset_success'.tr()),
-              backgroundColor: Colors.green,
-            ),
-          );
-
-          await Future.delayed(const Duration(seconds: 1));
-          if (!mounted) return;
-          debugPrint('Navigating to LoginPage after OTP reset');
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginPage()),
-          );
-        } else {
-          debugPrint(
-              'User mismatch: expected ${widget.email}, got ${user?.email}');
-          throw FirebaseAuthException(
-            code: 'user-mismatch',
-            message: 'Signed-in user does not match the provided email',
-          );
-        }
-      } else {
-        debugPrint('Password reset failed: ${response['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(response['message'] ??
-                'password_reset.failed_to_reset_password'.tr()),
+            content: Text('password_reset.password_reset_success'.tr()),
+            backgroundColor: Colors.green,
+          ),
+        );
+        await Future.delayed(const Duration(seconds: 1));
+        if (!mounted) return;
+        debugPrint('Navigating to LoginPage after OTP reset');
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response['message']?.toString() ??
+                'password_reset.otp_verification_failed'.tr()),
             backgroundColor: Colors.red,
           ),
         );
       }
-    } on FirebaseAuthException catch (e) {
-      debugPrint('FirebaseAuthException: ${e.code}, ${e.message}');
+    } on DioException catch (e) {
+      debugPrint('DioException: ${e.message}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_getFirebaseErrorMessage(e).tr()),
+          content: Text(e.response?.data['message']?.toString() ??
+              'password_reset.network_error'.tr()),
           backgroundColor: Colors.red,
         ),
       );
     } catch (e) {
       debugPrint('General error: ${e.toString()}');
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('password_reset.general_error_occurred'.tr()),
@@ -223,20 +197,12 @@ class _PasswordResetScreenState extends State<PasswordResetScreen> {
 
   String _getFirebaseErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
-      case 'invalid-custom-token':
-        return 'invalid-custom-token';
-      case 'user-mismatch':
-        return 'user-mismatch';
-      case 'requires-recent-login':
-        return 'requires-recent-login';
+      case 'invalid-email':
+        return 'invalid-email';
       case 'user-not-found':
         return 'user-not-found';
       case 'too-many-requests':
         return 'too-many-requests';
-      case 'weak-password':
-        return 'weak-password';
-      case 'invalid-credential':
-        return 'invalid-credential';
       default:
         return 'general_error_occurred';
     }

@@ -268,60 +268,33 @@ class _ProductPageState extends State<ProductPage> {
                       ),
                     ),
                     SizedBox(width: 7),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Color(0xFFEDEDED),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      width: 130,
-                      height: 40,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: widget.product.isNew
-                                    ? Colors.green
-                                    : Colors.grey,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                widget.product.isNew ? "New" : "Used",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
+                            decoration: BoxDecoration(
+                              color:
+                                  widget.product.isNew ? pkColor : Colors.black,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(width: 8),
-                            Padding(
-                              padding: EdgeInsets.all(4),
-                              child: Icon(
-                                Icons.thumb_up,
-                                color: pkColor,
-                                size: 25,
-                              ),
-                            ),
-                            SizedBox(width: 5),
-                            Text(
-                              "94",
-                              style: TextStyle(
+                            child: Text(
+                              widget.product.isNew ? "New" : "Used",
+                              style: const TextStyle(
+                                color: Colors.white,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: textColor,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 8),
+                          SizedBox(width: 5),
+                        ],
                       ),
                     ),
                     SizedBox(width: 8),
-                    Text(tr('product_page.reviews'),
-                        style: TextStyle(color: Colors.grey)),
                   ],
                 ),
               ),

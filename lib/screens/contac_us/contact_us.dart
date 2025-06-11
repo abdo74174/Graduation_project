@@ -1,8 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/services/contact_us.dart/contact_us.dart';
 
-class ContactUsPage extends StatelessWidget {
+class ContactUsPage extends StatefulWidget {
   const ContactUsPage({super.key});
+
+  @override
+  State<ContactUsPage> createState() => _ContactUsPageState();
+}
+
+class _ContactUsPageState extends State<ContactUsPage> {
+  final UserServicee _userService = UserServicee();
+  final ContactUsService _apiService = ContactUsService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  String? email;
+  Future<void> _loadUserData() async {
+    email = await _userService.getEmail();
+
+    setState(() {
+      _emailController.text = email ?? '';
+    });
+  }
+
+  Future<void> _submitMessage() async {
+    if (_messageController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('please_enter_message'.tr())),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final success = await _apiService.submitContactUsMessage(
+        _messageController.text, email);
+
+    setState(() {
+      _isSubmitting = false;
+    });
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('message_submitted'.tr())),
+      );
+      _messageController.clear();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('failed_to_submit'.tr())),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,21 +94,10 @@ class ContactUsPage extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(height: 20),
-              TextField(
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  prefixIcon: const Icon(Icons.person),
-                  hintText: 'full_name'.tr(),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
               const SizedBox(height: 10),
               TextField(
+                controller: _emailController,
+                readOnly: true,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.grey.shade100,
@@ -63,6 +111,7 @@ class ContactUsPage extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               TextField(
+                controller: _messageController,
                 maxLines: 5,
                 decoration: InputDecoration(
                   filled: true,
@@ -90,15 +139,17 @@ class ContactUsPage extends StatelessWidget {
                     ),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _isSubmitting ? null : _submitMessage,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 15),
                     ),
-                    child: Text('submit'.tr(),
-                        style: const TextStyle(fontSize: 16)),
+                    child: _isSubmitting
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : Text('submit'.tr(),
+                            style: const TextStyle(fontSize: 16)),
                   ),
                 ),
               ),

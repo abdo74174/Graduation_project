@@ -6,7 +6,7 @@ import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/screens/product_page.dart';
 import 'package:graduation_project/services/Favourites/favourites_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
-import 'package:easy_localization/easy_localization.dart'; // Add this import
+import 'package:easy_localization/easy_localization.dart';
 
 class FavouritePage extends StatefulWidget {
   const FavouritePage({super.key});
@@ -17,16 +17,36 @@ class FavouritePage extends StatefulWidget {
 
 class _FavoritePageState extends State<FavouritePage> {
   List<ProductModel> favourites = [];
+  List<ProductModel> filteredFavourites = [];
   bool isLoading = true;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     fetchFavourites();
+    _searchController.addListener(_filterFavourites);
   }
 
-  // Fetch favourites from the API or use dummy data if offline
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterFavourites() {
+    final query = _searchController.text.toLowerCase();
+    setState(() {
+      filteredFavourites = favourites.where((product) {
+        return product.name.toLowerCase().contains(query) ||
+            product.description.toLowerCase().contains(query);
+      }).toList();
+    });
+  }
+
   Future<void> fetchFavourites() async {
+    setState(() => isLoading = true);
+
     final serverStatusService = ServerStatusService();
     final isOnline = await serverStatusService.checkAndUpdateServerStatus();
 
@@ -39,53 +59,150 @@ class _FavoritePageState extends State<FavouritePage> {
               .toList();
           setState(() {
             favourites = loaded;
+            filteredFavourites = loaded;
             isLoading = false;
           });
         } else {
-          Fluttertoast.showToast(msg: "Failed to load favourites");
+          _showErrorToast("Failed to load favourites".tr());
           setState(() {
-            favourites = []; // Empty list in case of failure
+            favourites = [];
+            filteredFavourites = [];
             isLoading = false;
           });
         }
       } catch (e) {
-        Fluttertoast.showToast(msg: "Error loading favourites.");
+        _showErrorToast("Error loading favourites.".tr());
         setState(() {
-          favourites = []; // Empty list in case of error
+          favourites = [];
+          filteredFavourites = [];
           isLoading = false;
         });
       }
     } else {
-      if (mounted) return;
       setState(() {
-        favourites = dummyProducts; // Assuming you have dummyProducts
+        favourites = dummyProducts;
+        filteredFavourites = dummyProducts;
         isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text('You are offline. Showing dummy favourites.').tr()),
-      );
+      _showOfflineSnackbar();
     }
   }
 
-  // Remove product from favourites
-  void _removeFavourite(int index) async {
-    final product = favourites[index];
+  void _showOfflineSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('You are offline. Showing dummy favourites.').tr(),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(10),
+      ),
+    );
+  }
+
+  void _showErrorToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.red,
+      textColor: Colors.white,
+    );
+  }
+
+  Future<bool> _showConfirmationDialog(String title, String message) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title.tr()),
+            content: Text(message.tr()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(
+                  'Cancel'.tr(),
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(
+                  'Confirm'.tr(),
+                  style: const TextStyle(color: pkColor),
+                ),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _removeFavourite(int index) async {
+    final confirmed = await _showConfirmationDialog(
+      'Remove Item',
+      'Are you sure you want to remove this item from favourites?',
+    );
+    if (!confirmed) return;
+
+    final product = filteredFavourites[index];
     try {
-      await FavouritesService().removeFromFavourites(product.productId);
-      setState(() {
-        favourites.removeAt(index);
-      });
-      Fluttertoast.showToast(msg: "Removed from favourites".tr());
+      final response =
+          await FavouritesService().removeFromFavourites(product.productId);
+      if (response != null &&
+          (response.statusCode == 200 || response.statusCode == 204)) {
+        setState(() {
+          favourites.removeWhere((p) => p.productId == product.productId);
+          filteredFavourites.removeAt(index);
+        });
+        _showSuccessToast("Removed from favourites".tr());
+      } else {
+        _showErrorToast("Failed to remove".tr());
+      }
     } catch (e) {
-      Fluttertoast.showToast(msg: "Failed to remove".tr());
+      _showErrorToast("Error removing favourite.".tr());
     }
   }
 
-  // Sort items based on price
+  Future<void> _removeAllFavourites() async {
+    if (favourites.isEmpty) {
+      _showErrorToast("No favourites to remove".tr());
+      return;
+    }
+
+    final confirmed = await _showConfirmationDialog(
+      'Remove All',
+      'Are you sure you want to remove all items from favourites?',
+    );
+    if (!confirmed) return;
+
+    try {
+      final response = await FavouritesService().removeALLFromFavourites();
+      if (response != null &&
+          (response.statusCode == 200 || response.statusCode == 204)) {
+        setState(() {
+          favourites.clear();
+          filteredFavourites.clear();
+        });
+        _showSuccessToast("All favourites removed".tr());
+      } else {
+        _showErrorToast("Failed to remove all favourites".tr());
+      }
+    } catch (e) {
+      _showErrorToast("Error removing all favourites.".tr());
+    }
+  }
+
+  void _showSuccessToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.BOTTOM,
+      backgroundColor: Colors.green,
+      textColor: Colors.white,
+    );
+  }
+
   void _sortItems(bool ascending) {
     setState(() {
-      favourites.sort((a, b) =>
+      filteredFavourites.sort((a, b) =>
           ascending ? a.price.compareTo(b.price) : b.price.compareTo(a.price));
     });
   }
@@ -99,159 +216,185 @@ class _FavoritePageState extends State<FavouritePage> {
             style: const TextStyle(
                 fontWeight: FontWeight.bold, color: Colors.white)),
         centerTitle: true,
-        leading: PopupMenuButton<String>(
-          icon: const Icon(Icons.sort, color: Colors.white),
-          onSelected: (value) {
-            if (value == 'low_to_high') {
-              _sortItems(true);
-            } else {
-              _sortItems(false);
-            }
-          },
-          itemBuilder: (BuildContext context) => [
-            PopupMenuItem(
-              value: 'low_to_high',
-              child: Text('Price: Low to High'.tr()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sort, color: Colors.white),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.arrow_upward),
+                      title: Text('Price: Low to High'.tr()),
+                      onTap: () {
+                        _sortItems(true);
+                        Navigator.pop(context);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.arrow_downward),
+                      title: Text('Price: High to Low'.tr()),
+                      onTap: () {
+                        _sortItems(false);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                prefixIcon: const Icon(Icons.search),
+                hintText: 'Search favourites...'.tr(),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+              ),
             ),
-            PopupMenuItem(
-              value: 'high_to_low',
-              child: Text('Price: High to Low'.tr()),
-            ),
-          ],
+          ),
         ),
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
-          : favourites.isEmpty
-              ? Center(child: Text('No favorites available'.tr()))
-              : Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: GridView.builder(
-                    itemCount: favourites.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 0.75,
-                    ),
-                    itemBuilder: (context, index) {
-                      final item = favourites[index];
-                      return GestureDetector(
-                        onTap: () {
-                          // Navigate to the product page
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ProductPage(
-                                product: item,
-
-                                // Pass the product ID
-                              ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
+          : filteredFavourites.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.favorite_border,
+                          size: 60, color: Colors.grey),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No favorites available'.tr(),
+                        style:
+                            const TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: fetchFavourites,
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: GridView.builder(
+                      itemCount: filteredFavourites.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.75,
+                      ),
+                      itemBuilder: (context, index) {
+                        final item = filteredFavourites[index];
+                        return Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                offset: Offset(2, 2),
-                              ),
-                            ],
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      width: double.infinity,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0),
-                                      child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: item.images.isNotEmpty
-                                              ? Image.network(
-                                                  item.images[0],
-                                                  fit: BoxFit.contain,
-                                                  errorBuilder: (context, error,
-                                                          _) =>
-                                                      Image.asset(
-                                                          'assets/images/placeholder.png'),
-                                                )
-                                              : Image.asset(
-                                                  defaultProductImage,
-                                                  fit: BoxFit.contain,
-                                                  errorBuilder: (context, error,
-                                                          _) =>
-                                                      Image.asset(
-                                                          'assets/images/placeholder.png'),
-                                                )),
-                                    ),
-                                    Positioned(
-                                      top: 8,
-                                      right: 8,
-                                      child: GestureDetector(
-                                        onTap: () => _removeFavourite(index),
-                                        child: const Icon(Icons.favorite,
-                                            color: Colors.red),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductPage(product: item),
+                                ),
+                              );
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                                top: Radius.circular(12)),
+                                        child: item.images.isNotEmpty
+                                            ? Image.network(
+                                                item.images[0],
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                                errorBuilder: (context, error,
+                                                        _) =>
+                                                    Image.asset(
+                                                        'assets/images/placeholder.png'),
+                                              )
+                                            : Image.asset(
+                                                defaultProductImage,
+                                                fit: BoxFit.cover,
+                                                width: double.infinity,
+                                              ),
                                       ),
-                                    ),
-                                  ],
+                                      Positioned(
+                                        top: 8,
+                                        right: 8,
+                                        child: IconButton(
+                                          icon: const Icon(Icons.favorite,
+                                              color: Colors.red),
+                                          onPressed: () =>
+                                              _removeFavourite(index),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10.0, vertical: 6),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.name,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "₹${item.price}",
-                                      style: const TextStyle(
-                                          color: Colors.blue,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "₹${item.price}",
+                                        style: const TextStyle(
+                                            color: Colors.blue,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    },
+                        );
+                      },
+                    ),
                   ),
                 ),
-      backgroundColor: const Color(0xFFF5F5F5),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ElevatedButton(
-          onPressed: () {},
-          style: ElevatedButton.styleFrom(
-            backgroundColor: pkColor,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-          ),
-          child: Text(
-            "Remove All Favorites".tr(),
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ),
-      ),
+      floatingActionButton: favourites.isNotEmpty
+          ? FloatingActionButton.extended(
+              onPressed: _removeAllFavourites,
+              backgroundColor: pkColor,
+              icon: const Icon(Icons.delete),
+              label: Text("Remove All".tr()),
+            )
+          : null,
     );
   }
 }

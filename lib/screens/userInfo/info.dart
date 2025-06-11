@@ -54,11 +54,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
           if (!workTypes.contains(selectedKindOfWork)) {
             selectedKindOfWork = workTypes.isNotEmpty ? workTypes[0] : null;
           }
-          if (selectedKindOfWork == 'Doctor' &&
-              selectedSpecialty == null &&
-              specialties.isNotEmpty) {
-            selectedSpecialty = specialties[0];
-          }
         });
       }
     } catch (e) {
@@ -92,14 +87,25 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       return;
     }
 
-    if (selectedKindOfWork == 'Doctor' && selectedSpecialty == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('roleSelectionScreen.specialtyError'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
+    if (selectedKindOfWork == 'Doctor') {
+      if (specialties.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('roleSelectionScreen.noSpecialtiesError'.tr()),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      if (selectedSpecialty == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('roleSelectionScreen.specialtyError'.tr()),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -196,6 +202,14 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
     setState(() => _isLoading = false);
   }
 
+  bool get _isNextButtonEnabled {
+    if (selectedKindOfWork == null) return false;
+    if (selectedKindOfWork == 'Doctor' && specialties.isEmpty) return false;
+    if (selectedKindOfWork == 'Doctor' && selectedSpecialty == null)
+      return false;
+    return true;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -224,7 +238,7 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     children: [
                       const SizedBox(height: 20),
                       Image.asset(
-                        'assets/images/AppIcon.png', // Consistent with LoginPage
+                        'assets/images/AppIcon.png',
                         height: 80,
                       ),
                       const SizedBox(height: 20),
@@ -249,7 +263,11 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       workTypes.isEmpty
                           ? Text(
                               'No work types available'.tr(),
-                              style: const TextStyle(color: Colors.red),
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
                             )
                           : GridView.builder(
                               shrinkWrap: true,
@@ -272,8 +290,6 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                                       selectedKindOfWork = workType;
                                       if (workType != 'Doctor') {
                                         selectedSpecialty = null;
-                                      } else if (specialties.isNotEmpty) {
-                                        selectedSpecialty = specialties[0];
                                       }
                                     });
                                   },
@@ -341,42 +357,106 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         ),
                         const SizedBox(height: 16),
                         specialties.isEmpty
-                            ? Text(
-                                'No specialties available'.tr(),
-                                style: const TextStyle(color: Colors.red),
+                            ? Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.red),
+                                ),
+                                child: Column(
+                                  children: [
+                                    const Icon(
+                                      Icons.warning_amber_rounded,
+                                      color: Colors.red,
+                                      size: 40,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'roleSelectionScreen.noSpecialtiesAvailable'
+                                          .tr(),
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                ),
                               )
-                            : Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                alignment: WrapAlignment.center,
-                                children: specialties.map((specialty) {
+                            : GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 1,
+                                ),
+                                itemCount: specialties.length,
+                                itemBuilder: (context, index) {
+                                  final specialty = specialties[index];
                                   final isSelected =
                                       selectedSpecialty == specialty;
-                                  return ChoiceChip(
-                                    label: Text(specialty),
-                                    selected: isSelected,
-                                    onSelected: (selected) {
-                                      if (selected) {
-                                        setState(() =>
-                                            selectedSpecialty = specialty);
-                                      }
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        selectedSpecialty = specialty;
+                                      });
                                     },
-                                    selectedColor: pkColor,
-                                    backgroundColor: isDark
-                                        ? Colors.white.withOpacity(0.1)
-                                        : Colors.grey[200],
-                                    labelStyle: TextStyle(
-                                      color: isSelected
-                                          ? Colors.white
-                                          : isDark
-                                              ? Colors.white70
-                                              : Colors.black87,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
+                                    child: AnimatedContainer(
+                                      duration:
+                                          const Duration(milliseconds: 200),
+                                      decoration: BoxDecoration(
+                                        color: isDark
+                                            ? Colors.white.withOpacity(0.1)
+                                            : Colors.white,
+                                        borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? pkColor
+                                              : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(0.1),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.health_and_safety,
+                                            size: 40,
+                                            color: isSelected
+                                                ? pkColor
+                                                : Colors.grey,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            specialty,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: isDark
+                                                  ? Colors.white
+                                                  : Colors.black87,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   );
-                                }).toList(),
+                                },
                               ),
                       ],
                       const SizedBox(height: 40),
@@ -384,13 +464,16 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: _isLoading ? null : _onNextPressed,
+                          onPressed: _isLoading || !_isNextButtonEnabled
+                              ? null
+                              : _onNextPressed,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: pkColor,
+                            backgroundColor:
+                                _isNextButtonEnabled ? pkColor : Colors.grey,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
-                            elevation: 2,
+                            elevation: _isNextButtonEnabled ? 2 : 0,
                           ),
                           child: _isLoading
                               ? const CircularProgressIndicator(

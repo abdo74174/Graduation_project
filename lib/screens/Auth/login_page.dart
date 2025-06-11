@@ -21,8 +21,8 @@ import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -44,16 +44,14 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscurePassword = true;
   int _count = 10;
   Timer? _timer;
-  UserModel? user; // Nullable user field
-
-  final String _dummyEmail = "user@gmail.com";
-  final String _dummyPassword = "user";
+  UserModel? user;
 
   @override
   void initState() {
     super.initState();
     _statusService.getLastKnownStatus().then((flag) {
       setState(() => _serverOnline = flag);
+      print('DEBUG: Initial server status: $flag');
       _checkServer();
     });
   }
@@ -61,20 +59,22 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> fetchUserData(String email) async {
     try {
       final fetchedUser = await USerService().fetchUserByEmail(email);
-      // Debug log
-      if (fetchedUser != null) {
-        setState(() {
-          user = fetchedUser;
-        });
-        // Debug log
-      } else {
+      if (fetchedUser == null) {
         throw Exception("User not found for email: $email");
       }
+      if (fetchedUser.status == null) {
+        print('DEBUG: User status is null, setting to deactivated');
+        fetchedUser.status = UserStatus.deactivated;
+      }
+      setState(() {
+        user = fetchedUser;
+      });
+      print('DEBUG: User fetched: ${user!.email}, Status: ${user!.status}');
     } catch (e) {
-      // Debug log
       setState(() {
         user = null;
       });
+      print('DEBUG: Error fetching user data: $e');
       rethrow;
     }
   }
@@ -86,6 +86,7 @@ class _LoginPageState extends State<LoginPage> {
       _serverOnline = ok;
       _allowOfflineLogin = ok;
     });
+    print('DEBUG: Server check result: $ok');
     if (!ok) _startCountdown();
   }
 
@@ -93,6 +94,7 @@ class _LoginPageState extends State<LoginPage> {
     _timer?.cancel();
     _count = 10;
     setState(() => _allowOfflineLogin = false);
+    print('DEBUG: Starting countdown for offline login');
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (_count == 0) {
         t.cancel();
@@ -100,8 +102,10 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('offline_mode_enabled'.tr())),
         );
+        print('DEBUG: Offline login enabled');
       } else {
         setState(() => _count--);
+        print('DEBUG: Countdown: $_count');
       }
     });
   }
@@ -121,15 +125,37 @@ class _LoginPageState extends State<LoginPage> {
         _passErr = 'password_empty'.tr();
       }
     });
+    print(
+        'DEBUG: Validation - Email error: $_emailErr, Password error: $_passErr');
+  }
+
+  Future<bool> _handleUserStatus(UserModel user, BuildContext context) async {
+    print('DEBUG: Handling UserStatus: ${user.status}');
+    if (user.status == UserStatus.blocked ||
+        user.status == UserStatus.deactivated) {
+      if (!context.mounted) return true;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => AccountStatusScreen(status: user.status),
+        ),
+      );
+      print(
+          'DEBUG: Navigated to AccountStatusScreen with status: ${user.status}');
+      return true;
+    }
+    return false;
   }
 
   Future<void> _login() async {
     _validate();
     if (_emailErr != null || _passErr != null) {
+      print('DEBUG: Validation failed, aborting login');
       return;
     }
 
     setState(() => _loggingIn = true);
+    print('DEBUG: Starting login with email: ${_emailCtrl.text.trim()}');
 
     if (!_allowOfflineLogin && !_serverOnline) {
       final ok = await _statusService.checkAndUpdateServerStatus();
@@ -143,6 +169,7 @@ class _LoginPageState extends State<LoginPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('server_offline_msg'.tr())),
         );
+        print('DEBUG: Server offline, starting countdown');
         return;
       }
     }
@@ -154,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
     String? kindOfWork;
     String? medicalSpecialist;
     bool isAdmin = false;
-    UserStatus? status; // Changed from int? to UserStatus?
+    UserStatus? status;
 
     final prefs = await SharedPreferences.getInstance();
 
@@ -168,68 +195,56 @@ class _LoginPageState extends State<LoginPage> {
         if (loginSuccess) {
           userId = prefs.getString('user_id');
           if (userId == null) {
-            errorMessage = 'login_id_error'.tr();
-          } else {
-            await fetchUserData(_emailCtrl.text.trim());
-            if (user == null) {
-              errorMessage = 'user_fetch_error'.tr();
-            } else {
-              success = true;
-              kindOfWork = user!.kindOfWork;
-              medicalSpecialist = user!.medicalSpecialist;
-              isAdmin = user!.isAdmin;
-              status = user!.status;
-
-              await prefs.setString('kindOfWork', kindOfWork);
-              if (medicalSpecialist != null) {
-                await prefs.setString('medicalSpecialist', medicalSpecialist);
-              } else {
-                await prefs.remove('medicalSpecialist');
-              }
-              await prefs.setBool('isAdmin', isAdmin);
-              await prefs.setInt('status', status.index); // Store enum index
-              await prefs.setString('email', _emailCtrl.text.trim());
-
-              // Check user status for blocked or deactivated accounts
-              if (status == UserStatus.blocked ||
-                  status == UserStatus.deactivated) {
-                setState(() => _loggingIn = false);
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AccountStatusScreen(
-                      isBlocked: status == UserStatus.blocked,
-                      email: _emailCtrl.text.trim(),
-                    ),
-                  ),
-                );
-                return;
-              }
-
-              context.read<UserCubit>().setUser(
-                    userId,
-                    _emailCtrl.text.trim(),
-                    kindOfWork ?? '',
-                    medicalSpecialist,
-                    isAdmin,
-                  );
-            }
+            throw Exception('login_id_error'.tr());
           }
+
+          await fetchUserData(_emailCtrl.text.trim());
+          if (user == null) {
+            throw Exception('user_fetch_error'.tr());
+          }
+
+          if (await _handleUserStatus(user!, context)) return;
+
+          success = true;
+          kindOfWork = user!.kindOfWork;
+          medicalSpecialist = user!.medicalSpecialist;
+          isAdmin = user!.isAdmin;
+          status = user!.status;
+
+          await prefs.setString('kindOfWork', kindOfWork ?? '');
+          if (medicalSpecialist != null) {
+            await prefs.setString('medicalSpecialist', medicalSpecialist);
+          } else {
+            await prefs.remove('medicalSpecialist');
+          }
+          await prefs.setBool('isAdmin', isAdmin);
+          await prefs.setInt('status', status!.index);
+          await prefs.setString('email', _emailCtrl.text.trim());
+          print(
+              'DEBUG: Saved to SharedPreferences - status: ${status!.index}, isAdmin: $isAdmin');
+
+          context.read<UserCubit>().setUser(
+                userId,
+                _emailCtrl.text.trim(),
+                kindOfWork ?? '',
+                medicalSpecialist,
+                isAdmin,
+              );
         } else {
           errorMessage = 'login_credentials_error'.tr();
         }
       } catch (e) {
-        errorMessage =
-            (e as FirebaseAuthException).message ?? 'firebase_login_error'.tr();
+        errorMessage = e.toString().contains('Exception')
+            ? e.toString().replaceFirst('Exception: ', '')
+            : 'login_fail'.tr();
         success = false;
+        print('DEBUG: Login error: $e');
       } on DioException catch (e) {
         errorMessage = e.response?.data['message'] ??
             e.response?.data?.toString() ??
             'login_fail'.tr();
         success = false;
-      } catch (e) {
-        errorMessage = 'login_fail'.tr();
-        success = false;
+        print('DEBUG: DioException: ${e.message}');
       }
     } else {
       // Offline login
@@ -242,13 +257,20 @@ class _LoginPageState extends State<LoginPage> {
           (u) => u.email.toLowerCase() == inputEmail,
           orElse: () => throw Exception('User not found'),
         );
-        // Debug log
+        print('DEBUG: Offline login - Dummy user found: ${dummyUser.email}');
       } catch (e) {
         dummyUser = null;
-        // Debug log
+        print('DEBUG: Offline login - User not found: $e');
       }
 
       if (dummyUser != null && dummyUser.password == inputPassword) {
+        if (dummyUser.status == null) {
+          dummyUser.status = UserStatus.deactivated;
+          print('DEBUG: Dummy user status is null, set to deactivated');
+        }
+
+        if (await _handleUserStatus(dummyUser, context)) return;
+
         success = true;
         userId = 'dummy_${inputEmail.hashCode}';
         setState(() {
@@ -259,11 +281,9 @@ class _LoginPageState extends State<LoginPage> {
         isAdmin = dummyUser.isAdmin;
         status = dummyUser.status;
 
-        // Debug logs
-
         await prefs.setString('user_id', userId);
         await prefs.setString('kindOfWork', kindOfWork ?? '');
-        await prefs.setInt('status', status.index);
+        await prefs.setInt('status', status!.index);
         await prefs.setString('email', inputEmail);
         if (medicalSpecialist != null) {
           await prefs.setString('medicalSpecialist', medicalSpecialist);
@@ -271,21 +291,8 @@ class _LoginPageState extends State<LoginPage> {
           await prefs.remove('medicalSpecialist');
         }
         await prefs.setBool('isAdmin', isAdmin);
-
-        // Check user status for blocked or pending accounts
-        if (status == 1 || status == 2) {
-          setState(() => _loggingIn = false);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AccountStatusScreen(
-                isBlocked: status == 1,
-                email: inputEmail,
-              ),
-            ),
-          );
-          return; // Exit to prevent further navigation
-        }
+        print(
+            'DEBUG: Offline login - Saved to SharedPreferences - status: ${status!.index}');
 
         context.read<UserCubit>().setUser(
               userId,
@@ -295,8 +302,8 @@ class _LoginPageState extends State<LoginPage> {
               isAdmin,
             );
       } else {
-        success = false;
         errorMessage = 'offline_login_fail'.tr();
+        print('DEBUG: Offline login failed: Invalid credentials');
       }
     }
 
@@ -304,12 +311,16 @@ class _LoginPageState extends State<LoginPage> {
 
     if (success) {
       await prefs.setBool('isLoggedIn', true);
+      print('DEBUG: Login successful, navigating to next screen');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-            builder: (context) => RoleSelectionScreen(
+          builder: (context) => (kindOfWork?.isNotEmpty ?? false)
+              ? const HomePage()
+              : RoleSelectionScreen(
                   initialKindOfWork: 'doctor',
-                )),
+                ),
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -318,16 +329,19 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Colors.red,
         ),
       );
+      print('DEBUG: Login failed: $errorMessage');
     }
   }
 
   Future<void> _loginWithGoogle() async {
     setState(() => _loggingIn = true);
+    print('DEBUG: Starting Google Sign-In');
 
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         setState(() => _loggingIn = false);
+        print('DEBUG: Google Sign-In cancelled');
         return;
       }
 
@@ -346,9 +360,11 @@ class _LoginPageState extends State<LoginPage> {
       if (firebaseUser == null) {
         throw Exception('Firebase authentication failed');
       }
+      print('DEBUG: Google Sign-In user: ${firebaseUser.email}');
 
       final userDoc =
           await _firestore.collection('users').doc(firebaseUser.uid).get();
+      print('DEBUG: Firestore user data: ${userDoc.data()}');
 
       final prefs = await SharedPreferences.getInstance();
 
@@ -356,7 +372,9 @@ class _LoginPageState extends State<LoginPage> {
         await _firestore.collection('users').doc(firebaseUser.uid).set({
           'email': firebaseUser.email,
           'createdAt': FieldValue.serverTimestamp(),
+          'status': 'deactivated', // Default status for new users
         });
+        print('DEBUG: Created new Firestore user with status: deactivated');
 
         setState(() => _loggingIn = false);
         Navigator.push(
@@ -368,12 +386,14 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         );
+        print('DEBUG: Navigated to CompleteProfileScreen');
       } else {
         final response = await http.post(
           Uri.parse('https://10.0.2.2:7273/api/MedBridge/signin/google'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({'IdToken': googleAuth.idToken}),
         );
+        print('DEBUG: Google Sign-In backend response: ${response.body}');
 
         if (response.statusCode == 200) {
           final responseData = jsonDecode(response.body);
@@ -382,13 +402,12 @@ class _LoginPageState extends State<LoginPage> {
             throw Exception('Invalid backend response');
           }
 
-          // Fetch user data
           await fetchUserData(firebaseUser.email!);
           if (user == null) {
             throw Exception('Failed to fetch user data');
           }
 
-          // Debug logs
+          if (await _handleUserStatus(user!, context)) return;
 
           await prefs.setString('user_id', userId);
           await prefs.setString('kindOfWork', user!.kindOfWork);
@@ -404,6 +423,8 @@ class _LoginPageState extends State<LoginPage> {
               'token', responseData['token'] ?? 'firebase_token');
           await prefs.setBool('isLoggedIn', true);
           await prefs.setString('email', firebaseUser.email!);
+          print(
+              'DEBUG: Google Sign-In - Saved to SharedPreferences - status: ${user!.status.index}');
 
           context.read<UserCubit>().setUser(
                 userId,
@@ -413,25 +434,17 @@ class _LoginPageState extends State<LoginPage> {
                 user!.isAdmin,
               );
 
-          // Check user status for blocked or pending accounts
-          if (user!.status == 1 || user!.status == 2) {
-            setState(() => _loggingIn = false);
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AccountStatusScreen(
-                  isBlocked: user!.status == 1,
-                  email: firebaseUser.email!,
-                ),
-              ),
-            );
-            return;
-          }
-
           setState(() => _loggingIn = false);
+          print('DEBUG: Google Sign-In successful, navigating to next screen');
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
+            MaterialPageRoute(
+              builder: (_) => (user!.kindOfWork.isNotEmpty)
+                  ? const HomePage()
+                  : RoleSelectionScreen(
+                      initialKindOfWork: 'doctor',
+                    ),
+            ),
           );
         } else {
           throw Exception('Backend sign-in failed: ${response.body}');
@@ -440,8 +453,14 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       setState(() => _loggingIn = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${'google_sign_in_error'.tr()}: $e')),
+        SnackBar(
+          content: Text(e.toString().contains('Exception')
+              ? e.toString().replaceFirst('Exception: ', '')
+              : '${'google_sign_in_error'.tr()}: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
+      print('DEBUG: Google Sign-In error: $e');
     }
   }
 
@@ -451,6 +470,7 @@ class _LoginPageState extends State<LoginPage> {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
+    print('DEBUG: LoginPage disposed');
   }
 
   @override
@@ -478,7 +498,6 @@ class _LoginPageState extends State<LoginPage> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const SizedBox(height: 50),
-                  // Logo and Welcome Text
                   Center(
                     child: Image.asset(
                       'assets/images/AppIcon.png',
@@ -502,7 +521,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 40),
-                  // Email Field
                   _buildTextField(
                     controller: _emailCtrl,
                     label: 'Email'.tr(),
@@ -510,7 +528,6 @@ class _LoginPageState extends State<LoginPage> {
                     error: _emailErr,
                   ),
                   const SizedBox(height: 20),
-                  // Password Field
                   _buildTextField(
                     controller: _passCtrl,
                     label: 'Password'.tr(),
@@ -520,10 +537,11 @@ class _LoginPageState extends State<LoginPage> {
                     obscureText: _obscurePassword,
                     onToggleVisibility: () {
                       setState(() => _obscurePassword = !_obscurePassword);
+                      print(
+                          'DEBUG: Toggled password visibility: $_obscurePassword');
                     },
                   ),
                   const SizedBox(height: 12),
-                  // Forgot Password
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
@@ -542,7 +560,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Login Button
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -564,7 +581,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Divider
                   Row(
                     children: [
                       Expanded(child: Divider()),
@@ -581,20 +597,16 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Social Login Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildSocialButton(
                         'assets/images/google.png',
-                        onTap: () {
-                          // Implement Google sign in
-                        },
+                        onTap: _loginWithGoogle,
                       ),
                     ],
                   ),
                   const Spacer(),
-                  // Register Link
                   Center(
                     child: TextButton(
                       onPressed: () => Navigator.push(
