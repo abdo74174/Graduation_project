@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:graduation_project/services/contact_us.dart/contact_us.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ContactUsPage extends StatefulWidget {
   const ContactUsPage({super.key});
@@ -15,7 +16,9 @@ class _ContactUsPageState extends State<ContactUsPage> {
   final ContactUsService _apiService = ContactUsService();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _problemTypeController = TextEditingController();
   bool _isSubmitting = false;
+  String? _selectedProblemType;
 
   @override
   void initState() {
@@ -26,13 +29,19 @@ class _ContactUsPageState extends State<ContactUsPage> {
   String? email;
   Future<void> _loadUserData() async {
     email = await _userService.getEmail();
-
     setState(() {
       _emailController.text = email ?? '';
     });
   }
 
   Future<void> _submitMessage() async {
+    if (_selectedProblemType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('please_select_problem_type'.tr())),
+      );
+      return;
+    }
+
     if (_messageController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('please_enter_message'.tr())),
@@ -45,7 +54,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
     });
 
     final success = await _apiService.submitContactUsMessage(
-        _messageController.text, email);
+        _selectedProblemType!, _messageController.text, email);
 
     setState(() {
       _isSubmitting = false;
@@ -56,10 +65,20 @@ class _ContactUsPageState extends State<ContactUsPage> {
         SnackBar(content: Text('message_submitted'.tr())),
       );
       _messageController.clear();
+      _problemTypeController.clear();
+      setState(() {
+        _selectedProblemType = null;
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('failed_to_submit'.tr())),
       );
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    if (!await launchUrl(Uri.parse(url))) {
+      throw Exception('Could not launch $url');
     }
   }
 
@@ -94,6 +113,14 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   fit: BoxFit.cover,
                 ),
               ),
+              const SizedBox(height: 20),
+              Text(
+                'report_problem'.tr(),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 10),
               TextField(
                 controller: _emailController,
@@ -109,14 +136,55 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
+              DropdownButtonFormField<String>(
+                value: _selectedProblemType,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  prefixIcon: const Icon(Icons.warning),
+                  hintText: 'select_problem_type'.tr(),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                items: [
+                  DropdownMenuItem(
+                    value: 'account_blocked',
+                    child: Text('account_blocked'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'login_issues',
+                    child: Text('login_issues'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'payment_problem',
+                    child: Text('payment_problem'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'app_bugs',
+                    child: Text('app_bugs'.tr()),
+                  ),
+                  DropdownMenuItem(
+                    value: 'other',
+                    child: Text('other_issue'.tr()),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _selectedProblemType = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 15),
               TextField(
                 controller: _messageController,
                 maxLines: 5,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.grey.shade100,
-                  hintText: 'message'.tr(),
+                  hintText: 'describe_your_problem'.tr(),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
@@ -153,25 +221,38 @@ class _ContactUsPageState extends State<ContactUsPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 30),
+              Center(
+                child: Text('urgent_help'.tr(),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.red,
+                    )),
+              ),
+              const SizedBox(height: 15),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  SocialMediaButton(
+                    imagePath: 'assets/images/whatsapp.jpg',
+                    onTap: () => _launchUrl('https://wa.me/1234567890'),
+                    label: 'WhatsApp',
+                  ),
+                  SocialMediaButton(
+                    imagePath: 'assets/images/phone.png',
+                    onTap: () => _launchUrl('tel:+1234567890'),
+                    label: 'call'.tr(),
+                  ),
+                ],
+              ),
               const SizedBox(height: 20),
+              Divider(color: Colors.grey.shade400),
+              const SizedBox(height: 10),
               Text(
                 'contact_details'.tr(),
                 style: const TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  shadows: [
-                    Shadow(
-                        color: Colors.black26,
-                        offset: Offset(1, 1),
-                        blurRadius: 2)
-                  ],
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                'contact_message'.tr(),
-                style: TextStyle(
-                  color: Color(0xFF555720),
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -179,37 +260,49 @@ class _ContactUsPageState extends State<ContactUsPage> {
               ContactDetailRow(
                   icon: Icons.location_on,
                   label: 'address'.tr(),
-                  value: 'location'.tr()),
+                  value: '123 Main St, City, Country',
+                  onTap: () => _launchUrl(
+                      'https://maps.google.com/?q=123+Main+St,+City,+Country')),
               ContactDetailRow(
                   icon: Icons.phone,
                   label: 'phone'.tr(),
-                  value: 'phone_number'.tr()),
+                  value: '+1234567890',
+                  onTap: () => _launchUrl('tel:+1234567890')),
               ContactDetailRow(
                   icon: Icons.email,
                   label: 'email_contact'.tr(),
-                  value: 'email_value'.tr()),
+                  value: 'support@example.com',
+                  onTap: () => _launchUrl('mailto:support@example.com')),
               ContactDetailRow(
                   icon: Icons.access_time,
                   label: 'availability'.tr(),
-                  value: 'working_hours'.tr()),
-              const SizedBox(height: 10),
+                  value: 'Mon-Fri: 9AM-5PM'),
+              const SizedBox(height: 20),
               Divider(color: Colors.grey.shade400),
+              const SizedBox(height: 10),
+              Center(
+                child: Text('follow_us'.tr(),
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
               const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'social_media'.tr(),
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  SocialMediaButton(
+                    imagePath: 'assets/images/facebook.jpg',
+                    onTap: () => _launchUrl('https://facebook.com/yourpage'),
                   ),
-                  const SizedBox(width: 10),
-                  SocialMediaIcon(imagePath: 'assets/images/facebook.jpg'),
-                  const SizedBox(width: 10),
-                  SocialMediaIcon(imagePath: 'assets/images/twitter.jpg'),
-                  const SizedBox(width: 10),
-                  SocialMediaIcon(imagePath: 'assets/images/linkedin.jpg'),
-                  const SizedBox(width: 10),
-                  SocialMediaIcon(imagePath: 'assets/images/whatsapp.jpg'),
+                  const SizedBox(width: 15),
+                  SocialMediaButton(
+                    imagePath: 'assets/images/twitter.jpg',
+                    onTap: () => _launchUrl('https://twitter.com/yourhandle'),
+                  ),
+                  const SizedBox(width: 15),
+                  SocialMediaButton(
+                    imagePath: 'assets/images/linkedin.jpg',
+                    onTap: () => _launchUrl('https://linkedin.com/yourcompany'),
+                  ),
                 ],
               ),
             ],
@@ -224,46 +317,81 @@ class ContactDetailRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
-  const ContactDetailRow(
-      {super.key,
-      required this.icon,
-      required this.label,
-      required this.value});
+  const ContactDetailRow({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.black54),
-          const SizedBox(width: 10),
-          Text("$label:", style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(width: 5),
-          Expanded(child: Text(value)),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.black54),
+            const SizedBox(width: 10),
+            Text("$label:",
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 5),
+            Expanded(child: Text(value)),
+            if (onTap != null)
+              const Icon(Icons.chevron_right, color: Colors.grey),
+          ],
+        ),
       ),
     );
   }
 }
 
-class SocialMediaIcon extends StatelessWidget {
+class SocialMediaButton extends StatelessWidget {
   final String imagePath;
+  final VoidCallback onTap;
+  final String? label;
 
-  const SocialMediaIcon({super.key, required this.imagePath});
+  const SocialMediaButton({
+    super.key,
+    required this.imagePath,
+    required this.onTap,
+    this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      imagePath,
-      width: 30,
-      height: 30,
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(50),
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Image.asset(
+              imagePath,
+              width: 40,
+              height: 40,
+            ),
+          ),
+        ),
+        if (label != null) ...[
+          const SizedBox(height: 5),
+          Text(label!, style: const TextStyle(fontSize: 12)),
+        ],
+      ],
     );
   }
 }

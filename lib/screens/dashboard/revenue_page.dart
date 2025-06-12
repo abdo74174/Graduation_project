@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/order_model.dart';
 import 'package:graduation_project/services/Order/order_service.dart';
@@ -96,8 +97,8 @@ class _RevenuePageState extends State<RevenuePage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Revenue Overview',
+        title: Text(
+          'Revenue Overview'.tr(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
@@ -131,7 +132,7 @@ class _RevenuePageState extends State<RevenuePage> {
       ),
       child: TextField(
         decoration: InputDecoration(
-          hintText: 'Search by month...',
+          hintText: 'Search by month...'.tr(),
           hintStyle: TextStyle(color: Colors.grey[500]),
           prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
           border: InputBorder.none,
@@ -147,13 +148,13 @@ class _RevenuePageState extends State<RevenuePage> {
       future: _revenueFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Loading revenue data...',
+                Text('Loading revenue data...'.tr(),
                     style: TextStyle(color: Colors.grey)),
               ],
             ),
@@ -189,13 +190,13 @@ class _RevenuePageState extends State<RevenuePage> {
         children: [
           Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
           const SizedBox(height: 16),
-          const Text(
-            'Error loading revenue data',
+          Text(
+            'Error loading revenue data'.tr(),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
-            'Please try again',
+            'Please try again'.tr(),
             style: TextStyle(color: Colors.grey[600]),
           ),
           const SizedBox(height: 24),
@@ -203,7 +204,7 @@ class _RevenuePageState extends State<RevenuePage> {
             onPressed: () =>
                 setState(() => _revenueFuture = _loadRevenueData()),
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text('Retry'.tr()),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
@@ -226,15 +227,15 @@ class _RevenuePageState extends State<RevenuePage> {
           const SizedBox(height: 16),
           Text(
             _searchQuery.isEmpty
-                ? 'No revenue data found'
-                : 'No revenue data matches your search',
+                ? 'No revenue data found'.tr()
+                : 'No revenue data matches your search'.tr(),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             _searchQuery.isEmpty
-                ? 'No orders have been placed yet'
-                : 'Try a different search term',
+                ? 'No orders have been placed yet'.tr()
+                : 'Try a different search term'.tr(),
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],

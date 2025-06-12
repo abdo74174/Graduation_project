@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
@@ -60,7 +61,7 @@ class _CustomersPageState extends State<CustomersPage> {
     if (user.id == int.parse(_userOfAppIdString!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('You cannot perform actions on your own account.'),
+          content: Text('You cannot perform actions on your own account.'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -95,7 +96,7 @@ class _CustomersPageState extends State<CustomersPage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$action completed successfully')),
+          SnackBar(content: Text('$action completed successfully'.tr())),
         );
         await _fetchUsers();
       }
@@ -103,22 +104,22 @@ class _CustomersPageState extends State<CustomersPage> {
       String errorText = e.toString();
       String message;
 
-      if (errorText.contains("Admin not found")) {
-        message = "المستخدم ليس مسؤولًا أو غير موجود";
-      } else if (errorText.contains("Main admin cannot be deleted")) {
-        message = "لا يمكن حذف المسؤول الرئيسي";
-      } else if (errorText.contains("Admin already exists")) {
-        message = "هذا المستخدم بالفعل مسؤول";
-      } else if (errorText.contains("User is already blocked")) {
-        message = "المستخدم محظور بالفعل";
-      } else if (errorText.contains("User is already unblocked")) {
-        message = "المستخدم غير محظور بالفعل";
-      } else if (errorText.contains("User is already active")) {
-        message = "المستخدم نشط بالفعل";
-      } else if (errorText.contains("Invalid user")) {
-        message = "المستخدم غير صالح أو مسؤول";
+      if (errorText.contains("Admin not found".tr())) {
+        message = "المستخدم ليس مسؤولًا أو غير موجود".tr();
+      } else if (errorText.contains("Main admin cannot be deleted".tr())) {
+        message = "لا يمكن حذف المسؤول الرئيسي".tr();
+      } else if (errorText.contains("Admin already exists".tr())) {
+        message = "هذا المستخدم بالفعل مسؤول".tr();
+      } else if (errorText.contains("User is already blocked".tr())) {
+        message = "المستخدم محظور بالفعل".tr();
+      } else if (errorText.contains("User is already unblocked".tr())) {
+        message = "المستخدم غير محظور بالفعل".tr();
+      } else if (errorText.contains("User is already active".tr())) {
+        message = "المستخدم نشط بالفعل".tr();
+      } else if (errorText.contains("Invalid user".tr())) {
+        message = "المستخدم غير صالح أو مسؤول".tr();
       } else {
-        message = "حدث خطأ: $errorText";
+        message = "حدث خطأ: $errorText".tr();
       }
 
       if (mounted) {
@@ -153,13 +154,13 @@ class _CustomersPageState extends State<CustomersPage> {
             ),
             SizedBox(height: 16),
             Text(
-              'Connection Error',
+              'Connection Error'.tr(),
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 8),
             Text(
-              errorMessage ?? 'Failed to load users',
+              errorMessage ?? 'Failed to load users'.tr(),
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 24),
@@ -179,7 +180,7 @@ class _CustomersPageState extends State<CustomersPage> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Icon(Icons.refresh),
-              label: Text(isRetrying ? 'Retrying...' : 'Retry'),
+              label: Text(isRetrying ? 'Retrying...'.tr() : 'Retry'.tr()),
             ),
           ],
         ),
@@ -191,7 +192,7 @@ class _CustomersPageState extends State<CustomersPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Users'),
+        title: Text('Users'.tr()),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -245,15 +246,17 @@ class _CustomersPageState extends State<CustomersPage> {
                                   Row(
                                     children: [
                                       _buildChip(
-                                        label: user.isAdmin ? 'Admin' : 'User',
+                                        label: user.isAdmin
+                                            ? 'Admin'.tr()
+                                            : 'User'.tr(),
                                         color: user.isAdmin
                                             ? Colors.blue
-                                            : (user.kindOfWork == 'Doctor'
+                                            : (user.kindOfWork == 'Doctor'.tr()
                                                 ? Colors.green
                                                 : Colors.red),
                                         icon: user.isAdmin
                                             ? Icons.admin_panel_settings
-                                            : (user.kindOfWork == 'Doctor'
+                                            : (user.kindOfWork == 'Doctor'.tr()
                                                 ? Icons.medical_services
                                                 : Icons.person),
                                       ),
@@ -299,11 +302,11 @@ class _CustomersPageState extends State<CustomersPage> {
     // Admin role actions
     if (!user.isAdmin) {
       menuItems.add(
-        _buildMenuItem("Assign Admin", Icons.person_add),
+        _buildMenuItem("Assign Admin".tr(), Icons.person_add),
       );
     } else {
       menuItems.add(
-        _buildMenuItem("Remove Admin", Icons.person_remove, Colors.red),
+        _buildMenuItem("Remove Admin".tr(), Icons.person_remove, Colors.red),
       );
     }
 
@@ -313,22 +316,24 @@ class _CustomersPageState extends State<CustomersPage> {
         // For active users, show block and deactivate options
         menuItems.addAll([
           const PopupMenuDivider(),
-          _buildMenuItem("Block User", Icons.block, Colors.red),
-          _buildMenuItem("Deactivate User", Icons.person_off, Colors.orange),
+          _buildMenuItem("Block User".tr(), Icons.block, Colors.red),
+          _buildMenuItem(
+              "Deactivate User".tr(), Icons.person_off, Colors.orange),
         ]);
         break;
       case UserStatus.blocked:
         // For blocked users, only show unblock option
         menuItems.addAll([
           const PopupMenuDivider(),
-          _buildMenuItem("Unblock User", Icons.lock_open, Colors.green),
+          _buildMenuItem("Unblock User".tr(), Icons.lock_open, Colors.green),
         ]);
         break;
       case UserStatus.deactivated:
         // For deactivated users, only show activate option
         menuItems.addAll([
           const PopupMenuDivider(),
-          _buildMenuItem("Activate User", Icons.person_add_alt_1, Colors.green),
+          _buildMenuItem(
+              "Activate User".tr(), Icons.person_add_alt_1, Colors.green),
         ]);
         break;
     }
@@ -339,13 +344,13 @@ class _CustomersPageState extends State<CustomersPage> {
   String _getStatusLabel(int status) {
     switch (status) {
       case 0:
-        return 'Active';
+        return 'Active'.tr();
       case 1:
-        return 'Blocked';
+        return 'Blocked'.tr();
       case 2:
-        return 'Deactivated';
+        return 'Deactivated'.tr();
       default:
-        return 'Unknown';
+        return 'Unknown'.tr();
     }
   }
 

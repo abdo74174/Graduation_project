@@ -76,8 +76,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       userId = await UserServicee().getUserId();
       if (userId == null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text("User ID not found. Please login again.")),
+          SnackBar(
+              content: Text("User ID not found. Please login again.".tr())),
         );
       }
 
@@ -92,7 +92,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
     } catch (e) {
       if (mounted) {
-        showSnackbar(context, "Error loading initial data: $e");
+        showSnackbar(context, "Error loading initial data: $e".tr());
       }
     } finally {
       if (mounted) {
@@ -120,7 +120,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Add New Product",
+          "Add New Product".tr(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : Colors.black87,
@@ -159,7 +159,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             children: [
                               BuildTextField(
                                 controller: _productNameController,
-                                label: "Product Name",
+                                label: "Product Name".tr(),
                               ),
                               const SizedBox(height: 16),
 
@@ -190,25 +190,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 enabled:
                                     !_isLoading && selectedCategory != null,
                                 hint: _isLoading
-                                    ? "Loading subcategories..."
+                                    ? "Loading subcategories...".tr()
                                     : selectedCategory == null
-                                        ? "Select a category first"
+                                        ? "Select a category first".tr()
                                         : productSubCategories.isEmpty
-                                            ? "No subcategories available"
-                                            : "Select a subcategory",
+                                            ? "No subcategories available".tr()
+                                            : "Select a subcategory".tr(),
                               ),
                               const SizedBox(height: 16),
 
                               BuildTextField(
                                 controller: _StockQuantity,
-                                label: "Product Quantity",
+                                label: "Product Quantity".tr(),
                               ),
                             ],
                           ),
                         ),
                       ),
                     ),
-                    _buildSectionTitle("Product Description"),
+                    _buildSectionTitle("Product Description".tr()),
                     Card(
                       elevation: 2,
                       margin: const EdgeInsets.only(bottom: 24),
@@ -220,7 +220,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             BuildDescriptionField(
-                              label: "Product Description",
+                              label: "Product Description".tr(),
                               descriptionController: _descriptionController,
                             ),
                             const SizedBox(height: 16),
@@ -244,10 +244,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        Text("Generating..."),
+                                        Text("Generating...".tr()),
                                       ],
                                     )
-                                  : Text("Generate AI Description"),
+                                  : Text("Generate AI Description".tr()),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: theme.primaryColor,
                                 foregroundColor: Colors.white,
@@ -261,7 +261,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                       ),
                     ),
-                    _buildSectionTitle("Product Images"),
+                    _buildSectionTitle("Product Images".tr()),
                     Card(
                       elevation: 2,
                       margin: const EdgeInsets.only(bottom: 24),
@@ -274,7 +274,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           children: [
                             Text(
                               _imageFiles.isEmpty
-                                  ? "Please add at least one product image"
+                                  ? "Please add at least one product image".tr()
                                   : "${_imageFiles.length} image${_imageFiles.length > 1 ? 's' : ''} selected",
                               style: TextStyle(
                                 color: _imageFiles.isEmpty
@@ -293,7 +293,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                       ),
                     ),
-                    _buildSectionTitle("Pricing Information"),
+                    _buildSectionTitle("Pricing Information".tr()),
                     Card(
                       elevation: 2,
                       margin: const EdgeInsets.only(bottom: 24),
@@ -338,11 +338,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  Text("Adding Product..."),
+                                  Text("Adding Product...".tr()),
                                 ],
                               )
                             : Text(
-                                "Add Product",
+                                "Add Product".tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -390,7 +390,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Product Status",
+          "Product Status".tr(),
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -400,11 +400,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Row(
           children: [
             Expanded(
-              child: _buildStatusOption("New", Icons.new_releases),
+              child: _buildStatusOption("New".tr(), Icons.new_releases),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _buildStatusOption("Used", Icons.replay_circle_filled),
+              child:
+                  _buildStatusOption("Used".tr(), Icons.replay_circle_filled),
             ),
           ],
         ),
@@ -458,13 +459,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       if (_discountController.text.isEmpty) {
-        showSnackbar(context, "Please enter a discount percentage");
+        showSnackbar(context, "Please enter a discount percentage".tr());
         return;
       } else if (double.tryParse(_discountController.text) == null) {
-        showSnackbar(context, "Please enter a valid discount percentage");
+        showSnackbar(context, "Please enter a valid discount percentage".tr());
         return;
       } else if (double.tryParse(_discountController.text)! > 100) {
-        showSnackbar(context, "Discount percentage cannot be greater than 100");
+        showSnackbar(
+            context, "Discount percentage cannot be greater than 100".tr());
         return;
       }
 
@@ -475,45 +477,45 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Future<void> _submitProduct() async {
     // Check validation manually since we don't have validators in components
     if (_productNameController.text.isEmpty) {
-      showSnackbar(context, "Product name is required");
+      showSnackbar(context, "Product name is required".tr());
       return;
     }
 
     if (selectedCategory == null) {
-      showSnackbar(context, "Please select a category");
+      showSnackbar(context, "Please select a category".tr());
       return;
     }
 
     if (selectedCategory != null &&
         selectedSubCategory == null &&
         productSubCategories.isNotEmpty) {
-      showSnackbar(context, "Please select a subcategory");
+      showSnackbar(context, "Please select a subcategory".tr());
       return;
     }
 
     if (_StockQuantity.text.isEmpty ||
         int.tryParse(_StockQuantity.text) == null) {
-      showSnackbar(context, "Please enter a valid quantity");
+      showSnackbar(context, "Please enter a valid quantity".tr());
       return;
     }
 
     if (_descriptionController.text.isEmpty) {
-      showSnackbar(context, "Description is required");
+      showSnackbar(context, "Description is required".tr());
       return;
     }
 
     if (_imageFiles.isEmpty) {
-      showSnackbar(context, "Please add at least one product image");
+      showSnackbar(context, "Please add at least one product image".tr());
       return;
     }
 
     if (selectedStatus == null) {
-      showSnackbar(context, "Please select product status (New or Used)");
+      showSnackbar(context, "Please select product status (New or Used)".tr());
       return;
     }
 
     if (userId == null) {
-      showSnackbar(context, "Please login to add a product");
+      showSnackbar(context, "Please login to add a product".tr());
       return;
     }
 
@@ -534,13 +536,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
         imageFiles: _imageFiles,
       );
 
-      showSnackbar(context, "Product added successfully!");
+      showSnackbar(context, "Product added successfully!".tr());
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => HomePage()));
     } catch (e) {
-      showSnackbar(context, "Error: $e");
+      showSnackbar(context, "Error: $e".tr());
       if (kDebugMode) {
-        print("Error adding product: $e");
+        print("Error adding product: $e".tr());
       }
     } finally {
       if (mounted) {
@@ -550,25 +552,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   int getCategoryIdByName(String? name) {
-    if (name == null) throw Exception("Category not selected");
+    if (name == null) throw Exception("Category not selected".tr());
     final category = _categories.firstWhere(
       (c) => c.name == name,
-      orElse: () => throw Exception("Category not found"),
+      orElse: () => throw Exception("Category not found".tr()),
     );
     return category.categoryId;
   }
 
   int getSubCategoryIdByName(String? name) {
-    if (name == null) throw Exception("Subcategory not selected");
-    if (selectedCategory == null) throw Exception("Category not selected");
+    if (name == null) throw Exception("Subcategory not selected".tr());
+    if (selectedCategory == null) throw Exception("Category not selected".tr());
 
     final subCategory = _subcategories.firstWhere(
-      (s) =>
-          s.name == name &&
-          s.categoryId == getCategoryIdByName(selectedCategory),
-      orElse: () => throw Exception(
-          "Subcategory '$name' not found in category '$selectedCategory'"),
-    );
+        (s) =>
+            s.name == name &&
+            s.categoryId == getCategoryIdByName(selectedCategory),
+        orElse: () => throw Exception(
+              "${"Subcategory".tr()}, $name not found in category ${selectedCategory}",
+            ));
 
     print(
         '✅ Found subcategory: ${subCategory.name} (ID: ${subCategory.subCategoryId}) in category: $selectedCategory');
@@ -597,7 +599,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Future<void> _generateDescription() async {
     if (_productNameController.text.isEmpty || selectedCategory == null) {
-      showSnackbar(context, "Please enter product name and select a category");
+      showSnackbar(
+          context, "Please enter product name and select a category".tr());
       return;
     }
 
@@ -615,9 +618,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         _descriptionController.text = description;
       });
     } catch (e) {
-      showSnackbar(context, "Failed to generate description: $e");
+      showSnackbar(context, "Failed to generate description: $e".tr());
       if (kDebugMode) {
-        print("Error generating description: $e");
+        print("Error generating description: $e".tr());
       }
     } finally {
       setState(() {
@@ -650,7 +653,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       // Find the category ID for the selected category name
       final category = _categories.firstWhere(
         (cat) => cat.name == categoryName,
-        orElse: () => throw Exception('Category not found'),
+        orElse: () => throw Exception('Category not found'.tr()),
       );
 
       print(
@@ -679,7 +682,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       });
 
       if (filteredSubcategories.isEmpty) {
-        showSnackbar(context, 'No subcategories found for ${category.name}');
+        showSnackbar(
+            context, '${'No subcategories found for '.tr()} ${category.name}');
         print(
             '⚠️ No subcategories found for category ${category.name} (ID: ${category.categoryId})');
       } else {
@@ -694,7 +698,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         productSubCategories = [];
         _isLoading = false;
       });
-      showSnackbar(context, 'Failed to load subcategories: $e');
+      showSnackbar(context, 'Failed to load subcategories: $e'.tr());
     }
   }
 }
@@ -742,7 +746,7 @@ class ImageUploadSection extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Add Images",
+                      "Add Images".tr(),
                       style: TextStyle(
                         color: theme.primaryColor,
                         fontSize: 12,
@@ -756,7 +760,7 @@ class ImageUploadSection extends StatelessWidget {
             Expanded(
               child: imageFiles.isEmpty
                   ? Text(
-                      "No images selected",
+                      "No images selected".tr(),
                       style: TextStyle(
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
                         fontStyle: FontStyle.italic,

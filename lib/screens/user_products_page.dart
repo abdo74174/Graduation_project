@@ -29,55 +29,25 @@ class _UserProductsPageState extends State<UserProductsPage> {
 
   Future<void> _loadUserProducts() async {
     try {
-      print('🔍 Starting to load user products...');
       final userId = await UserServicee().getUserId();
-      print('👤 Current User ID: $userId (${userId.runtimeType})');
 
       if (userId == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Please log in to view your products')),
-          );
-        }
-        print('❌ User not logged in');
-        return;
-      }
-
-      // Convert userId to integer
-      int? userIdInt;
-      try {
-        userIdInt = int.parse(userId);
-      } catch (e) {
-        print('❌ Error parsing user ID: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invalid user ID')),
+            SnackBar(content: Text('Please log in to view your products'.tr())),
           );
         }
         return;
       }
 
-      print('📥 Fetching all products...');
       final allProducts = await ProductService().fetchAllProducts();
-      print('📦 Total products fetched: ${allProducts.length}');
 
       if (mounted) {
-        final filteredProducts = allProducts
-            .where((product) => product.userId == userIdInt)
-            .toList();
-        print('🎯 Filtered products for user: ${filteredProducts.length}');
+        final filteredProducts =
+            allProducts.where((product) => product.userId == userId).toList();
 
         // Debug product IDs
-        print('🔍 Product user IDs:');
-        for (var product in allProducts) {
-          print(
-              'Product ${product.productId}: userId=${product.userId} (${product.userId.runtimeType})');
-          print(
-              'Product ${product.productId} name type: ${product.name.runtimeType}');
-          print(
-              'Product ${product.productId} description type: ${product.description.runtimeType}');
-        }
-        print('🎯 Looking for products with userId: $userIdInt (int)');
+        for (var product in allProducts) {}
 
         setState(() {
           userProducts = filteredProducts;
@@ -85,14 +55,12 @@ class _UserProductsPageState extends State<UserProductsPage> {
         });
       }
     } catch (e, stackTrace) {
-      print('❌ Error loading products: $e');
-      print('Stack trace: $stackTrace');
       if (mounted) {
         setState(() {
           isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading products')),
+          SnackBar(content: Text('Error loading products'.tr())),
         );
       }
     }
@@ -107,20 +75,20 @@ class _UserProductsPageState extends State<UserProductsPage> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Product deleted successfully')),
+            SnackBar(content: Text('Product deleted successfully'.tr())),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete product')),
+            SnackBar(content: Text('Failed to delete product'.tr())),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting product: $e')),
+          SnackBar(content: Text('Error deleting product: $e'.tr())),
         );
       }
     }
@@ -134,7 +102,7 @@ class _UserProductsPageState extends State<UserProductsPage> {
     return Scaffold(
       backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: AppBar(
-        title: Text('My Products'),
+        title: Text('My Products'.tr()),
         backgroundColor: isDark ? Colors.black : Colors.white,
         foregroundColor: isDark ? Colors.white : Colors.black,
         elevation: 0,
@@ -151,7 +119,7 @@ class _UserProductsPageState extends State<UserProductsPage> {
                 );
               }
             },
-            tooltip: 'Logout',
+            tooltip: 'Logout'.tr(),
           ),
         ],
       ),
@@ -179,7 +147,7 @@ class _UserProductsPageState extends State<UserProductsPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No products found',
+                        'No products found'.tr(),
                         style: TextStyle(
                           fontSize: 18,
                           color: isDark ? Colors.white54 : Colors.black54,
@@ -196,7 +164,7 @@ class _UserProductsPageState extends State<UserProductsPage> {
                           ).then((_) => _loadUserProducts());
                         },
                         icon: const Icon(Icons.add),
-                        label: Text('Add Product'),
+                        label: Text('Add Product'.tr()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(context).primaryColor,
                           foregroundColor: Colors.white,

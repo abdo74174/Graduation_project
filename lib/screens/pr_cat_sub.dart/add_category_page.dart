@@ -75,7 +75,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         imageFile: _categoryImage!,
       );
 
-      _showSuccess('Category added successfully');
+      _showSuccess('Category added successfully'.tr());
       _categoryNameController.clear();
       _categoryDescController.clear();
       setState(() => _categoryImage = null);

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'wave_painter.dart';
 
@@ -82,12 +83,13 @@ class _AnimatedBottomNavState extends State<AnimatedBottomNav>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'),
+              _buildNavItem(0, Icons.home_outlined, Icons.home, 'Home'.tr()),
+              _buildNavItem(1, Icons.category_outlined, Icons.category,
+                  'Categories'.tr()),
+              _buildNavItem(2, Icons.shopping_cart_outlined,
+                  Icons.shopping_cart, 'Cart'.tr()),
               _buildNavItem(
-                  1, Icons.category_outlined, Icons.category, 'Categories'),
-              _buildNavItem(
-                  2, Icons.shopping_cart_outlined, Icons.shopping_cart, 'Cart'),
-              _buildNavItem(3, Icons.person_outline, Icons.person, 'Profile'),
+                  3, Icons.person_outline, Icons.person, 'Profile'.tr()),
             ],
           ),
         ],

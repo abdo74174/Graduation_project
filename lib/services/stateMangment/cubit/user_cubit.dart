@@ -4,13 +4,14 @@ import 'package:graduation_project/services/stateMangment/cubit/user_cubit_state
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserCubit extends Cubit<UserState> {
-  UserCubit() : super(UserState(
-    userId: null,
-    email: null,
-    kindOfWork: null,
-    medicalSpecialist: null,
-    isAdmin: false,
-  )) {
+  UserCubit()
+      : super(UserState(
+          userId: null,
+          email: null,
+          kindOfWork: null,
+          medicalSpecialist: null,
+          isAdmin: false,
+        )) {
     // Add this initialization
     loadUserData();
   }

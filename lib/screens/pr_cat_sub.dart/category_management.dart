@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/services/Product/category_service.dart';
@@ -135,14 +136,14 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                 Icon(Icons.warning_amber_rounded,
                     color: Colors.orange, size: 28),
                 const SizedBox(width: 12),
-                const Text('Confirm Deletion'),
+                Text('Confirm Deletion'.tr()),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Are you sure you want to delete "$categoryName"?'),
+                Text("${'Are you sure you want to delete '.tr()}$categoryName"),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -151,13 +152,14 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.orange.withOpacity(0.3)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.info_outline, color: Colors.orange, size: 20),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'This action cannot be undone. Categories with subcategories or products cannot be deleted.',
+                          'This action cannot be undone. Categories with subcategories or products cannot be deleted.'
+                              .tr(),
                           style: TextStyle(fontSize: 12),
                         ),
                       ),
@@ -169,7 +171,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: Text('Cancel'.tr()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
@@ -177,7 +179,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Delete'),
+                child: Text('Delete'.tr()),
               ),
             ],
           ),
@@ -224,8 +226,8 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Manage Categories',
+        title: Text(
+          'Manage Categories'.tr(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
@@ -234,9 +236,9 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: Icon(Icons.add),
             onPressed: _addCategory,
-            tooltip: 'Add new category',
+            tooltip: 'Add new category'.tr(),
           ),
         ],
       ),
@@ -266,7 +268,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
       ),
       child: TextField(
         decoration: InputDecoration(
-          hintText: 'Search categories...',
+          hintText: 'Search categories...'.tr(),
           hintStyle: TextStyle(color: Colors.grey[500]),
           prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
           border: InputBorder.none,
@@ -282,13 +284,13 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
       future: _categoriesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Loading categories...',
+                Text('Loading categories...'.tr(),
                     style: TextStyle(color: Colors.grey)),
               ],
             ),
@@ -324,13 +326,13 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
         children: [
           Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
           const SizedBox(height: 16),
-          const Text(
-            'Error loading categories',
+          Text(
+            'Error loading categories'.tr(),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
-            'Please try again',
+            'Please try again'.tr(),
             style: TextStyle(color: Colors.grey[600]),
           ),
           const SizedBox(height: 24),
@@ -338,7 +340,7 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
             onPressed: () =>
                 setState(() => _categoriesFuture = _loadCategories()),
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text('Retry'.tr()),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
@@ -361,15 +363,15 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
           const SizedBox(height: 16),
           Text(
             _searchQuery.isEmpty
-                ? 'No categories found'
-                : 'No categories match your search',
+                ? 'No categories found'.tr()
+                : 'No categories match your search'.tr(),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             _searchQuery.isEmpty
-                ? 'Add some categories to get started'
-                : 'Try a different search term',
+                ? 'Add some categories to get started'.tr()
+                : 'Try a different search term'.tr(),
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],
@@ -414,17 +416,17 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    category.name ?? 'Unnamed Category',
+                    category.name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
                     ),
                   ),
-                  if (category.description?.isNotEmpty == true) ...[
+                  if (category.description.isNotEmpty == true) ...[
                     const SizedBox(height: 4),
                     Text(
-                      category.description!,
+                      category.description,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -462,20 +464,20 @@ class _ManageCategoriesPageState extends State<ManageCategoriesPage> {
                     backgroundColor: Colors.blue.withOpacity(0.1),
                     foregroundColor: Colors.blue,
                   ),
-                  tooltip: 'Edit category',
+                  tooltip: 'Edit category'.tr(),
                 ),
                 const SizedBox(height: 8),
                 IconButton(
                   onPressed: _isLoading
                       ? null
-                      : () => _deleteCategory(
-                          category.categoryId, category.name ?? 'Unknown'),
+                      : () =>
+                          _deleteCategory(category.categoryId, category.name),
                   icon: const Icon(Icons.delete_outline),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.red.withOpacity(0.1),
                     foregroundColor: Colors.red,
                   ),
-                  tooltip: 'Delete category',
+                  tooltip: 'Delete category'.tr(),
                 ),
               ],
             ),
@@ -548,7 +550,7 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
         });
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to pick image: $e');
+      _showErrorSnackBar('Failed to pick image: $e'.tr());
     }
   }
 
@@ -564,12 +566,12 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
         imageFile: _selectedImage,
       );
       if (mounted) {
-        _showSuccessSnackBar('Category updated successfully');
+        _showSuccessSnackBar('Category updated successfully'.tr());
         Navigator.of(context).pop(true);
       }
     } catch (error) {
       if (mounted) {
-        _showErrorSnackBar('Failed to update category: $error');
+        _showErrorSnackBar('Failed to update category: $error'.tr());
       }
     } finally {
       if (mounted) {
@@ -617,8 +619,8 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Edit Category',
+        title: Text(
+          'Edit Category'.tr(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
@@ -661,7 +663,7 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
       child: Column(
         children: [
           Text(
-            'Category Image',
+            'Category Image'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -702,7 +704,7 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Tap to change image',
+            'Tap to change image'.tr(),
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 14,
@@ -721,7 +723,7 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
             size: 32, color: Colors.grey[400]),
         const SizedBox(height: 8),
         Text(
-          'Add Image',
+          'Add Image'.tr(),
           style: TextStyle(color: Colors.grey[500], fontSize: 12),
         ),
       ],
@@ -751,7 +753,7 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'Please enter a category name';
+            return 'Please enter a category name'.tr();
           }
           return null;
         },
@@ -775,15 +777,15 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
       ),
       child: TextFormField(
         controller: _descriptionController,
-        decoration: const InputDecoration(
-          labelText: 'Description',
+        decoration: InputDecoration(
+          labelText: 'Description'.tr(),
           border: OutlineInputBorder(),
           prefixIcon: Icon(Icons.description_outlined),
         ),
         maxLines: 3,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'Please enter a description';
+            return 'Please enter a description'.tr();
           }
           return null;
         },
@@ -806,7 +808,7 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
           elevation: 2,
         ),
         child: _isLoading
-            ? const Row(
+            ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
@@ -818,11 +820,11 @@ class _EditCategoryPageState extends State<EditCategoryPage> {
                     ),
                   ),
                   SizedBox(width: 12),
-                  Text('Updating...'),
+                  Text('Updating...'.tr()),
                 ],
               )
-            : const Text(
-                'Update Category',
+            : Text(
+                'Update Category'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -870,14 +872,14 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         });
       }
     } catch (e) {
-      _showErrorSnackBar('Failed to pick image: $e');
+      _showErrorSnackBar('Failed to pick image: $e'.tr());
     }
   }
 
   Future<void> _addCategory() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedImage == null) {
-      _showErrorSnackBar('Please select an image');
+      _showErrorSnackBar('Please select an image'.tr());
       return;
     }
 
@@ -889,12 +891,12 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         imageFile: _selectedImage!,
       );
       if (mounted) {
-        _showSuccessSnackBar('Category added successfully');
+        _showSuccessSnackBar('Category added successfully'.tr());
         Navigator.of(context).pop(true);
       }
     } catch (error) {
       if (mounted) {
-        _showErrorSnackBar('Failed to add category: $error');
+        _showErrorSnackBar('Failed to add category: $error'.tr());
       }
     } finally {
       if (mounted) {
@@ -986,7 +988,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       child: Column(
         children: [
           Text(
-            'Category Image',
+            'Category Image'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -1017,7 +1019,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Tap to select image',
+            'Tap to select image'.tr(),
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 14,
@@ -1036,7 +1038,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
             size: 32, color: Colors.grey[400]),
         const SizedBox(height: 8),
         Text(
-          'Add Image',
+          'Add Image'.tr(),
           style: TextStyle(color: Colors.grey[500], fontSize: 12),
         ),
       ],
@@ -1059,14 +1061,14 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       ),
       child: TextFormField(
         controller: _nameController,
-        decoration: const InputDecoration(
-          labelText: 'Category Name',
+        decoration: InputDecoration(
+          labelText: 'Category Name'.tr(),
           border: OutlineInputBorder(),
           prefixIcon: Icon(Icons.category_outlined),
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'Please enter a category name';
+            return 'Please enter a category name'.tr();
           }
           return null;
         },
@@ -1090,15 +1092,15 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       ),
       child: TextFormField(
         controller: _descriptionController,
-        decoration: const InputDecoration(
-          labelText: 'Description',
+        decoration: InputDecoration(
+          labelText: 'Description'.tr(),
           border: OutlineInputBorder(),
           prefixIcon: Icon(Icons.description_outlined),
         ),
         maxLines: 3,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'Please enter a description';
+            return 'Please enter a description'.tr();
           }
           return null;
         },
@@ -1121,7 +1123,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           elevation: 2,
         ),
         child: _isLoading
-            ? const Row(
+            ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
@@ -1133,11 +1135,11 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                     ),
                   ),
                   SizedBox(width: 12),
-                  Text('Adding...'),
+                  Text('Adding...'.tr()),
                 ],
               )
-            : const Text(
-                'Add Category',
+            : Text(
+                'Add Category'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

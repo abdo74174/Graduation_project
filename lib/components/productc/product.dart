@@ -107,7 +107,7 @@ class ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '${product.discount}% OFF',
+                        '${product.discount}% OFF'.tr(),
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: _Dim.badgeFontSize,
@@ -192,7 +192,7 @@ class ProductCard extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                'product_card.add_to_cart'.tr(),
+                                'add_to_cart'.tr(),
                                 style: TextStyle(
                                   fontSize: _Dim.buttonFontSize,
                                   fontWeight: FontWeight.w600,

@@ -1,39 +1,35 @@
-import 'package:intl/intl.dart';
-
 class ContactUsModel {
   final int id;
-  final String userId;
+  final String problemType;
   final String message;
-  final DateTime createdAt;
   final String? email;
+  final DateTime createdAt;
 
   ContactUsModel({
     required this.id,
-    required this.userId,
+    required this.problemType,
     required this.message,
-    required this.createdAt,
     this.email,
+    required this.createdAt,
   });
 
   factory ContactUsModel.fromJson(Map<String, dynamic> json) {
     return ContactUsModel(
       id: json['id'],
-      userId: json['userId']?.toString() ?? '',
-      message: json['message']?.toString() ?? '',
-      createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      email: json['email']?.toString(),
+      problemType: json['problemType'],
+      message: json['message'],
+      email: json['email'],
+      createdAt: DateTime.parse(json['createdAt']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'userId': userId,
+      'problemType': problemType,
       'message': message,
+      'email': email,
       'createdAt': createdAt.toIso8601String(),
-      if (email != null) 'email': email,
     };
   }
 }

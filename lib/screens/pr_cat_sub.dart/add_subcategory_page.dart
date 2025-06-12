@@ -41,7 +41,7 @@ class _AddSubCategoryPageState extends State<AddSubCategoryPage> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Failed to load categories: $e');
+      _showError('Failed to load categories: $e'.tr());
     }
   }
 

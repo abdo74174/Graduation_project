@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/screens/Auth/login_page.dart';
+import 'package:graduation_project/screens/UserOrderStatusPage.dart';
 import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
 import 'package:graduation_project/screens/setting_page.dart';
@@ -85,6 +86,15 @@ class _DrawerItemsState extends State<DrawerItems> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const UserProductsPage()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.inventory_2_outlined),
+            title: Text('UserOrderStatusPage'.tr()),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const UserOrderStatusPage()),
             ),
           ),
         ]);

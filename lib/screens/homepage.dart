@@ -461,7 +461,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      "${product.price} EGP",
+                                      "${product.price} " "EGP".tr(),
                                       style: const TextStyle(
                                         fontSize: 16,
                                         color: Colors.white,
@@ -529,7 +529,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               trailing: Text(
-                "${product.price} EGP",
+                "${product.price} " "EGP".tr(),
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -990,7 +990,7 @@ class InstallmentSection extends StatelessWidget {
               const SizedBox(height: 12),
               _buildBankPromotionCard(
                 logo: "assets/images/Enbd.png",
-                bankName: "Emirates NBD",
+                bankName: "Emirates NBD".tr(),
                 termsText: "when_using_enbd_cards".tr(),
                 onTap: () {
                   Navigator.push(

@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 
 class CustomInputField extends StatefulWidget {
   final String hint;
@@ -39,14 +39,12 @@ class _CustomInputFieldState extends State<CustomInputField> {
                     _isPasswordHidden ? Icons.visibility_off : Icons.visibility,
                     color: Colors.grey[600],
                   ),
-                  onPressed: () => setState(
-                    () => _isPasswordHidden = !_isPasswordHidden,
-                  ),
+                  onPressed: () =>
+                      setState(() => _isPasswordHidden = !_isPasswordHidden),
                 )
               : null,
           hintText: 'auth.${widget.hint}'.tr(),
           filled: true,
-          // ignore: deprecated_member_use
           fillColor: Colors.white.withOpacity(0.8),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),

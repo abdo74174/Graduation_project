@@ -297,7 +297,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     } catch (e) {
       if (!mounted) return;
       showSnackbar(context, "profile.update_failed".tr());
-      debugPrint("Profile update error: $e");
+      debugPrint("Profile update error: $e".tr());
     }
   }
 

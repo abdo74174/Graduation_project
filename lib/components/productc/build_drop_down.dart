@@ -39,7 +39,7 @@ class BuildDropdown extends StatelessWidget {
           ),
           child: DropdownButton<String>(
             value: selectedValue,
-            hint: Text(hint?.tr() ?? 'dropdown.select'.tr() + ' ' + label.tr()),
+            hint: Text(hint?.tr() ?? '${'dropdown.select'.tr()} ${label.tr()}'),
             isExpanded: true,
             underline: Container(),
             onChanged: enabled ? onChanged : null,

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
@@ -77,7 +78,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Review Products',
+          'Review Products'.tr(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : Colors.black87,
@@ -94,7 +95,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
           : _pendingProducts.isEmpty
               ? Center(
                   child: Text(
-                    'No pending products to review',
+                    'No pending products to review'.tr(),
                     style: TextStyle(
                       fontSize: 16,
                       color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -137,7 +138,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Price: \$${product.price}',
+                              '${'Price:'.tr()} \$${product.price}',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
@@ -146,7 +147,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Quantity: ${product.StockQuantity}',
+                              '${'Quantity:'.tr()} ${product.StockQuantity}',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: isDark
@@ -191,7 +192,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                               children: [
                                 ElevatedButton(
                                   onPressed: () => _updateProductStatus(
-                                      product.productId, 'Approved'),
+                                      product.productId, 'Approved'.tr()),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
                                     foregroundColor: Colors.white,
@@ -199,12 +200,12 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
-                                  child: Text('Approve'),
+                                  child: Text('Approve'.tr()),
                                 ),
                                 const SizedBox(width: 8),
                                 ElevatedButton(
                                   onPressed: () => _updateProductStatus(
-                                      product.productId, 'Rejected'),
+                                      product.productId, 'Rejected'.tr()),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                     foregroundColor: Colors.white,
@@ -212,7 +213,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
-                                  child: Text('Reject'),
+                                  child: Text('Reject'.tr()),
                                 ),
                               ],
                             ),

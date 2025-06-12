@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/Models/product_model.dart';
@@ -21,7 +22,7 @@ class _ProductsPageState extends State<ProductsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Products")),
+      appBar: AppBar(title: Text("Products".tr())),
       body: FutureBuilder<List<ProductModel>>(
         future: _productsFuture,
         builder: (context, snapshot) {
@@ -30,7 +31,7 @@ class _ProductsPageState extends State<ProductsPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text("Error: ${snapshot.error}"));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text("No products available"));
+            return Center(child: Text("No products available".tr()));
           }
 
           final products = snapshot.data!;

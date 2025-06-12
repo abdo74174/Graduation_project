@@ -99,7 +99,7 @@ class _PricingSectionState extends State<PricingSection> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Pricing information has been reset"),
+        content: Text("Pricing information has been reset".tr()),
         backgroundColor: Colors.orange,
         duration: Duration(seconds: 2),
       ),
@@ -143,7 +143,7 @@ class _PricingSectionState extends State<PricingSection> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Product scheduled for ${_formatDate(pickedDate)}"),
+          content: Text("scheduled_for".tr(args: [_formatDate(pickedDate)])),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
@@ -216,7 +216,7 @@ class _PricingSectionState extends State<PricingSection> {
             controller: widget.discountController,
             readOnly: false,
             suffix: '%',
-            helperText: "Enter discount percentage",
+            helperText: "Enter discount percentage".tr(),
             keyboardType: TextInputType.number,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
@@ -231,8 +231,8 @@ class _PricingSectionState extends State<PricingSection> {
             readOnly: true,
             isStrikethrough: false,
             prefix: '\$',
-            hintText: "Calculated based on discount",
-            helperText: "This is the final price after applying discount",
+            hintText: "Calculated based on discount".tr(),
+            helperText: "This is the final price after applying discount".tr(),
             filled: true,
             fillColor: Colors.lightGreen.withOpacity(0.1),
           ),

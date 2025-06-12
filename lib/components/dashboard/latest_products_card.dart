@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -16,13 +17,13 @@ class LatestProductsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Latest Products',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'latest_products'.tr(),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             products.isEmpty
-                ? const Text('No products available')
+                ? Text('no_products_available'.tr())
                 : ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -30,9 +31,10 @@ class LatestProductsCard extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final product = products[index];
                       return ListTile(
-                        title: Text(product['name'] ?? 'Unknown'),
+                        title: Text(product['name'] ?? 'unknown'.tr()),
                         subtitle: Text(
-                          'Price: ${formatter.format(product['price'] ?? 0.0)}\nCreated: ${DateFormat('MMM dd, yyyy hh:mm a').format(DateTime.parse(product['createdAt'] ?? DateTime.now().toIso8601String()).toLocal())}',
+                          '${'price'.tr()}: ${formatter.format(product['price'] ?? 0.0)}\n'
+                          '${'created'.tr()}: ${DateFormat('MMM dd, yyyy hh:mm a').format(DateTime.parse(product['createdAt'] ?? DateTime.now().toIso8601String()).toLocal())}',
                         ),
                         leading:
                             const Icon(Icons.inventory_2, color: Colors.blue),

@@ -36,7 +36,7 @@ class CartItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              '${'currency_symbol'.tr()}$price',
+              'EG${'currency_symbol'.tr()}$price',
               style: const TextStyle(
                 color: Colors.red,
                 fontSize: 16,

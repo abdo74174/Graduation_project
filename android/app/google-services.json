@@ -12,7 +12,12 @@
           "package_name": "com.example.graduation_project"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "653167376608-mensemao8ijidtlu1140uuqnoffkfgbp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAQl86yhCjyarTS-rtQf3vkXNchra7L3ag"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "653167376608-mensemao8ijidtlu1140uuqnoffkfgbp.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "653167376608-futjq50m72kmr0lvb96tfrbgoka0v13u.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.graduationProject"
+              }
+            }
+          ]
         }
       }
     }

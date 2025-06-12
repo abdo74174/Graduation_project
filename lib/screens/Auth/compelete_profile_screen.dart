@@ -1,10 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/screens/userInfo/info.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';
 
 class CompleteProfileScreen extends StatefulWidget {
   final User firebaseUser;
@@ -25,13 +29,19 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _medicalSpecialistController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isSubmitting = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
     _phoneController.dispose();
     _addressController.dispose();
     _medicalSpecialistController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -51,30 +61,62 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         'kindOfWork': 'Doctor',
         'isAdmin': false,
         'createdAt': FieldValue.serverTimestamp(),
+        'name': widget.firebaseUser.displayName ?? 'Google User',
+        'password': _passwordController.text.trim(),
+        'confirmPassword': _confirmPasswordController.text.trim(),
       };
 
       // Save to Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.firebaseUser.uid)
-          .set(userData, SetOptions(merge: true));
+          .set({
+        'email': widget.email,
+        'phone': _phoneController.text.trim(),
+        'address': _addressController.text.trim(),
+        'medicalSpecialist': _medicalSpecialistController.text.isNotEmpty
+            ? _medicalSpecialistController.text.trim()
+            : null,
+        'kindOfWork': 'Doctor',
+        'isAdmin': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'name': widget.firebaseUser.displayName ?? 'Google User',
+      }, SetOptions(merge: true));
 
       // Save to backend
       final response = await http.post(
         Uri.parse(
             'https://10.0.2.2:7273/api/MedBridge/signin/google/complete-profile'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': widget.email,
-          'phone': _phoneController.text.trim(),
-          'address': _addressController.text.trim(),
-          'medicalSpecialist': _medicalSpecialistController.text.isNotEmpty
-              ? _medicalSpecialistController.text.trim()
-              : null,
-        }),
+        body: jsonEncode(userData),
       );
 
       if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_id', responseData['id'].toString());
+        await prefs.setString('kindOfWork', responseData['kindOfWork'] ?? '');
+        await prefs.setInt(
+            'status', UserStatus.deactivated.index); // Assuming UserStatus enum
+        if (responseData['medicalSpecialist'] != null) {
+          await prefs.setString(
+              'medicalSpecialist', responseData['medicalSpecialist']);
+        } else {
+          await prefs.remove('medicalSpecialist');
+        }
+        await prefs.setBool('isAdmin', responseData['isAdmin'] ?? false);
+        await prefs.setString('token', responseData['token'] ?? '');
+        await prefs.setBool('isLoggedIn', true);
+        await prefs.setString('email', widget.email);
+
+        context.read<UserCubit>().setUser(
+              responseData['id'],
+              widget.email,
+              responseData['kindOfWork'] ?? '',
+              responseData['medicalSpecialist'],
+              responseData['isAdmin'] ?? false,
+            );
+
         print(
             'Profile completion successful, navigating to RoleSelectionScreen');
         Navigator.pushReplacement(
@@ -90,7 +132,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         );
       } else {
         print('Backend profile completion failed: ${response.body}');
-        throw Exception('Backend profile completion failed');
+        throw Exception('Backend profile completion failed: ${response.body}');
       }
     } catch (e) {
       print('Error completing profile: $e');
@@ -148,6 +190,63 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     labelText: 'medical_specialist_optional'.tr(),
                     border: const OutlineInputBorder(),
                   ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _passwordController,
+                  decoration: InputDecoration(
+                    labelText: 'password'.tr(),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                    ),
+                  ),
+                  obscureText: _obscurePassword,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'password_required'.tr();
+                    }
+                    if (value.length < 6) {
+                      return 'password_too_short'.tr();
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  decoration: InputDecoration(
+                    labelText: 'confirm_password'.tr(),
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword);
+                      },
+                    ),
+                  ),
+                  obscureText: _obscureConfirmPassword,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'confirm_password_required'.tr();
+                    }
+                    if (value != _passwordController.text) {
+                      return 'passwords_do_not_match'.tr();
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 24),
                 SizedBox(

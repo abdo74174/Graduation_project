@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/components/productc/product.dart';
@@ -18,13 +19,13 @@ class DiscountedProductsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title:
-            const Text('Special Offers', style: TextStyle(color: Colors.white)),
+            Text('Special Offers'.tr(), style: TextStyle(color: Colors.white)),
         backgroundColor: pkColor,
       ),
       body: discountedProducts.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
-                'No special offers available at the moment',
+                'No special offers available at the moment'.tr(),
                 style: TextStyle(color: Colors.white),
               ),
             )

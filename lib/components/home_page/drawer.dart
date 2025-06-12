@@ -113,8 +113,8 @@ class _DrawerHomeState extends State<DrawerHome> {
                             ),
                           );
                         }
-                        return const Text(
-                          'Guest',
+                        return Text(
+                          'guest'.tr(),
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 16,

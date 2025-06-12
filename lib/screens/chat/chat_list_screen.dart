@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/ChatListModel.dart';
 import 'package:graduation_project/screens/chat/chat_page.dart';
@@ -45,7 +46,7 @@ class _ChatListPageState extends State<ChatListPage> {
     final userEmail = await UserServicee().getEmail();
     if (userEmail == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to start a chat')),
+        SnackBar(content: Text('Please log in to start a chat'.tr())),
       );
       return;
     }
@@ -53,7 +54,7 @@ class _ChatListPageState extends State<ChatListPage> {
     const contactEmail = 'abdulrhmanosama744@gmail.com';
     if (contactEmail == userEmail) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot chat with yourself')),
+        SnackBar(content: Text('Cannot chat with yourself'.tr())),
       );
       return;
     }
@@ -83,7 +84,7 @@ class _ChatListPageState extends State<ChatListPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error starting chat: $e')),
+        SnackBar(content: Text('Error starting chat: $e'.tr())),
       );
     }
   }
@@ -98,8 +99,8 @@ class _ChatListPageState extends State<ChatListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Chats",
+        title: Text(
+          "Chats".tr(),
           style: TextStyle(
             color: Colors.white,
             fontSize: 24,
@@ -112,7 +113,7 @@ class _ChatListPageState extends State<ChatListPage> {
           IconButton(
             onPressed: _startNewChat,
             icon: const Icon(Icons.support_agent, color: Colors.white),
-            tooltip: 'Chat with Support',
+            tooltip: 'Chat with Support'.tr(),
           ),
         ],
       ),
@@ -122,7 +123,7 @@ class _ChatListPageState extends State<ChatListPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
               decoration: InputDecoration(
-                hintText: "Search chats...",
+                hintText: "Search chats...".tr(),
                 prefixIcon: const Icon(Icons.search, color: Colors.grey),
                 filled: true,
                 fillColor: Colors.grey[200],
@@ -142,7 +143,8 @@ class _ChatListPageState extends State<ChatListPage> {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
-                      child: Text("Error fetching chats: ${snapshot.error}"));
+                      child:
+                          Text("Error fetching chats: ${snapshot.error}".tr()));
                 }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -150,7 +152,7 @@ class _ChatListPageState extends State<ChatListPage> {
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No chats available."));
+                  return Center(child: Text("No chats available.".tr()));
                 }
 
                 final chatList = snapshot.data!.docs
@@ -186,7 +188,7 @@ class _ChatListPageState extends State<ChatListPage> {
                         title: Text(
                           chat.contactName.isNotEmpty
                               ? chat.contactName
-                              : "Unknown Contact",
+                              : "Unknown Contact".tr(),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -195,7 +197,7 @@ class _ChatListPageState extends State<ChatListPage> {
                         subtitle: Text(
                           chat.lastMessage.isNotEmpty
                               ? chat.lastMessage
-                              : "No messages yet",
+                              : "No messages yet".tr(),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                           style: const TextStyle(
@@ -248,8 +250,8 @@ class _ChatListPageState extends State<ChatListPage> {
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Invalid contact ID"),
+                              SnackBar(
+                                content: Text("Invalid contact ID".tr()),
                               ),
                             );
                           }
@@ -267,7 +269,7 @@ class _ChatListPageState extends State<ChatListPage> {
         onPressed: _startNewChat,
         backgroundColor: Colors.blue,
         child: const Icon(Icons.support_agent),
-        tooltip: 'Chat with Support',
+        tooltip: 'Chat with Support'.tr(),
       ),
     );
   }

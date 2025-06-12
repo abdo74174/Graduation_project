@@ -89,8 +89,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           const Icon(Icons.person_off,
                               size: 50, color: Colors.grey),
                           const SizedBox(height: 10),
-                          const Text(
-                            "No user data found!",
+                          Text(
+                            "No user data found!".tr(),
                             style: TextStyle(fontSize: 18),
                           ),
                         ],
@@ -184,20 +184,25 @@ class _ProfilePageState extends State<ProfilePage> {
                                         user?.name ?? "Unknown",
                                         Icons.person),
                                     const SizedBox(height: 20),
-                                    buildProfileTextField("auth.email".tr(),
-                                        user?.email ?? "Unknown", Icons.email),
+                                    buildProfileTextField(
+                                        "auth.email".tr(),
+                                        user?.email ?? "Unknown".tr(),
+                                        Icons.email),
                                     const SizedBox(height: 20),
                                     buildProfileTextField(
                                         "specialty".tr(),
-                                        user?.medicalSpecialist ?? "Unknown",
+                                        user?.medicalSpecialist ??
+                                            "Unknown".tr(),
                                         Icons.medical_services),
                                     const SizedBox(height: 20),
-                                    buildProfileTextField("profile.phone".tr(),
-                                        user?.phone ?? "Unknown", Icons.phone),
+                                    buildProfileTextField(
+                                        "profile.phone".tr(),
+                                        user?.phone ?? "Unknown".tr(),
+                                        Icons.phone),
                                     const SizedBox(height: 20),
                                     buildProfileTextField(
                                         "profile.address".tr(),
-                                        user?.address ?? "Unknown",
+                                        user?.address ?? "Unknown".tr(),
                                         Icons.home),
                                   ],
                                 ),

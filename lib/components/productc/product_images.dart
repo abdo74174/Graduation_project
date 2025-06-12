@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -104,7 +105,7 @@ class _ImageWidgetState extends State<ImageWidget>
       }
     } catch (e) {
       print('Sync failed: $e');
-      if (mounted) showSnackbar("Changes will sync when online");
+      if (mounted) showSnackbar("sync_later".tr());
     }
   }
 

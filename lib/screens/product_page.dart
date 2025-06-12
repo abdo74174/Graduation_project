@@ -4,7 +4,7 @@ import 'package:graduation_project/components/productc/product.dart';
 import 'package:graduation_project/components/productc/product_images.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
-import 'package:graduation_project/services/Cart/car_service.dart';
+import 'package:graduation_project/services/Cart/cart_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/Product/recommendation_service.dart';
@@ -135,7 +135,8 @@ class _ProductPageState extends State<ProductPage> {
             _commentController.text.isNotEmpty ? _commentController.text : null,
       );
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Rating and comment submitted successfully!')),
+        SnackBar(
+            content: Text('Rating and comment submitted successfully!'.tr())),
       );
       _commentController.clear();
       setState(() {
@@ -146,7 +147,7 @@ class _ProductPageState extends State<ProductPage> {
     } catch (e) {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to submit rating: $e')),
+        SnackBar(content: Text('Failed to submit rating: $e'.tr())),
       );
     }
   }
@@ -282,7 +283,7 @@ class _ProductPageState extends State<ProductPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              widget.product.isNew ? "New" : "Used",
+                              widget.product.isNew ? "New".tr() : "Used".tr(),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -383,7 +384,7 @@ class _ProductPageState extends State<ProductPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Rate this product',
+                    Text('Rate this product'.tr(),
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     SizedBox(height: 10),
@@ -405,7 +406,7 @@ class _ProductPageState extends State<ProductPage> {
                       controller: _commentController,
                       maxLines: 3,
                       decoration: InputDecoration(
-                        labelText: 'Leave a comment',
+                        labelText: 'Leave a comment'.tr(),
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -413,7 +414,7 @@ class _ProductPageState extends State<ProductPage> {
                     Center(
                       child: ElevatedButton(
                         onPressed: _submitRating,
-                        child: Text('Submit'),
+                        child: Text('Submit'.tr()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: pkColor,
                           padding: EdgeInsets.symmetric(
@@ -428,14 +429,14 @@ class _ProductPageState extends State<ProductPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Comments',
+                          Text('Comments'.tr(),
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           SizedBox(height: 10),
                           _isCommentsLoading
                               ? Center(child: CircularProgressIndicator())
                               : _comments.isEmpty
-                                  ? Text('No comments yet.',
+                                  ? Text('No comments yet.'.tr(),
                                       style: TextStyle(color: Colors.grey))
                                   : Column(
                                       children: _comments
@@ -518,19 +519,26 @@ class _ProductPageState extends State<ProductPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        widget.product.discount > 0
+                            ? Text(
+                                "${widget.product.price} EGP ",
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                  decoration: TextDecoration.lineThrough,
+                                  decorationColor: Colors.red,
+                                  decorationThickness: 2,
+                                ),
+                              )
+                            : Text(
+                                "No Discount",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                ),
+                              ),
                         Text(
-                          "\$${widget.product.price}",
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                            decoration: TextDecoration.lineThrough,
-                            decorationColor: Colors.red,
-                            decorationThickness: 2,
-                          ),
-                        ),
-                        Text(
-                          "\$${getDiscountedPrice(widget.product)}",
+                          "${getDiscountedPrice(widget.product)} EGP ",
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,

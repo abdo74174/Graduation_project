@@ -1,35 +1,41 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/order_model.dart';
-import 'package:graduation_project/services/Order/order_service.dart';
+import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/services/order/order_service.dart';
 import 'package:shimmer/shimmer.dart';
 
-class OrdersPage extends StatefulWidget {
-  const OrdersPage({Key? key}) : super(key: key);
+class UserOrderStatusPage extends StatefulWidget {
+  const UserOrderStatusPage({Key? key}) : super(key: key);
 
   @override
-  _OrdersPageState createState() => _OrdersPageState();
+  _UserOrderStatusPageState createState() => _UserOrderStatusPageState();
 }
 
-class _OrdersPageState extends State<OrdersPage> {
-  final OrderService _apiService = OrderService();
+class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
+  final OrderService _orderService = OrderService();
+  int? _userId; // Changed to int? to match OrderModel.userId type
   List<OrderModel> _orders = [];
   List<OrderModel> _filteredOrders = [];
   bool _isLoading = false;
   String _errorMessage = '';
+
   final TextEditingController _searchController = TextEditingController();
   String _selectedStatus = 'All';
   final List<String> _statusFilters = [
     'All',
-    'Shipped',
+    'Pending',
     'Processing',
-    'Delivered'
+    'Shipped',
+    'Delivered',
+    'Cancelled',
   ];
 
   @override
   void initState() {
     super.initState();
-    _fetchOrders();
+    _loadUserIdAndFetchOrders();
     _searchController.addListener(_filterOrders);
   }
 
@@ -39,17 +45,47 @@ class _OrdersPageState extends State<OrdersPage> {
     super.dispose();
   }
 
+  Future<void> _loadUserIdAndFetchOrders() async {
+    try {
+      final userIdString =
+          await UserServicee().getUserId(); // Returns "123" as String
+      _userId = userIdString != null
+          ? int.tryParse(userIdString)
+          : null; // Parse to int?
+      if (_userId == null) {
+        setState(() {
+          _errorMessage = 'User ID not found or invalid.';
+        });
+        return;
+      }
+      await _fetchOrders();
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load user ID: $e';
+      });
+    }
+  }
+
   Future<void> _fetchOrders() async {
+    if (_userId == null) return; // Safeguard against null _userId
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
     try {
-      final orders = await _apiService.getAllOrders();
+      final orders = await _orderService.getAllOrders();
       setState(() {
-        _orders = orders;
-        _filteredOrders = orders;
+        // Safeguard against null or invalid userId in orders
+        // ignore: unnecessary_null_comparison
+        _orders = orders != null
+            ? orders.where((order) {
+                // Ensure order.userId is not null before comparison
+                return order.userId != null && order.userId == _userId;
+              }).toList()
+            : [];
+        _filteredOrders = _orders;
         _isLoading = false;
       });
       _filterOrders();
@@ -65,11 +101,9 @@ class _OrdersPageState extends State<OrdersPage> {
     final query = _searchController.text.toLowerCase();
     setState(() {
       _filteredOrders = _orders.where((order) {
-        final matchesQuery = order.items.any(
-                (item) => item.productName.toLowerCase().contains(query)) ||
+        final matchesQuery =
             order.orderId.toString().toLowerCase().contains(query) ||
-            order.status.toLowerCase().contains(query) ||
-            order.userName.toLowerCase().contains(query);
+                order.status.toLowerCase().contains(query);
         final matchesStatus = _selectedStatus == 'All' ||
             order.status.toLowerCase() == _selectedStatus.toLowerCase();
         return matchesQuery && matchesStatus;
@@ -112,24 +146,7 @@ class _OrdersPageState extends State<OrdersPage> {
               ),
             ),
           ),
-          title: Text('All Orders'.tr()),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.sort),
-              tooltip: 'Sort Orders'.tr(),
-              onPressed: () {
-                // Implement sorting logic
-              },
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: primaryColor,
-          onPressed: () {
-            // Navigate to create order page
-          },
-          child: const Icon(Icons.add),
-          tooltip: 'Create Order'.tr(),
+          title: Text('My Order Status'.tr()),
         ),
         body: Stack(
           children: [
@@ -146,7 +163,7 @@ class _OrdersPageState extends State<OrdersPage> {
             ),
             Column(
               children: [
-                const SizedBox(height: 80), // Space for AppBar
+                const SizedBox(height: 80),
                 _buildSearchBar(isDark),
                 _buildStatusFilters(isDark),
                 Expanded(child: _buildOrdersList(isDark)),
@@ -164,9 +181,11 @@ class _OrdersPageState extends State<OrdersPage> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search orders...'.tr(),
-          prefixIcon: Icon(Icons.search,
-              color: isDark ? Colors.grey[400] : Colors.grey[600]),
+          hintText: 'Search by order ID...'.tr(),
+          prefixIcon: Icon(
+            Icons.search,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          ),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
                   icon: const Icon(Icons.clear, size: 20),
@@ -186,12 +205,11 @@ class _OrdersPageState extends State<OrdersPage> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.transparent),
+            borderSide: const BorderSide(color: Colors.transparent),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide:
-                BorderSide(color: Theme.of(context).primaryColor, width: 2),
+            borderSide: BorderSide(color: pkColor, width: 2),
           ),
           contentPadding:
               const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
@@ -214,7 +232,7 @@ class _OrdersPageState extends State<OrdersPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: Text(status.tr(), style: TextStyle(fontSize: 14)),
+              label: Text(status.tr(), style: const TextStyle(fontSize: 14)),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {
@@ -273,91 +291,72 @@ class _OrdersPageState extends State<OrdersPage> {
           ),
         );
       },
-      child: GestureDetector(
-        onTap: () {
-          // Navigate to order details
-        },
-        child: Card(
-          margin: const EdgeInsets.only(bottom: 16),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        elevation: 4,
+        color: isDark
+            ? Colors.grey[850]!.withOpacity(0.8)
+            : Colors.white.withOpacity(0.95),
+        child: ExpansionTile(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          elevation: 4,
-          color: isDark
-              ? Colors.grey[850]!.withOpacity(0.8)
-              : Colors.white.withOpacity(0.95),
-          child: ExpansionTile(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            backgroundColor: Colors.transparent,
-            collapsedBackgroundColor: Colors.transparent,
-            leading: CircleAvatar(
-              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-              child: Icon(Icons.local_shipping,
-                  color: Theme.of(context).primaryColor),
-            ),
-            title: Text(
-              '${'Order ID:'.tr()} ${order.orderId}',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 16,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
-            ),
-            subtitle: Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${'User:'.tr()} ${order.userName}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${'Total:'.tr()} \$${order.totalPrice.toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            trailing: _buildStatusChip(order.status, isDark),
-            children: order.items.map((item) {
-              return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.image, color: Colors.grey, size: 20),
-                ),
-                title: Text(
-                  item.productName,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                subtitle: Text(
-                  '${'Qty:'.tr()} ${item.quantity} | ${'Price:'.tr()} \$${item.unitPrice.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-              );
-            }).toList(),
+          backgroundColor: Colors.transparent,
+          collapsedBackgroundColor: Colors.transparent,
+          leading: CircleAvatar(
+            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+            child: Icon(Icons.local_shipping,
+                color: Theme.of(context).primaryColor),
           ),
+          title: Text(
+            '${'Order ID:'.tr()} ${order.orderId}',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              '${'Date:'.tr()} ${order.orderDate.toLocal().toString().split(' ')[0]}',
+              style: TextStyle(
+                fontSize: 14,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
+          ),
+          trailing: _buildStatusChip(order.status, isDark),
+          children: order.items.map((item) {
+            return ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.image, color: Colors.grey, size: 20),
+              ),
+              title: Text(
+                item.productName,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              subtitle: Text(
+                '${'Qty:'.tr()} ${item.quantity} | ${'Price:'.tr()} \$${item.unitPrice.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+            );
+          }).toList(),
         ),
       ),
     );
@@ -366,14 +365,20 @@ class _OrdersPageState extends State<OrdersPage> {
   Widget _buildStatusChip(String status, bool isDark) {
     Color chipColor;
     switch (status.toLowerCase()) {
-      case 'shipped':
-        chipColor = Colors.green;
+      case 'pending':
+        chipColor = Colors.grey;
         break;
       case 'processing':
         chipColor = Colors.orange;
         break;
-      case 'delivered':
+      case 'shipped':
         chipColor = Colors.blue;
+        break;
+      case 'delivered':
+        chipColor = Colors.green;
+        break;
+      case 'cancelled':
+        chipColor = Colors.red;
         break;
       default:
         chipColor = Colors.grey;

@@ -15,7 +15,7 @@ class TotalAmountRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'cart.total'.tr(),
+          'cart_total'.tr(),
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         Text(

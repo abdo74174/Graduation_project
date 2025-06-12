@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/screens/contac_us/contact_us.dart';
@@ -17,7 +18,8 @@ class AccountStatusScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isBlocked ? 'Account Blocked' : 'Account Inactive'),
+        title:
+            Text(isBlocked ? 'Account Blocked'.tr() : 'Account Inactive'.tr()),
         automaticallyImplyLeading: false,
       ),
       body: Center(
@@ -43,7 +45,9 @@ class AccountStatusScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               Text(
-                isBlocked ? 'Account Blocked' : 'Account Not Activated',
+                isBlocked
+                    ? 'Account Blocked'.tr()
+                    : 'Account Not Activated'.tr(),
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: isBlocked ? Colors.red : Colors.orange,
@@ -54,7 +58,9 @@ class AccountStatusScreen extends StatelessWidget {
               Text(
                 isBlocked
                     ? 'Your account has been blocked. Please contact our support team for assistance.'
-                    : 'Your account is pending activation. Please wait for approval or contact support for more information.',
+                        .tr()
+                    : 'Your account is pending activation. Please wait for approval or contact support for more information.'
+                        .tr(),
                 style: Theme.of(context).textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),
@@ -69,7 +75,7 @@ class AccountStatusScreen extends StatelessWidget {
                     }));
                   },
                   icon: const Icon(Icons.support_agent),
-                  label: const Text('Contact Support'),
+                  label: Text('Contact Support'.tr()),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.all(16),
                     backgroundColor: isBlocked ? Colors.red : Colors.orange,
@@ -94,7 +100,7 @@ class AccountStatusScreen extends StatelessWidget {
                     }
                   },
                   icon: const Icon(Icons.logout),
-                  label: const Text('Back to Login'),
+                  label: Text('Back to Login'.tr()),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.all(16),
                     side: BorderSide(

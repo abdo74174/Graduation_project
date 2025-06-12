@@ -201,7 +201,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                       children: [
                         const SizedBox(height: 16),
                         Text(
-                          "Categories",
+                          "Categories".tr(),
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -261,7 +261,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                "Subcategories",
+                                "Subcategories".tr(),
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
@@ -270,7 +270,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                                 ),
                               ),
                               Text(
-                                "${filteredSubCategories.length} Items",
+                                "${filteredSubCategories.length} " "Items".tr(),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color:
@@ -385,8 +385,8 @@ class _CategoryScreenState extends State<CategoryScreen>
                           const SizedBox(height: 16),
                           Text(
                             selectedCategoryId == null
-                                ? "Select a Category"
-                                : "Choose a Subcategory",
+                                ? "Select a Category".tr()
+                                : "Choose a Subcategory".tr(),
                             style: TextStyle(
                               fontSize: 18,
                               color: isDark ? Colors.white54 : Colors.black54,
@@ -543,7 +543,9 @@ class _CustomProductTileState extends State<CustomProductTile> {
                               color: pkColor,
                               borderRadius: BorderRadius.circular(8)),
                           child: Text(
-                            widget.product.isNew == true ? 'New' : 'Old',
+                            widget.product.isNew == true
+                                ? 'New'.tr()
+                                : 'Used'.tr(),
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,

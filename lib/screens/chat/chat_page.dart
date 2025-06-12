@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/chat_model.dart';
 import 'package:graduation_project/components/chat/chat_pubble.dart';
@@ -90,8 +91,8 @@ class _ChatPageState extends State<ChatPage> {
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(
-                      child:
-                          Text("Error fetching messages: ${snapshot.error}"));
+                      child: Text(
+                          "Error fetching messages: ${snapshot.error}".tr()));
                 }
 
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -110,7 +111,7 @@ class _ChatPageState extends State<ChatPage> {
                 });
 
                 return messagesList.isEmpty
-                    ? const Center(child: Text("No messages yet."))
+                    ? Center(child: Text("No messages yet.".tr()))
                     : ListView.builder(
                         reverse: true,
                         controller: _controller,
@@ -155,14 +156,14 @@ class _ChatPageState extends State<ChatPage> {
                     _scrollToBottom();
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Error sending message: $e")),
+                      SnackBar(content: Text("Error sending message: $e".tr())),
                     );
                   }
                 }
               },
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 suffixIcon: Icon(Icons.send),
-                hintText: "Send Message",
+                hintText: "Send Message".tr(),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.all(Radius.circular(16)),
                 ),

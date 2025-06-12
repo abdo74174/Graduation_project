@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/pr_cat_sub.dart/add_subcategory_page.dart';
 import 'package:image_picker/image_picker.dart';
@@ -42,7 +43,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
       setState(() => _isLoading = false);
 
       if (mounted) {
-        _showErrorSnackBar('Failed to load subcategories: $error');
+        _showErrorSnackBar('Failed to load subcategories: $error'.tr());
       }
 
       rethrow;
@@ -62,7 +63,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
       _subCategoriesFuture = _loadSubCategories();
 
       if (mounted) {
-        _showSuccessSnackBar('Subcategory deleted successfully');
+        _showSuccessSnackBar('Subcategory deleted successfully'.tr());
       }
     } catch (error) {
       setState(() => _isLoading = false);
@@ -93,26 +94,27 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
     String errorString = error.toString();
 
     if (errorString.contains('400')) {
-      return 'Cannot delete this subcategory because it has associated products. Please remove all products first.';
+      return 'Cannot delete this subcategory because it has associated products. Please remove all products first.'
+          .tr();
     }
 
     if (errorString.contains('404')) {
-      return 'Subcategory not found. It may have already been deleted.';
+      return 'Subcategory not found. It may have already been deleted.'.tr();
     }
 
     if (errorString.contains('403')) {
-      return 'You don\'t have permission to delete this subcategory.';
+      return 'You don\'t have permission to delete this subcategory.'.tr();
     }
 
     if (errorString.contains('500')) {
-      return 'Server error occurred. Please try again later.';
+      return 'Server error occurred. Please try again later.'.tr();
     }
 
     if (errorString.contains('network') || errorString.contains('connection')) {
-      return 'Network error. Please check your internet connection.';
+      return 'Network error. Please check your internet connection.'.tr();
     }
 
-    return 'Cant delete sub because have product ';
+    return 'Cant delete sub because have product '.tr();
   }
 
   List<SubCategory> _getFilteredSubCategories() {
@@ -140,14 +142,15 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
                 Icon(Icons.warning_amber_rounded,
                     color: Colors.orange, size: 28),
                 const SizedBox(width: 12),
-                const Text('Confirm Deletion'),
+                Text('Confirm Deletion'.tr()),
               ],
             ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Are you sure you want to delete "$subcategoryName"?'),
+                Text(
+                    '${'Are you sure you want to delete '.tr()}$subcategoryName?'),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -163,9 +166,9 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
                           Icon(Icons.info_outline,
                               color: Colors.orange, size: 20),
                           const SizedBox(width: 8),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'This action cannot be undone.',
+                              'This action cannot be undone.'.tr(),
                               style: TextStyle(fontSize: 12),
                             ),
                           ),
@@ -177,9 +180,10 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
                           Icon(Icons.error_outline,
                               color: Colors.red, size: 20),
                           const SizedBox(width: 8),
-                          const Expanded(
+                          Expanded(
                             child: Text(
-                              'Subcategories with products cannot be deleted. Please remove all associated products first.',
+                              'Subcategories with products cannot be deleted. Please remove all associated products first.'
+                                  .tr(),
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.red,
@@ -197,7 +201,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+                child: Text('Cancel'.tr()),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
@@ -205,7 +209,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
                   backgroundColor: Colors.red,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Delete'),
+                child: Text('Delete'.tr()),
               ),
             ],
           ),
@@ -252,8 +256,8 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Manage SubCategories',
+        title: Text(
+          'Manage SubCategories'.tr(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
@@ -264,7 +268,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: _addSubCategory,
-            tooltip: 'Add new Sub category',
+            tooltip: 'Add new Sub category'.tr(),
           ),
         ],
       ),
@@ -308,7 +312,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
       ),
       child: TextField(
         decoration: InputDecoration(
-          hintText: 'Search subcategories...',
+          hintText: 'Search subcategories...'.tr(),
           hintStyle: TextStyle(color: Colors.grey[500]),
           prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
           border: InputBorder.none,
@@ -324,13 +328,13 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
       future: _subCategoriesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircularProgressIndicator(),
                 SizedBox(height: 16),
-                Text('Loading subcategories...',
+                Text('Loading subcategories...'.tr(),
                     style: TextStyle(color: Colors.grey)),
               ],
             ),
@@ -366,13 +370,13 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
         children: [
           Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
           const SizedBox(height: 16),
-          const Text(
-            'Error loading subcategories',
+          Text(
+            'Error loading subcategories'.tr(),
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
-            'Please try again',
+            'Please try again'.tr(),
             style: TextStyle(color: Colors.grey[600]),
           ),
           const SizedBox(height: 24),
@@ -380,7 +384,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
             onPressed: () =>
                 setState(() => _subCategoriesFuture = _loadSubCategories()),
             icon: const Icon(Icons.refresh),
-            label: const Text('Retry'),
+            label: Text('Retry'.tr()),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
@@ -403,15 +407,15 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
           const SizedBox(height: 16),
           Text(
             _searchQuery.isEmpty
-                ? 'No subcategories found'
-                : 'No subcategories match your search',
+                ? 'No subcategories found'.tr()
+                : 'No subcategories match your search'.tr(),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
           Text(
             _searchQuery.isEmpty
-                ? 'Add some subcategories to get started'
-                : 'Try a different search term',
+                ? 'Add some subcategories to get started'.tr()
+                : 'Try a different search term'.tr(),
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],
@@ -459,7 +463,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    subcategory.name ?? 'Unnamed Subcategory',
+                    subcategory.name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -510,7 +514,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
                     backgroundColor: Colors.blue.withOpacity(0.1),
                     foregroundColor: Colors.blue,
                   ),
-                  tooltip: 'Edit subcategory',
+                  tooltip: 'Edit subcategory'.tr(),
                 ),
                 const SizedBox(height: 8),
                 IconButton(
@@ -523,7 +527,7 @@ class _ManageSubCategoriesPageState extends State<ManageSubCategoriesPage> {
                     backgroundColor: Colors.red.withOpacity(0.1),
                     foregroundColor: Colors.red,
                   ),
-                  tooltip: 'Delete subcategory',
+                  tooltip: 'Delete subcategory'.tr(),
                 ),
               ],
             ),
@@ -618,12 +622,12 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
       );
 
       if (mounted) {
-        _showSuccessSnackBar('Subcategory updated successfully');
+        _showSuccessSnackBar('Subcategory updated successfully'.tr());
         Navigator.of(context).pop(true); // Return true to indicate success
       }
     } catch (error) {
       if (mounted) {
-        _showErrorSnackBar('Failed to update subcategory: $error');
+        _showErrorSnackBar('Failed to update subcategory: $error'.tr());
       }
     } finally {
       if (mounted) {
@@ -671,8 +675,8 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text(
-          'Edit Subcategory',
+        title: Text(
+          'Edit Subcategory'.tr(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         backgroundColor: Colors.white,
@@ -715,7 +719,7 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
       child: Column(
         children: [
           Text(
-            'Subcategory Image',
+            'Subcategory Image'.tr(),
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -756,7 +760,7 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
           ),
           const SizedBox(height: 12),
           Text(
-            'Tap to change image',
+            'Tap to change image'.tr(),
             style: TextStyle(
               color: Colors.grey[600],
               fontSize: 14,
@@ -775,7 +779,7 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
             size: 32, color: Colors.grey[400]),
         const SizedBox(height: 8),
         Text(
-          'Add Image',
+          'Add Image'.tr(),
           style: TextStyle(color: Colors.grey[500], fontSize: 12),
         ),
       ],
@@ -798,14 +802,14 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
       ),
       child: TextFormField(
         controller: _nameController,
-        decoration: const InputDecoration(
-          labelText: 'Subcategory Name',
+        decoration: InputDecoration(
+          labelText: 'Subcategory Name'.tr(),
           border: OutlineInputBorder(),
           prefixIcon: Icon(Icons.category_outlined),
         ),
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'Please enter a subcategory name';
+            return 'Please enter a subcategory name'.tr();
           }
           return null;
         },
@@ -837,7 +841,7 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
         maxLines: 3,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {
-            return 'Please enter a description';
+            return 'Please enter a description'.tr();
           }
           return null;
         },
@@ -860,7 +864,7 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
           elevation: 2,
         ),
         child: _isLoading
-            ? const Row(
+            ? Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   SizedBox(
@@ -872,11 +876,11 @@ class _EditSubCategoryPageState extends State<EditSubCategoryPage> {
                     ),
                   ),
                   SizedBox(width: 12),
-                  Text('Updating...'),
+                  Text('Updating...'.tr()),
                 ],
               )
-            : const Text(
-                'Update Subcategory',
+            : Text(
+                'Update Subcategory'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,

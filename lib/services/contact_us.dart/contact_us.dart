@@ -1,14 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:graduation_project/models/contact_us_model.dart';
-import 'dart:io';
 
 class ContactUsService {
-  static const String baseUrl = 'https://10.0.2.2:7273/api/ContactUs';
+  static const String baseUrl = 'https://your-api-url.com/api/ContactUs';
   late final Dio _dio;
 
   ContactUsService() {
-    HttpOverrides.global = MyHttpOverrides();
-
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(seconds: 15),
@@ -44,13 +41,15 @@ class ContactUsService {
     ));
   }
 
-  Future<bool> submitContactUsMessage(String message, String? email) async {
+  Future<bool> submitContactUsMessage(
+      String problemType, String message, String? email) async {
     try {
       final response = await _dio.post(
         '',
         data: {
+          'problemType': problemType,
           'message': message,
-          if (email != null) 'email': email,
+          'email': email,
         },
       );
 
@@ -103,9 +102,6 @@ class ContactUsService {
       case DioExceptionType.receiveTimeout:
         errorMessage += 'Receive timeout';
         break;
-      case DioExceptionType.badCertificate:
-        errorMessage += 'Bad SSL certificate';
-        break;
       case DioExceptionType.badResponse:
         errorMessage +=
             'Bad response: ${e.response?.statusCode} ${e.response?.data}';
@@ -119,19 +115,12 @@ class ContactUsService {
       case DioExceptionType.unknown:
         errorMessage += 'Unknown error: ${e.message}';
         break;
+      default:
+        errorMessage += 'Other error: ${e.type}';
     }
     print(errorMessage);
     if (e.response != null) {
       print('Response data: ${e.response?.data}');
     }
-  }
-}
-
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
   }
 }
