@@ -8,7 +8,6 @@ import 'package:graduation_project/components/main/MedicalApp.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'firebase_options.dart';
 import 'components/setting/ThemeNotifier.dart';
 import 'services/stateMangment/cubit/user_cubit.dart';
@@ -18,21 +17,12 @@ import 'background/server_check.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  await AndroidAlarmManager.initialize();
-  await NotificationService.init();
+
   await EasyLocalization.ensureInitialized();
   Stripe.publishableKey = 'your_stripe_publishable_key_here';
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }
-
-  await AndroidAlarmManager.periodic(
-    const Duration(seconds: 20),
-    123,
-    hourlyServerCheck,
-    wakeup: true,
-    exact: true,
-  );
 
   final prefs = await SharedPreferences.getInstance();
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;

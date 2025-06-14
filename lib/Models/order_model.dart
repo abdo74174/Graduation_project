@@ -1,16 +1,20 @@
 class OrderModel {
   final int orderId;
+  final int userId;
   final String userName;
+  final int? deliveryPersonId;
+  final String? deliveryPersonName;
   final DateTime orderDate;
   final String status;
   final double totalPrice;
-  final int? userId; // Changed to int? to handle potential null values
   final List<OrderItemModel> items;
 
   OrderModel({
-    this.userId,
     required this.orderId,
+    required this.userId,
     required this.userName,
+    this.deliveryPersonId,
+    this.deliveryPersonName,
     required this.orderDate,
     required this.status,
     required this.totalPrice,
@@ -19,30 +23,19 @@ class OrderModel {
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
     return OrderModel(
-      userId: json['userId'] as int? ?? 0, // Default to 0 if null or missing
-      orderId: json['orderId'] as int,
-      userName: json['userName'] as String? ?? 'Unknown',
-      orderDate: DateTime.parse(json['orderDate'] as String),
-      status: json['status'] as String? ?? 'Pending',
-      totalPrice: (json['totalPrice'] as num).toDouble(),
+      orderId: json['orderId'] ?? 0,
+      userId: json['userId'] ?? 0,
+      userName: json['userName'] ?? 'Unknown',
+      deliveryPersonId: json['deliveryPersonId'],
+      deliveryPersonName: json['deliveryPersonName'] ?? 'Unassigned',
+      orderDate: DateTime.parse(json['orderDate'] ?? DateTime.now().toString()),
+      status: json['status'] ?? 'Pending',
+      totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
       items: (json['items'] as List<dynamic>?)
-              ?.map((item) =>
-                  OrderItemModel.fromJson(item as Map<String, dynamic>))
+              ?.map((item) => OrderItemModel.fromJson(item))
               .toList() ??
           [],
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'userId': userId,
-      'orderId': orderId,
-      'userName': userName,
-      'orderDate': orderDate.toIso8601String(),
-      'status': status,
-      'totalPrice': totalPrice,
-      'items': items.map((item) => item.toJson()).toList(),
-    };
   }
 }
 
@@ -59,17 +52,9 @@ class OrderItemModel {
 
   factory OrderItemModel.fromJson(Map<String, dynamic> json) {
     return OrderItemModel(
-      productName: json['productName'] as String? ?? 'Unknown',
-      quantity: json['quantity'] as int,
-      unitPrice: (json['unitPrice'] as num).toDouble(),
+      productName: json['productName'] ?? 'Unknown',
+      quantity: json['quantity'] ?? 0,
+      unitPrice: (json['unitPrice'] as num?)?.toDouble() ?? 0.0,
     );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'productName': productName,
-      'quantity': quantity,
-      'unitPrice': unitPrice,
-    };
   }
 }

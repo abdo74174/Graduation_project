@@ -8,7 +8,9 @@ class BuildDescriptionField extends StatelessWidget {
   const BuildDescriptionField({
     super.key,
     required this.descriptionController,
-    required this.label, // Pass label to the constructor
+    required this.label,
+    required String? Function(dynamic value)
+        validator, // Pass label to the constructor
   });
 
   @override

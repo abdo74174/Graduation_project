@@ -13,6 +13,9 @@
      <meta-data
         android:name="com.google.android.gms.signin.client_id"
         android:value="818362916537-acisto2jfh9tcsob26fa7mrlur0081eb.apps.googleusercontent.com"/>
+        <meta-data
+    android:name="com.google.android.gms.wallet.api.enabled"
+    android:value="true" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

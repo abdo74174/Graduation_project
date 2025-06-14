@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/cart_item.dart';
-import 'package:graduation_project/Models/cart_model.dart';
+import 'package:graduation_project/Models/cart_model.dart' show CartModel;
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
@@ -44,6 +44,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
   @override
   void dispose() {
     _animationController.dispose();
+    discountController.dispose();
     super.dispose();
   }
 
@@ -237,7 +238,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
       appBar: _buildAppBar(),
       body: validCartItems.isEmpty
           ? _buildEmptyCart()
-          : _buildCartContent(validCartItems),
+          : _buildCartContent(validCartItems.cast<MapEntry<int, CartItems>>()),
       bottomNavigationBar: validCartItems.isNotEmpty ? _buildBottomBar() : null,
     );
   }
@@ -352,7 +353,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
     );
   }
 
-  Widget _buildCartContent(List<MapEntry<int, CartItem>> validCartItems) {
+  Widget _buildCartContent(List<MapEntry<int, CartItems>> validCartItems) {
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Column(
@@ -436,7 +437,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
   }
 
   Widget _buildCartItemCard(
-      CartItem cartItem, int originalIndex, ProductModel product) {
+      CartItems cartItem, int originalIndex, ProductModel product) {
     return Container(
       margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -723,7 +724,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => Paymentscreen(
+                    builder: (context) => PaymentScreen(
                       total: total,
                       cartItems: cartModel!.cartItems,
                     ),
@@ -789,10 +790,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'Not enough stock for '.tr() +
-                    product.name +
-                    '. Available:'.tr() +
-                    ' ${product.StockQuantity}',
+                '${'Not enough stock for '.tr()}${product.name}${'. Available:'.tr()} ${product.StockQuantity}',
               ),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,

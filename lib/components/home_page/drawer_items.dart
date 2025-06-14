@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/screens/Auth/login_page.dart';
+import 'package:graduation_project/screens/delivery/admin_dashboard_page.dart.dart';
+import 'package:graduation_project/screens/delivery/delivery_person_request_page.dart.dart';
+import 'package:graduation_project/screens/donation/DonationProductsScreen.dart';
 import 'package:graduation_project/screens/UserOrderStatusPage.dart';
 import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
+import 'package:graduation_project/screens/fix_product_screen.dart';
 import 'package:graduation_project/screens/setting_page.dart';
 import 'package:graduation_project/screens/pr_cat_sub.dart/add_product.dart';
-import 'package:graduation_project/screens/contac_us/contact_us.dart';
+import 'package:graduation_project/screens/contact_us/contact_us.dart';
 import 'package:graduation_project/screens/userInfo/profile.dart';
 import 'package:graduation_project/screens/user_coupons.dart';
 import 'package:graduation_project/screens/user_products_page.dart';
@@ -30,7 +34,7 @@ class DrawerItems extends StatefulWidget {
 }
 
 class _DrawerItemsState extends State<DrawerItems> {
-  String? userId;
+  int? userId;
 
   @override
   void initState() {
@@ -41,7 +45,16 @@ class _DrawerItemsState extends State<DrawerItems> {
   Future<void> _loadUserId() async {
     String? id = await UserServicee().getUserId();
     setState(() {
-      userId = id;
+      if (id != null && id.isNotEmpty) {
+        try {
+          userId = int.parse(id);
+        } catch (e) {
+          debugPrint('Error parsing userId: $e');
+          userId = null;
+        }
+      } else {
+        userId = null;
+      }
     });
   }
 
@@ -95,6 +108,47 @@ class _DrawerItemsState extends State<DrawerItems> {
               context,
               MaterialPageRoute(
                   builder: (context) => const UserOrderStatusPage()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.inventory_2_outlined),
+            title: Text('DeliveryPersonAdminPage'.tr()),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const DeliveryPersonAdminPage()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.inventory_2_outlined),
+            title: Text('fixx'.tr()),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FixProductScreen()),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.inventory_2_outlined),
+            title: Text('DeliveryPersonRequestPage'.tr()),
+            onTap: userId != null
+                ? () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DeliveryPersonRequestPage(
+                          userId: userId!,
+                        ),
+                      ),
+                    )
+                : null,
+          ),
+          ListTile(
+            leading: const Icon(Icons.inventory_2_outlined),
+            title: Text('DonationProduct'.tr()),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DonationProductsScreen(),
+              ),
             ),
           ),
         ]);

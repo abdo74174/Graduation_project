@@ -2,9 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'dart:developer' as developer;
 
+import 'package:graduation_project/core/constants/constant.dart';
+
 class RecommendationService {
   final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'https://10.0.2.2:7273', // ASP.NET Core API
+    baseUrl: baseUri, // ASP.NET Core API
     validateStatus: (status) => status! < 500,
   ));
 
@@ -30,7 +32,7 @@ class RecommendationService {
     try {
       _logDebug('Making API request...');
       final response = await _dio.get(
-        '/api/product/recommend',
+        'product/recommend',
         queryParameters: {
           'productId': productId,
           'topN': topN,
@@ -110,7 +112,7 @@ class RecommendationService {
     });
 
     // Validate data types
-    if (item['stockQuantity'] != null && !(item['stockQuantity'] is int)) {
+    if (item['stockQuantity'] != null && item['stockQuantity'] is! int) {
       _logDebug(
         '⚠️ Invalid data type for stockQuantity',
         error: {

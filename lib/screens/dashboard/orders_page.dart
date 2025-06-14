@@ -21,9 +21,11 @@ class _OrdersPageState extends State<OrdersPage> {
   String _selectedStatus = 'All';
   final List<String> _statusFilters = [
     'All',
-    'Shipped',
+    'Pending',
     'Processing',
-    'Delivered'
+    'Shipped',
+    'Delivered',
+    'Cancelled',
   ];
 
   @override

@@ -107,7 +107,7 @@ class ProductCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        '${product.discount}% OFF'.tr(),
+                        '${product.discount} ${'OFF'.tr()}',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: _Dim.badgeFontSize,

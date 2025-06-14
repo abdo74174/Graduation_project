@@ -11,17 +11,50 @@ class RevenuePage extends StatefulWidget {
   State<RevenuePage> createState() => _RevenuePageState();
 }
 
-class _RevenuePageState extends State<RevenuePage> {
+class _RevenuePageState extends State<RevenuePage>
+    with SingleTickerProviderStateMixin {
   final OrderService _orderService = OrderService();
   late Future<List<Map<String, dynamic>>> _revenueFuture;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
   List<Map<String, dynamic>> _allRevenueData = [];
   String _searchQuery = '';
   bool _isLoading = false;
 
+  // Modern color scheme
+  static const Color primaryColor = Color(0xFF6366F1);
+  static const Color secondaryColor = Color(0xFF8B5CF6);
+  static const Color accentColor = Color(0xFF06B6D4);
+  static const Color successColor = Color(0xFF10B981);
+  static const Color backgroundColor = Color(0xFFF8FAFC);
+  static const Color cardColor = Colors.white;
+  static const Color textPrimary = Color(0xFF1E293B);
+  static const Color textSecondary = Color(0xFF64748B);
+
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+
     _revenueFuture = _loadRevenueData();
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<List<Map<String, dynamic>>> _loadRevenueData() async {
@@ -75,19 +108,38 @@ class _RevenuePageState extends State<RevenuePage> {
     }).toList();
   }
 
+  double get _totalRevenue {
+    return _allRevenueData.fold(
+        0.0, (sum, item) => sum + (item['revenue'] as double));
+  }
+
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.error_outline,
+                  color: Colors.white, size: 20),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: Text(message)),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
           ],
         ),
-        backgroundColor: Colors.red,
+        backgroundColor: const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.all(16),
       ),
     );
   }
@@ -95,50 +147,191 @@ class _RevenuePageState extends State<RevenuePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
+      backgroundColor: backgroundColor,
+      body: CustomScrollView(
+        slivers: [
+          _buildModernAppBar(),
+          SliverToBoxAdapter(child: _buildStatsCards()),
+          SliverToBoxAdapter(child: _buildSearchSection()),
+          SliverFillRemaining(child: _buildRevenueList()),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernAppBar() {
+    return SliverAppBar(
+      expandedHeight: 120,
+      floating: false,
+      pinned: true,
+      backgroundColor: cardColor,
+      foregroundColor: textPrimary,
+      elevation: 0,
+      flexibleSpace: FlexibleSpaceBar(
         title: Text(
           'Revenue Overview'.tr(),
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: textPrimary,
+          ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
-        elevation: 0.5,
         centerTitle: true,
+        background: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [cardColor, Color(0xFFF1F5F9)],
+            ),
+          ),
+        ),
       ),
-      body: Column(
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(
+          height: 1,
+          color: Colors.grey.withOpacity(0.1),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsCards() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Expanded(
+                child: _buildStatCard(
+                    'Total Revenue'.tr(),
+                    '\$${_totalRevenue.toStringAsFixed(2)}',
+                    Icons.trending_up,
+                    successColor)),
+            const SizedBox(width: 16),
+            Expanded(
+                child: _buildStatCard(
+                    'Months'.tr(),
+                    '${_allRevenueData.length}',
+                    Icons.calendar_month,
+                    accentColor)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+      String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+        border: Border.all(color: color.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildSearchSection(),
-          Expanded(child: _buildRevenueList()),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              color: textSecondary,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: textPrimary,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildSearchSection() {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search by month...'.tr(),
-          hintStyle: TextStyle(color: Colors.grey[500]),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 0.5),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+      )),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: primaryColor.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
-        onChanged: (value) => setState(() => _searchQuery = value),
+        child: TextField(
+          decoration: InputDecoration(
+            hintText: 'Search by month...'.tr(),
+            hintStyle: TextStyle(
+              color: textSecondary.withOpacity(0.7),
+              fontWeight: FontWeight.w400,
+            ),
+            prefixIcon: Container(
+              margin: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.search_rounded, color: primaryColor, size: 20),
+            ),
+            suffixIcon: _searchQuery.isNotEmpty
+                ? IconButton(
+                    icon: Icon(Icons.clear_rounded, color: textSecondary),
+                    onPressed: () => setState(() => _searchQuery = ''),
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 20),
+          ),
+          style: const TextStyle(
+            color: textPrimary,
+            fontWeight: FontWeight.w500,
+          ),
+          onChanged: (value) => setState(() => _searchQuery = value),
+        ),
       ),
     );
   }
@@ -148,17 +341,7 @@ class _RevenuePageState extends State<RevenuePage> {
       future: _revenueFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading revenue data...'.tr(),
-                    style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          );
+          return _buildLoadingState();
         }
 
         if (snapshot.hasError) {
@@ -172,133 +355,274 @@ class _RevenuePageState extends State<RevenuePage> {
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(20),
           itemCount: filteredRevenueData.length,
           itemBuilder: (context, index) {
-            final revenue = filteredRevenueData[index];
-            return _buildRevenueCard(revenue);
+            return TweenAnimationBuilder<double>(
+              duration: Duration(milliseconds: 200 + (index * 100)),
+              tween: Tween(begin: 0.0, end: 1.0),
+              builder: (context, value, child) {
+                return Transform.translate(
+                  offset: Offset(0, 50 * (1 - value)),
+                  child: Opacity(
+                    opacity: value,
+                    child: _buildRevenueCard(filteredRevenueData[index], index),
+                  ),
+                );
+              },
+            );
           },
         );
       },
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildLoadingState() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-          const SizedBox(height: 16),
-          Text(
-            'Error loading revenue data'.tr(),
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Please try again'.tr(),
-            style: TextStyle(color: Colors.grey[600]),
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+              strokeWidth: 3,
+            ),
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: () =>
-                setState(() => _revenueFuture = _loadRevenueData()),
-            icon: const Icon(Icons.refresh),
-            label: Text('Retry'.tr()),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          Text(
+            'Loading revenue data...'.tr(),
+            style: TextStyle(
+              color: textSecondary,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String error) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.red.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(Icons.error_outline_rounded,
+                  size: 48, color: Colors.red[400]),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Error loading revenue data'.tr(),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please try again'.tr(),
+              style: TextStyle(
+                color: textSecondary,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: () =>
+                  setState(() => _revenueFuture = _loadRevenueData()),
+              icon: const Icon(Icons.refresh_rounded),
+              label: Text('Retry'.tr()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            _searchQuery.isEmpty ? Icons.bar_chart_outlined : Icons.search_off,
-            size: 64,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _searchQuery.isEmpty
-                ? 'No revenue data found'.tr()
-                : 'No revenue data matches your search'.tr(),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _searchQuery.isEmpty
-                ? 'No orders have been placed yet'.tr()
-                : 'Try a different search term'.tr(),
-            style: TextStyle(color: Colors.grey[600]),
-          ),
-        ],
+      child: Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: textSecondary.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: textSecondary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                _searchQuery.isEmpty
+                    ? Icons.bar_chart_outlined
+                    : Icons.search_off_rounded,
+                size: 48,
+                color: textSecondary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'No revenue data found'.tr()
+                  : 'No revenue data matches your search'.tr(),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'No orders have been placed yet'.tr()
+                  : 'Try a different search term'.tr(),
+              style: TextStyle(
+                color: textSecondary,
+                fontSize: 16,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildRevenueCard(Map<String, dynamic> revenue) {
+  Widget _buildRevenueCard(Map<String, dynamic> revenue, int index) {
+    final colors = [primaryColor, secondaryColor, accentColor, successColor];
+    final color = colors[index % colors.length];
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: color.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
+        border: Border.all(color: color.withOpacity(0.1)),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.attach_money,
-                color: Colors.blue[700],
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    revenue['month'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // Add tap functionality if needed
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [color.withOpacity(0.1), color.withOpacity(0.2)],
                     ),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '\$${revenue['revenue'].toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                  child: Icon(
+                    Icons.monetization_on_rounded,
+                    color: color,
+                    size: 28,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        revenue['month'],
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '\$${revenue['revenue'].toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: color,
+                    size: 16,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

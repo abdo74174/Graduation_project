@@ -1,8 +1,9 @@
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class RatingService {
-  static const String baseUrl = 'https://10.0.2.2:7273/api/ratings';
+  static final String baseUrl = '${baseUri}ratings';
 
   Future<void> submitRating({
     required String productId,

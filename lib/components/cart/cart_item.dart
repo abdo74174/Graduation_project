@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
-class CartItem extends StatelessWidget {
+class CartItemWidget extends StatelessWidget {
   final String imagePath;
   final String title;
   final int price;
@@ -9,7 +9,7 @@ class CartItem extends StatelessWidget {
   final int quantity;
   final Function(int) onQuantityChanged;
 
-  const CartItem({
+  const CartItemWidget({
     super.key,
     required this.imagePath,
     required this.title,

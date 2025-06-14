@@ -17,6 +17,7 @@ class BuildDropdown extends StatelessWidget {
     this.onChanged,
     this.enabled = true,
     this.hint,
+    required String? Function(dynamic value) validator,
   }) : super(key: key);
 
   @override

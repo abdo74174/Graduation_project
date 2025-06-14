@@ -281,7 +281,7 @@ class _MessageCard extends StatelessWidget {
             _DetailRow(
               icon: Icons.person_outline,
               label: 'user_id'.tr(),
-              value: message.userId,
+              value: message.UserId.toString(),
             ),
             if (message.email != null)
               _DetailRow(

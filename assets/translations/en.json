@@ -775,7 +775,14 @@
   "urgent_help": "Need Urgent Help?",
   "call": "Call",
   
-  "please_select_problem_type": "Please select a problem type."
+  "please_select_problem_type": "Please select a problem type.",
+  "Delivery Person Requests": "Delivery Person Requests",
+  "Refresh Requests": "Refresh Requests",
+  "Email:": "Email:",
+  "Status:": "Status:",
+  "Applied:": "Applied:"
+  
+
 
 
                                 

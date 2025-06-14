@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 
 // Admin API Service
 class AdminApiService {
@@ -8,7 +9,7 @@ class AdminApiService {
 
   AdminApiService()
       : _dio = Dio(BaseOptions(
-          baseUrl: 'https://10.0.2.2:7273/api/Admin',
+          baseUrl: '${baseUri}Admin',
           connectTimeout: Duration(seconds: 30),
           receiveTimeout: Duration(seconds: 30),
         )) {

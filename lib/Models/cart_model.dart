@@ -3,7 +3,7 @@ import 'package:graduation_project/Models/cart_item.dart';
 class CartModel {
   final int id;
   final String userId;
-  final List<CartItem> cartItems;
+  final List<CartItems> cartItems;
 
   CartModel({
     required this.id,
@@ -17,8 +17,8 @@ class CartModel {
         : []; // Handle both cases for cartItems
 
     final parsedItems = rawList
-        .map((e) => e is Map<String, dynamic> ? CartItem.fromJson(e) : null)
-        .whereType<CartItem>()
+        .map((e) => e is Map<String, dynamic> ? CartItems.fromJson(e) : null)
+        .whereType<CartItems>()
         .toList();
 
     return CartModel(

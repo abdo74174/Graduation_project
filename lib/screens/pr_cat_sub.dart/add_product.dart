@@ -1,10 +1,9 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
+import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/services/Product/category_service.dart';
 import 'package:graduation_project/services/Product/desc_api_ai.dart';
@@ -20,6 +19,9 @@ import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:shimmer/main.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/screens/chat/chat_page.dart';
+import 'package:dio/dio.dart';
+import 'package:path/path.dart' as path;
+import 'package:http_parser/http_parser.dart';
 
 class AddProductScreen extends StatefulWidget {
   const AddProductScreen({super.key});
@@ -35,6 +37,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _StockQuantity = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _guaranteeController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   final _formKey = GlobalKey<FormState>();
 
@@ -44,6 +48,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? selectedCategory;
   String? selectedSubCategory;
   String? userId;
+  String? userAddress;
+  bool isDonation = false;
 
   List<CategoryModel> _categories = [];
   List<SubCategory> _subcategories = [];
@@ -56,6 +62,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       ProductDescriptionService();
   bool _isLoading = false;
   bool _isSubmitting = false;
+  bool _isReturnAgreementAccepted = false;
 
   @override
   void initState() {
@@ -66,6 +73,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _priceController.text = "0.00";
     _comparePriceController.text = "0.00";
     _discountController.text = "0";
+    _guaranteeController.text = "0.0";
   }
 
   Future<void> _loadInitialData() async {
@@ -79,6 +87,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
           SnackBar(
               content: Text("User ID not found. Please login again.".tr())),
         );
+        return;
+      }
+
+      // Fetch user data to get address
+      if (userId != null) {
+        final user = await fetchUserById(int.parse(userId!));
+        if (user != null && mounted) {
+          setState(() {
+            userAddress = user.address;
+          });
+          if (userAddress == null || userAddress!.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("User address not found.".tr())),
+            );
+          }
+        }
       }
 
       // Fetch categories
@@ -101,6 +125,33 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
+  Future<UserModel?> fetchUserById(int userId) async {
+    try {
+      final url = '/User/$userId';
+      print('Fetching from: $url');
+
+      final response = await Dio().get(url);
+
+      if (response.statusCode == 200) {
+        print('User data: ${response.data}');
+        return UserModel.fromJson(response.data);
+      } else {
+        print('Failed to fetch user. Status code: ${response.statusCode}');
+        return null;
+      }
+    } on DioException catch (e) {
+      print('DioException: ${e.message}');
+      if (e.response != null) {
+        print('Status Code: ${e.response?.statusCode}');
+        print('Response Data: ${e.response?.data}');
+      }
+      return null;
+    } catch (e) {
+      print('Unexpected error: $e');
+      return null;
+    }
+  }
+
   @override
   void dispose() {
     _productNameController.dispose();
@@ -109,6 +160,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _StockQuantity.dispose();
     _discountController.dispose();
     _descriptionController.dispose();
+    _guaranteeController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -160,7 +213,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               BuildTextField(
                                 controller: _productNameController,
                                 label: "Product Name".tr(),
+                                keyboardType: TextInputType.text,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "Product name is required".tr();
+                                  }
+                                  return null;
+                                },
                               ),
+                              const SizedBox(height: 16),
+
+                              // Donation Toggle
+                              _buildDonationToggle(),
                               const SizedBox(height: 16),
 
                               // Product Status
@@ -175,6 +239,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 onChanged: (value) {
                                   _updateSubcategories(value);
                                 },
+                                validator: (value) {
+                                  if (value == null) {
+                                    return "Please select a category".tr();
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 16),
 
@@ -188,7 +258,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   });
                                 },
                                 enabled:
-                                    !_isLoading && selectedCategory != null,
+                                    (!_isLoading && selectedCategory != null),
                                 hint: _isLoading
                                     ? "Loading subcategories...".tr()
                                     : selectedCategory == null
@@ -196,13 +266,67 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                         : productSubCategories.isEmpty
                                             ? "No subcategories available".tr()
                                             : "Select a subcategory".tr(),
+                                validator: (value) {
+                                  if (selectedCategory != null &&
+                                      productSubCategories.isNotEmpty &&
+                                      value == null) {
+                                    return "Please select a subcategory".tr();
+                                  }
+                                  return null;
+                                },
                               ),
                               const SizedBox(height: 16),
 
                               BuildTextField(
                                 controller: _StockQuantity,
                                 label: "Product Quantity".tr(),
+                                keyboardType: TextInputType.number,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return "Please enter a quantity".tr();
+                                  }
+                                  if (int.tryParse(value) == null) {
+                                    return "Please enter a valid quantity".tr();
+                                  }
+                                  return null;
+                                },
                               ),
+                              if (!isDonation) ...[
+                                const SizedBox(height: 16),
+                                BuildTextField(
+                                  controller: _guaranteeController,
+                                  label: "Guarantee (months)".tr(),
+                                  keyboardType: TextInputType.numberWithOptions(
+                                      decimal: true),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Please enter a guarantee period"
+                                          .tr();
+                                    }
+                                    if (double.tryParse(value) == null) {
+                                      return "Please enter a valid guarantee period"
+                                          .tr();
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                              if (userAddress == null ||
+                                  userAddress!.isEmpty) ...[
+                                const SizedBox(height: 16),
+                                BuildTextField(
+                                  controller: _addressController,
+                                  label: "Product Address".tr(),
+                                  keyboardType: TextInputType.streetAddress,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return "Please enter a valid address"
+                                          .tr();
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -222,6 +346,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             BuildDescriptionField(
                               label: "Product Description".tr(),
                               descriptionController: _descriptionController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Description is required".tr();
+                                }
+                                return null;
+                              },
                             ),
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
@@ -293,26 +423,28 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         ),
                       ),
                     ),
-                    _buildSectionTitle("Pricing Information".tr()),
-                    Card(
-                      elevation: 2,
-                      margin: const EdgeInsets.only(bottom: 24),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            PricingSection(
-                              comparePriceController: _comparePriceController,
-                              discountController: _discountController,
-                              priceController: _priceController,
-                            ),
-                          ],
+                    if (!isDonation) ...[
+                      _buildSectionTitle("Pricing Information".tr()),
+                      Card(
+                        elevation: 2,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              PricingSection(
+                                comparePriceController: _comparePriceController,
+                                discountController: _discountController,
+                                priceController: _priceController,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -385,6 +517,93 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
+  Widget _buildDonationToggle() {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Donate this product".tr(),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: () {
+            setState(() {
+              isDonation = !isDonation;
+              if (isDonation) {
+                _priceController.text = "0.00";
+                _comparePriceController.text = "0.00";
+                _discountController.text = "0";
+                _guaranteeController.text = "0.0";
+              }
+            });
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isDonation ? theme.primaryColor : Colors.grey[300]!,
+                width: 2,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              color: isDonation ? theme.primaryColor.withOpacity(0.1) : null,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isDonation
+                      ? Icons.volunteer_activism
+                      : Icons.volunteer_activism_outlined,
+                  color: isDonation ? theme.primaryColor : Colors.grey[600],
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isDonation
+                            ? "Donation Enabled".tr()
+                            : "Enable Donation".tr(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: isDonation
+                              ? theme.primaryColor
+                              : Colors.grey[800],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Offer this product for free to support a cause.".tr(),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  isDonation ? Icons.check_circle : Icons.circle_outlined,
+                  color: isDonation ? theme.primaryColor : Colors.grey[600],
+                  size: 20,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildStatusSelector() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,6 +640,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       onTap: () {
         setState(() {
           selectedStatus = status;
+          if (status == "Used".tr()) {
+            _isReturnAgreementAccepted = false;
+            _showReturnAgreementBottomSheet();
+          }
         });
       },
       borderRadius: BorderRadius.circular(8),
@@ -456,17 +679,104 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
+  void _showReturnAgreementBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Return Agreement for Used Products".tr(),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "By listing a used product, you agree to accept returns if the product does not function as described."
+                        .tr(),
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _isReturnAgreementAccepted,
+                        onChanged: (bool? value) {
+                          setModalState(() {
+                            _isReturnAgreementAccepted = value ?? false;
+                          });
+                          setState(() {
+                            _isReturnAgreementAccepted = value ?? false;
+                          });
+                        },
+                        activeColor: Theme.of(context).primaryColor,
+                      ),
+                      Expanded(
+                        child: Text(
+                          "I agree to the return policy for used products".tr(),
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isReturnAgreementAccepted
+                          ? () => Navigator.pop(context)
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text("Confirm".tr()),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
-      if (_discountController.text.isEmpty) {
+      if (!isDonation && _discountController.text.isEmpty) {
         showSnackbar(context, "Please enter a discount percentage".tr());
         return;
-      } else if (double.tryParse(_discountController.text) == null) {
+      } else if (!isDonation &&
+          double.tryParse(_discountController.text) == null) {
         showSnackbar(context, "Please enter a valid discount percentage".tr());
         return;
-      } else if (double.tryParse(_discountController.text)! > 100) {
+      } else if (!isDonation &&
+          double.tryParse(_discountController.text)! > 100) {
         showSnackbar(
             context, "Discount percentage cannot be greater than 100".tr());
+        return;
+      }
+
+      if (selectedStatus == "Used".tr() && !_isReturnAgreementAccepted) {
+        showSnackbar(context,
+            "Please accept the return agreement for used products".tr());
         return;
       }
 
@@ -475,40 +785,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _submitProduct() async {
-    // Check validation manually since we don't have validators in components
-    if (_productNameController.text.isEmpty) {
-      showSnackbar(context, "Product name is required".tr());
-      return;
-    }
-
-    if (selectedCategory == null) {
-      showSnackbar(context, "Please select a category".tr());
-      return;
-    }
-
-    if (selectedCategory != null &&
-        selectedSubCategory == null &&
-        productSubCategories.isNotEmpty) {
-      showSnackbar(context, "Please select a subcategory".tr());
-      return;
-    }
-
-    if (_StockQuantity.text.isEmpty ||
-        int.tryParse(_StockQuantity.text) == null) {
-      showSnackbar(context, "Please enter a valid quantity".tr());
-      return;
-    }
-
-    if (_descriptionController.text.isEmpty) {
-      showSnackbar(context, "Description is required".tr());
-      return;
-    }
-
-    if (_imageFiles.isEmpty) {
-      showSnackbar(context, "Please add at least one product image".tr());
-      return;
-    }
-
     if (selectedStatus == null) {
       showSnackbar(context, "Please select product status (New or Used)".tr());
       return;
@@ -519,6 +795,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
+    // Use _addressController.text if userAddress is null or empty, otherwise use userAddress
+    final String productAddress = (userAddress == null || userAddress!.isEmpty)
+        ? _addressController.text
+        : userAddress!;
+
+    if (productAddress.isEmpty) {
+      showSnackbar(context, "User address is required".tr());
+      return;
+    }
+
+    if (_imageFiles.isEmpty) {
+      showSnackbar(context, "Please add at least one product image".tr());
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -526,11 +817,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
         userId: userId!,
         name: _productNameController.text,
         description: _descriptionController.text,
-        price: double.tryParse(_priceController.text) ?? 0.0,
-        comparePrice: double.tryParse(_comparePriceController.text) ?? 0.0,
-        discount: double.tryParse(_discountController.text) ?? 0.0,
+        address: productAddress,
+        donation: isDonation,
+        price: isDonation ? 0.0 : double.tryParse(_priceController.text) ?? 0.0,
+        comparePrice: isDonation
+            ? 0.0
+            : double.tryParse(_comparePriceController.text) ?? 0.0,
+        discount:
+            isDonation ? 0.0 : double.tryParse(_discountController.text) ?? 0.0,
         status: selectedStatus!,
-        StockQuantity: int.tryParse(_StockQuantity.text) ?? 1,
+        guarantee: isDonation
+            ? 0.0
+            : double.tryParse(_guaranteeController.text) ?? 0.0,
+        stockQuantity: int.tryParse(_StockQuantity.text) ?? 1,
         categoryId: getCategoryIdByName(selectedCategory),
         subCategoryId: getSubCategoryIdByName(selectedSubCategory),
         imageFiles: _imageFiles,
@@ -561,13 +860,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   int getSubCategoryIdByName(String? name) {
-    if (name == null) throw Exception("Subcategory not selected".tr());
+    if (name == null && productSubCategories.isNotEmpty) {
+      throw Exception("Subcategory not selected".tr());
+    }
     if (selectedCategory == null) throw Exception("Category not selected".tr());
+
+    if (name == null) return 0;
 
     final subCategory = _subcategories.firstWhere(
         (s) =>
-            s.name == name &&
-            s.categoryId == getCategoryIdByName(selectedCategory),
+            s?.name == name &&
+            s?.categoryId == getCategoryIdByName(selectedCategory),
         orElse: () => throw Exception(
               "${"Subcategory".tr()}, $name not found in category ${selectedCategory}",
             ));
@@ -629,7 +932,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  // Update subcategories when category changes
   void _updateSubcategories(String? categoryName) async {
     if (categoryName == null) {
       setState(() {
@@ -645,12 +947,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       selectedCategory = categoryName;
       selectedSubCategory = null;
       _isLoading = true;
-      productSubCategories = []; // Clear existing subcategories
-      _subcategories = []; // Clear existing subcategories
+      productSubCategories = [];
+      _subcategories = [];
     });
 
     try {
-      // Find the category ID for the selected category name
       final category = _categories.firstWhere(
         (cat) => cat.name == categoryName,
         orElse: () => throw Exception('Category not found'.tr()),
@@ -659,11 +960,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
       print(
           '🔍 Loading subcategories for category: ${category.name} (ID: ${category.categoryId})');
 
-      // Fetch subcategories for this category ID
       final allSubcategories = await SubCategoryService()
           .fetchSubCategoriesByCategory(category.categoryId);
 
-      // Filter subcategories to only include those matching the selected category ID
       final filteredSubcategories = allSubcategories
           .where((subcat) => subcat.categoryId == category.categoryId)
           .toList();
@@ -673,11 +972,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       setState(() {
         _subcategories = filteredSubcategories;
-        // Create a list of unique subcategory names
-        productSubCategories = filteredSubcategories
-            .map((subcat) => subcat.name)
-            .toSet() // Convert to Set to remove duplicates
-            .toList(); // Convert back to List
+        productSubCategories =
+            filteredSubcategories.map((subcat) => subcat.name).toSet().toList();
         _isLoading = false;
       });
 
@@ -809,7 +1105,6 @@ class ImageUploadSection extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Image number badge
           Positioned(
             left: 8,
             bottom: 8,
@@ -829,7 +1124,6 @@ class ImageUploadSection extends StatelessWidget {
               ),
             ),
           ),
-          // Delete button
           Positioned(
             right: -5,
             top: -5,

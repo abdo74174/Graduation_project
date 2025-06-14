@@ -17,6 +17,7 @@ class BuildTextField extends StatelessWidget {
     this.isPercentage = false,
     this.isStrikethrough = false,
     this.validator,
+    required TextInputType keyboardType,
   });
 
   @override

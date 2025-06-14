@@ -1,8 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/coupon_management.dart';
-import 'package:graduation_project/screens/contac_us/messages_list_page.dart';
-import 'package:graduation_project/screens/delivery_management_page.dart';
+import 'package:graduation_project/screens/contact_us/messages_list_page.dart';
+import 'package:graduation_project/screens/delivery/user_order_confirmation_page.dart';
 import 'package:graduation_project/screens/pr_cat_sub.dart/addCatandSub.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
 import 'package:graduation_project/screens/dashboard/customers_page.dart';

@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/models/contact_us_model.dart';
 
 class ContactUsService {
-  static const String baseUrl = 'https://your-api-url.com/api/ContactUs';
+  static final String baseUrl = '${baseUri}ContactUs';
   late final Dio _dio;
 
   ContactUsService() {

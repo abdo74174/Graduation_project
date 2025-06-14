@@ -15,7 +15,7 @@ class USerService {
 
   USerService()
       : dio = Dio(BaseOptions(
-          baseUrl: 'https://10.0.2.2:7273/api/MedBridge',
+          baseUrl: '${baseUri}MedBridge',
           headers: {'Content-Type': 'application/json'},
           validateStatus: (status) => status! < 500,
         )) {
@@ -57,7 +57,8 @@ class USerService {
       if (response.statusCode == 200) {
         return List<String>.from(response.data['specialties']).toSet().toList();
       } else {
-        print('Failed to fetch specialties. Status code: \${response.statusCode}');
+        print(
+            'Failed to fetch specialties. Status code: \${response.statusCode}');
         return [];
       }
     } on DioException catch (e) {
@@ -101,6 +102,33 @@ class USerService {
     try {
       final encodedEmail = Uri.encodeComponent(email);
       final url = '/User/$encodedEmail';
+      print('Fetching from: $url');
+
+      final response = await dio.get(url);
+
+      if (response.statusCode == 200) {
+        print('User data: ${response.data}');
+        return UserModel.fromJson(response.data);
+      } else {
+        print('Failed to fetch user. Status code: ${response.statusCode}');
+        return null;
+      }
+    } on DioException catch (e) {
+      print('DioException: ${e.message}');
+      if (e.response != null) {
+        print('Status Code: ${e.response?.statusCode}');
+        print('Response Data: ${e.response?.data}');
+      }
+      return null;
+    } catch (e) {
+      print('Unexpected error: $e');
+      return null;
+    }
+  }
+
+  Future<UserModel?> fetchUserById(int userId) async {
+    try {
+      final url = '/User/$userId';
       print('Fetching from: $url');
 
       final response = await dio.get(url);

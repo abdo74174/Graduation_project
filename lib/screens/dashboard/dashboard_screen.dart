@@ -788,7 +788,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           builder: (context) => FutureBuilder<String>(
                             future: UserServicee()
                                 .getUserId()
-                                .then((value) => (value as String?) ?? '0'),
+                                .then((value) => value ?? '0'),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {

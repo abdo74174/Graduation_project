@@ -798,7 +798,12 @@
   "call": "اتصال",
 
   "follow_us": "تابعنا",
-  "please_select_problem_type": "يرجى اختيار نوع المشكلة."
+  "please_select_problem_type": "يرجى اختيار نوع المشكلة.",
+  "Delivery Person Requests": "طلبات مندوبي التوصيل",
+  "Refresh Requests": "تحديث الطلبات",
+  "Email:": "البريد الإلكتروني:",
+  "Status:": "الحالة:",
+  "Applied:": "تم التقديم:"
 
   
     

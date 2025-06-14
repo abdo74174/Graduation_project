@@ -5,10 +5,11 @@ import 'package:dio/io.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class GoogleSignInService {
-  final String _baseUrl = 'https://10.0.2.2:7273/api/MedBridge';
+  final String _baseUrl = '${baseUri}MedBridge';
   final Dio _dio;
   final GoogleSignIn _googleSignIn;
   final FirebaseAuth _auth;

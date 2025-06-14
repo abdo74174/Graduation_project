@@ -1,13 +1,13 @@
 import 'package:graduation_project/Models/product_model.dart';
 
-class CartItem {
+class CartItems {
   final int id;
   final int cartId;
   final int productId;
   int quantity;
   final ProductModel product;
 
-  CartItem({
+  CartItems({
     required this.id,
     required this.cartId,
     required this.productId,
@@ -15,8 +15,8 @@ class CartItem {
     required this.product,
   });
 
-  factory CartItem.fromJson(Map<String, dynamic> json) {
-    return CartItem(
+  factory CartItems.fromJson(Map<String, dynamic> json) {
+    return CartItems(
       id: json['id'] as int? ?? 0, // Make sure it uses the correct key
       cartId: json['cartId'] as int? ?? 0,
       productId: json['productId'] as int? ?? 0,

@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/user_model.dart';
-import 'package:graduation_project/screens/contac_us/contact_us.dart';
+import 'package:graduation_project/screens/contact_us/contact_us.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_page.dart';
 

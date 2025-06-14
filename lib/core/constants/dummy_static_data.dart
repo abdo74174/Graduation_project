@@ -18,6 +18,7 @@ final dummyProducts = [
     name: "Blood Pressure Monitor",
     description: "Digital device with cuff and memory storage.",
     price: 450.0,
+    donation: false,
     isNew: true,
     discount: 10.0,
     subCategoryId: 1,
@@ -33,6 +34,7 @@ final dummyProducts = [
     description: "Non-contact, quick-reading thermometer.",
     price: 299.0,
     isNew: false,
+    donation: false,
     discount: 5.0,
     subCategoryId: 2,
     categoryId: 1,
@@ -44,14 +46,14 @@ final dummyProducts = [
 
 // Dummy Cart Items
 final dummyCartItems = [
-  CartItem(
+  CartItems(
     id: 1,
     cartId: 1,
     productId: dummyProducts[0].productId,
     quantity: 2,
     product: dummyProducts[0],
   ),
-  CartItem(
+  CartItems(
     id: 2,
     cartId: 1,
     productId: dummyProducts[1].productId,

@@ -10,7 +10,7 @@ import 'package:graduation_project/screens/chat/chat_list_screen.dart';
 import 'package:graduation_project/screens/chat/chat_page.dart';
 import 'package:graduation_project/screens/setting_page.dart';
 import 'package:graduation_project/screens/pr_cat_sub.dart/add_product.dart';
-import 'package:graduation_project/screens/contac_us/contact_us.dart';
+import 'package:graduation_project/screens/contact_us/contact_us.dart';
 import 'package:graduation_project/screens/userInfo/profile.dart';
 import 'package:graduation_project/services/User/sign.dart';
 import 'package:graduation_project/services/stateMangment/cubit/user_cubit.dart';

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart' show IOHttpClientAdapter;
 import 'package:flutter/foundation.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 
 class ForgotPasswordService {
   final Dio dio;
@@ -10,7 +11,7 @@ class ForgotPasswordService {
     debugPrint('Initial Dio base URL: ${dio.options.baseUrl}');
 
     dio.options = BaseOptions(
-      baseUrl: 'https://10.0.2.2:7273/api/ForgotPassword',
+      baseUrl: '${baseUri}ForgotPassword',
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       headers: {

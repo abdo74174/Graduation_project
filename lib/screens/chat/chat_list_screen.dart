@@ -268,8 +268,8 @@ class _ChatListPageState extends State<ChatListPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _startNewChat,
         backgroundColor: Colors.blue,
-        child: const Icon(Icons.support_agent),
         tooltip: 'Chat with Support'.tr(),
+        child: const Icon(Icons.support_agent),
       ),
     );
   }

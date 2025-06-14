@@ -10,6 +10,7 @@ class ProductModel {
   final int subCategoryId;
   final int categoryId;
   final int userId;
+  final bool donation;
   final int StockQuantity;
   final bool installmentAvailable; // New field
   final List<String> images; // URLs of images
@@ -25,6 +26,7 @@ class ProductModel {
     required this.description,
     required this.price,
     required this.isNew,
+    required this.donation,
     required this.discount,
     required this.subCategoryId,
     required this.categoryId,
@@ -57,6 +59,7 @@ class ProductModel {
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
       subCategoryId: json['subCategoryId'] ?? 0,
       categoryId: json['categoryId'] ?? 0,
+      donation: json['donation'] ?? false,
       installmentAvailable: json['installmentAvailable'] ?? false,
       StockQuantity: json['stockQuantity'] ?? 0, // lowercase!
       userId: json['userId'] ?? 0,
@@ -72,6 +75,7 @@ class ProductModel {
         price = 0,
         StockQuantity = 0,
         isNew = false,
+        donation = false,
         discount = 0,
         subCategoryId = 0,
         categoryId = 0,
@@ -88,6 +92,7 @@ class ProductModel {
       'isNew': isNew,
       'discount': discount,
       'subCategoryId': subCategoryId,
+      'donation': donation, // ✅ Add this
       'categoryId': categoryId,
       'installmentAvailable': installmentAvailable,
       'StockQuantity': StockQuantity,
