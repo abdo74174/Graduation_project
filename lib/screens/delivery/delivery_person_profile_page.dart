@@ -1,6 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:graduation_project/models/order_model.dart';
+import 'package:graduation_project/Models/order_model.dart';
+import 'package:graduation_project/services/admin_dashboard.dart'
+    hide DeliveryPersonRequestModel;
 import 'package:graduation_project/services/elivery_person_service.dart';
 import 'package:graduation_project/services/order/order_service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -23,51 +25,61 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
   String? _requestStatus;
   bool? _isAvailable;
   List<OrderModel> _orders = [];
+  DeliveryPersonRequestModel? deliveryPerson;
+  int? deliveryPersonId;
 
   @override
   void initState() {
     super.initState();
     print('DeliveryPersonProfilePage: userId = ${widget.userId}');
-    _fetchProfileData();
+    _fetchData();
   }
 
-  Future<void> _fetchProfileData() async {
+  Future<void> _fetchData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
     try {
-      final requests = await _deliveryPersonService.getAllRequests();
-      print('Profile requests fetched: $requests');
-      final profile = requests.firstWhere(
-        (request) {
-          print(
-              'Checking profile request with userId: ${request.userId ?? 'null'} against ${widget.userId}');
-          return request.userId == widget.userId;
-        },
-        orElse: () {
-          print('No matching profile found for userId: ${widget.userId}');
-          return DeliveryPersonRequestModel();
-        },
-      );
-      final orders = await _orderService.getOrdersByDeliveryPerson(23);
-      print('Orders fetched for userId ${widget.userId}: $orders');
-      if (profile.requestStatus != null) {
-        setState(() {
-          _requestStatus = profile.requestStatus;
-          _isAvailable = profile.isAvailable;
-          _orders = orders.cast<OrderModel>();
-          print(
-              'Profile status set: $_requestStatus, isAvailable: $_isAvailable, orders: ${_orders.length}');
-        });
+      // Fetch delivery person data
+      final deliveryList = await _deliveryPersonService
+          .fetchDeliveryPersonInfoById(widget.userId);
+      DeliveryPersonRequestModel? profile;
+      int? fetchedDeliveryPersonId;
+
+      if (deliveryList != null && deliveryList.isNotEmpty) {
+        profile = deliveryList.first;
+        fetchedDeliveryPersonId = profile.userId;
+        print("Delivery person ID: $fetchedDeliveryPersonId");
       } else {
-        setState(() {
-          _orders = orders.cast<OrderModel>();
-        });
-        print('No profile status found for userId: ${widget.userId}');
+        print("No delivery person found for userId ${widget.userId}");
       }
+
+      // Fetch orders if deliveryPersonId is available
+      List<OrderModel> orders = [];
+      if (fetchedDeliveryPersonId != null) {
+        try {
+          orders = await _orderService
+              .getOrdersByDeliveryPerson(fetchedDeliveryPersonId);
+          print(
+              'Orders fetched for deliveryPersonId $fetchedDeliveryPersonId: $orders');
+        } catch (e) {
+          print('Error fetching orders: $e');
+          setState(() {
+            _errorMessage = 'error_fetching_orders'.tr();
+          });
+        }
+      }
+
+      setState(() {
+        deliveryPerson = profile;
+        deliveryPersonId = fetchedDeliveryPersonId;
+        _requestStatus = profile?.requestStatus;
+        _isAvailable = profile?.isAvailable ?? false;
+        _orders = orders;
+      });
     } catch (e) {
-      print('Error fetching profile data: $e');
+      print('Error fetching data: $e');
       setState(() {
         _errorMessage = 'error_fetching_profile'.tr();
       });
@@ -185,6 +197,50 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
+                            'profile_info'.tr(),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                              color: isDark ? Colors.white : Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            deliveryPersonId != null
+                                ? 'delivery_person_id'.tr() +
+                                    ': $deliveryPersonId'
+                                : 'no_id_available'.tr(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            deliveryPerson != null
+                                ? 'phone'.tr() + ': ${deliveryPerson!.phone}'
+                                : 'no_phone_available'.tr(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            deliveryPerson != null
+                                ? 'address'.tr() +
+                                    ': ${deliveryPerson!.address}'
+                                : 'no_address_available'.tr(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color:
+                                  isDark ? Colors.grey[400] : Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
                             'request_status'.tr(),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
@@ -264,8 +320,10 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
                   if (_errorMessage.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
-                      child: Text(_errorMessage.tr(),
-                          style: TextStyle(color: Colors.red[400])),
+                      child: Text(
+                        _errorMessage.tr(),
+                        style: TextStyle(color: Colors.red[400]),
+                      ),
                     ),
                 ],
               ),
@@ -474,41 +532,5 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
         ),
       ),
     );
-  }
-}
-
-class DeliveryPersonRequestModel {
-  String phone;
-  String address;
-  String cardNumber;
-  String? requestStatus;
-  bool? isAvailable;
-  int? userId;
-
-  DeliveryPersonRequestModel({
-    this.phone = '',
-    this.address = '',
-    this.cardNumber = '',
-    this.requestStatus,
-    this.isAvailable,
-    this.userId,
-  });
-
-  factory DeliveryPersonRequestModel.fromJson(Map<String, dynamic> json) {
-    return DeliveryPersonRequestModel(
-      phone: json['phone'] ?? '',
-      address: json['address'] ?? '',
-      cardNumber: json['cardNumber'] ?? '',
-      requestStatus: json['requestStatus'],
-      isAvailable: json['isAvailable'] as bool?,
-      userId: (json['userId'] is int)
-          ? json['userId']
-          : int.tryParse(json['userId']?.toString() ?? '0'),
-    );
-  }
-
-  @override
-  String toString() {
-    return 'DeliveryPersonRequestModel(phone: $phone, address: $address, cardNumber: $cardNumber, requestStatus: $requestStatus, isAvailable: $isAvailable, userId: $userId)';
   }
 }

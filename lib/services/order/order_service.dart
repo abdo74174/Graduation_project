@@ -11,9 +11,9 @@ class OrderService {
 
   OrderService()
       : _dio = Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          sendTimeout: const Duration(seconds: 10),
+          connectTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 20),
+          sendTimeout: const Duration(seconds: 20),
           validateStatus: (status) => status != null && status < 500,
         )) {
     _dio.interceptors.add(LogInterceptor(
@@ -183,13 +183,23 @@ class OrderService {
     }
   }
 
-  Future<void> updateOrderStatus(int orderId, String status) async {
+  Future<void> updateOrderStatus(
+      int orderId, int deliveryPersonId, String status) async {
     try {
       if (orderId <= 0) throw Exception('Invalid orderId: $orderId');
+      if (deliveryPersonId <= 0)
+        throw Exception('Invalid deliveryPersonId: $deliveryPersonId');
+      if (!['Shipped', 'Delivered', 'Cancelled', 'Processing']
+          .contains(status)) {
+        throw Exception('Invalid status: $status');
+      }
 
       final response = await _dio.put(
-        '$_baseUrl/$orderId/status',
-        queryParameters: {'status': status},
+        '$_baseUrl/$orderId/delivery-status',
+        queryParameters: {
+          'deliveryPersonId': deliveryPersonId,
+          'status': status,
+        },
       );
 
       if (response.statusCode != 200 && response.statusCode != 204) {
@@ -197,8 +207,16 @@ class OrderService {
             'Failed to update order status: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      _handleDioError(e, 'updateOrderStatus');
-      rethrow;
+      String errorMsg = 'Network error in updateOrderStatus: ${e.message}';
+      if (e.response != null) {
+        errorMsg += ' (Status: ${e.response?.statusCode})';
+        if (e.response?.statusCode == 403) {
+          errorMsg = 'You are not assigned to this order.';
+        } else if (e.response?.statusCode == 400) {
+          errorMsg = 'Invalid status or request parameters.';
+        }
+      }
+      throw Exception(errorMsg);
     } catch (e) {
       throw Exception('Failed to update order status: $e');
     }

@@ -88,7 +88,7 @@ class _DeliveryManagementPageState extends State<DeliveryManagementPage> {
   Future<void> _updateOrderStatus(int orderId, DeliveryStatus status) async {
     try {
       String statusString = status.toString().split('.').last;
-      await _orderService.updateOrderStatus(orderId, statusString);
+      // await _orderService.updateOrderStatus(orderId, statusString as int);
       await _fetchOrders(); // Refresh orders
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -2,24 +2,33 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/order_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
-import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/services/elivery_person_service.dart';
 import 'package:graduation_project/services/order/order_service.dart';
 import 'package:shimmer/shimmer.dart';
 
 class UserOrderStatusPage extends StatefulWidget {
-  const UserOrderStatusPage({Key? key}) : super(key: key);
+  final int userId; // Add userId parameter
+  const UserOrderStatusPage({Key? key, required this.userId}) : super(key: key);
 
   @override
   _UserOrderStatusPageState createState() => _UserOrderStatusPageState();
 }
 
-class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
+class _UserOrderStatusPageState extends State<UserOrderStatusPage>
+    with SingleTickerProviderStateMixin {
   final OrderService _orderService = OrderService();
-  int? _userId; // Changed to int? to match OrderModel.userId type
+  final DeliveryPersonService _deliveryPersonService =
+      DeliveryPersonService(); // Initialize service
+  int? _deliveryPersonId;
+  DeliveryPersonRequestModel? _deliveryPerson;
+  String? _requestStatus;
+  bool _isAvailable = false;
   List<OrderModel> _orders = [];
-  List<OrderModel> _filteredOrders = [];
+  List<OrderModel> _filteredOrdersShipped = [];
+  List<OrderModel> _filteredOrdersOther = [];
   bool _isLoading = false;
   String _errorMessage = '';
+  bool _isUpdatingStatus = false;
 
   final TextEditingController _searchController = TextEditingController();
   String _selectedStatus = 'All';
@@ -30,69 +39,116 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
     'Shipped',
     'Delivered',
     'Cancelled',
+    'Assigned',
   ];
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _loadUserIdAndFetchOrders();
+    _tabController = TabController(length: 2, vsync: this);
+    _fetchData();
     _searchController.addListener(_filterOrders);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUserIdAndFetchOrders() async {
-    try {
-      final userIdString =
-          await UserServicee().getUserId(); // Returns "123" as String
-      _userId = userIdString != null
-          ? int.tryParse(userIdString)
-          : null; // Parse to int?
-      if (_userId == null) {
-        setState(() {
-          _errorMessage = 'User ID not found or invalid.';
-        });
-        return;
-      }
-      await _fetchOrders();
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to load user ID: $e';
-      });
-    }
-  }
-
-  Future<void> _fetchOrders() async {
-    if (_userId == null) return; // Safeguard against null _userId
-
+  Future<void> _fetchData() async {
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
-
     try {
-      final orders = await _orderService.getAllOrders();
+      // Fetch delivery person data
+      final deliveryList = await _deliveryPersonService
+          .fetchDeliveryPersonInfoById(widget.userId);
+      DeliveryPersonRequestModel? profile;
+      int? fetchedDeliveryPersonId;
+
+      if (deliveryList != null && deliveryList.isNotEmpty) {
+        profile = deliveryList.first;
+        fetchedDeliveryPersonId = profile.userId;
+        print("Delivery person ID: $fetchedDeliveryPersonId");
+      } else {
+        print("No delivery person found for userId ${widget.userId}");
+        setState(() {
+          _errorMessage = 'error_no_delivery_person'.tr();
+        });
+        return;
+      }
+
+      // Fetch orders if deliveryPersonId is available
+      List<OrderModel> orders = [];
+      if (fetchedDeliveryPersonId != null) {
+        try {
+          orders = await _orderService
+              .getOrdersByDeliveryPerson(fetchedDeliveryPersonId);
+          print(
+              'Orders fetched for deliveryPersonId $fetchedDeliveryPersonId: $orders');
+        } catch (e) {
+          print('Error fetching orders: $e');
+          setState(() {
+            _errorMessage = 'error_fetching_orders'.tr();
+          });
+        }
+      }
+
       setState(() {
-        // Safeguard against null or invalid userId in orders
-        // ignore: unnecessary_null_comparison
-        _orders = orders != null
-            ? orders.where((order) {
-                // Ensure order.userId is not null before comparison
-                return order.userId != null && order.userId == _userId;
-              }).toList()
-            : [];
-        _filteredOrders = _orders;
+        _deliveryPerson = profile;
+        _deliveryPersonId = fetchedDeliveryPersonId;
+        _requestStatus = profile?.requestStatus;
+        _isAvailable = profile?.isAvailable ?? false;
+        _orders = orders;
+        _filterOrders();
         _isLoading = false;
       });
-      _filterOrders();
     } catch (e) {
+      print('Error fetching data: $e');
       setState(() {
-        _errorMessage = 'Failed to load orders: $e';
+        _errorMessage =
+            'error_fetching_profile'.tr(namedArgs: {'error': e.toString()});
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateOrderStatus(int orderId, String newStatus) async {
+    if (_deliveryPersonId == null) {
+      setState(() {
+        _errorMessage = 'error_delivery_person_id_not_found'.tr();
+      });
+      return;
+    }
+
+    setState(() {
+      _isUpdatingStatus = true;
+      _errorMessage = '';
+    });
+
+    try {
+      await _orderService.updateOrderStatus(
+          orderId, _deliveryPersonId!, newStatus);
+      await _fetchData(); // Refresh orders after status update
+      setState(() {
+        _isUpdatingStatus = false;
+      });
+    } catch (e) {
+      String errorKey = 'error_generic';
+      if (e.toString().contains('Status: 403')) {
+        errorKey = 'error_not_assigned';
+      } else if (e.toString().contains('Status: 400')) {
+        errorKey = 'error_invalid_status';
+      } else if (e.toString().contains('Status: 404')) {
+        errorKey = 'error_order_not_found';
+      }
+      setState(() {
+        _errorMessage = errorKey.tr(namedArgs: {'error': e.toString()});
+        _isUpdatingStatus = false;
       });
     }
   }
@@ -100,13 +156,25 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
   void _filterOrders() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredOrders = _orders.where((order) {
+      _filteredOrdersShipped = _orders.where((order) {
         final matchesQuery =
             order.orderId.toString().toLowerCase().contains(query) ||
                 order.status.toLowerCase().contains(query);
         final matchesStatus = _selectedStatus == 'All' ||
             order.status.toLowerCase() == _selectedStatus.toLowerCase();
-        return matchesQuery && matchesStatus;
+        return matchesQuery &&
+            matchesStatus &&
+            order.status.toLowerCase() == 'shipped';
+      }).toList();
+      _filteredOrdersOther = _orders.where((order) {
+        final matchesQuery =
+            order.orderId.toString().toLowerCase().contains(query) ||
+                order.status.toLowerCase().contains(query);
+        final matchesStatus = _selectedStatus == 'All' ||
+            order.status.toLowerCase() == _selectedStatus.toLowerCase();
+        return matchesQuery &&
+            matchesStatus &&
+            order.status.toLowerCase() != 'shipped';
       }).toList();
     });
   }
@@ -146,7 +214,17 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
               ),
             ),
           ),
-          title: Text('My Order Status'.tr()),
+          title: Text('my_order_status'.tr()),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(text: 'shipped'.tr()),
+              Tab(text: 'other'.tr()),
+            ],
+            labelColor: primaryColor,
+            unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey[600],
+            indicatorColor: primaryColor,
+          ),
         ),
         body: Stack(
           children: [
@@ -166,7 +244,15 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
                 const SizedBox(height: 80),
                 _buildSearchBar(isDark),
                 _buildStatusFilters(isDark),
-                Expanded(child: _buildOrdersList(isDark)),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildOrdersList(isDark, _filteredOrdersShipped, true),
+                      _buildOrdersList(isDark, _filteredOrdersOther, false),
+                    ],
+                  ),
+                ),
               ],
             ),
           ],
@@ -181,7 +267,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
-          hintText: 'Search by order ID...'.tr(),
+          hintText: 'search_by_order_id'.tr(),
           prefixIcon: Icon(
             Icons.search,
             color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -232,7 +318,8 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
-              label: Text(status.tr(), style: const TextStyle(fontSize: 14)),
+              label: Text(status.toLowerCase().tr(),
+                  style: const TextStyle(fontSize: 14)),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {
@@ -257,28 +344,30 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
     );
   }
 
-  Widget _buildOrdersList(bool isDark) {
+  Widget _buildOrdersList(
+      bool isDark, List<OrderModel> orders, bool isShippedTab) {
     if (_isLoading) {
       return _buildLoadingState();
     } else if (_errorMessage.isNotEmpty) {
       return _buildErrorState();
-    } else if (_filteredOrders.isEmpty) {
+    } else if (orders.isEmpty) {
       return _buildEmptyState(isDark);
     }
 
     return RefreshIndicator(
-      onRefresh: _fetchOrders,
+      onRefresh: _fetchData,
       color: Theme.of(context).primaryColor,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: _filteredOrders.length,
+        itemCount: orders.length,
         itemBuilder: (context, index) =>
-            _buildOrderCard(_filteredOrders[index], isDark, index),
+            _buildOrderCard(orders[index], isDark, index, isShippedTab),
       ),
     );
   }
 
-  Widget _buildOrderCard(OrderModel order, bool isDark, int index) {
+  Widget _buildOrderCard(
+      OrderModel order, bool isDark, int index, bool isShippedTab) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
       duration: Duration(milliseconds: 300 + (index * 100)),
@@ -309,7 +398,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
                 color: Theme.of(context).primaryColor),
           ),
           title: Text(
-            '${'Order ID:'.tr()} ${order.orderId}',
+            '${'order_id'.tr()} ${order.orderId}',
             style: TextStyle(
               fontWeight: FontWeight.w700,
               fontSize: 16,
@@ -319,7 +408,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              '${'Date:'.tr()} ${order.orderDate.toLocal().toString().split(' ')[0]}',
+              '${'date'.tr()} ${order.orderDate.toLocal().toString().split(' ')[0]}',
               style: TextStyle(
                 fontSize: 14,
                 color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -327,36 +416,66 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
             ),
           ),
           trailing: _buildStatusChip(order.status, isDark),
-          children: order.items.map((item) {
-            return ListTile(
+          children: [
+            ...order.items.map((item) {
+              return ListTile(
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+                leading: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.image, color: Colors.grey, size: 20),
+                ),
+                title: Text(
+                  item.productName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+                subtitle: Text(
+                  '${'quantity'.tr()} ${item.quantity} | ${'price'.tr()} \$${item.unitPrice.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+              );
+            }).toList(),
+            ListTile(
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(8),
+              title: ElevatedButton(
+                onPressed: _isUpdatingStatus
+                    ? null
+                    : () {
+                        final newStatus =
+                            isShippedTab ? 'Processing' : 'Shipped';
+                        _updateOrderStatus(order.orderId, newStatus);
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 ),
-                child: const Icon(Icons.image, color: Colors.grey, size: 20),
-              ),
-              title: Text(
-                item.productName,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : Colors.black87,
+                child: Text(
+                  isShippedTab
+                      ? 'mark_as_not_shipped'.tr()
+                      : 'mark_as_shipped'.tr(),
+                  style: const TextStyle(fontSize: 14),
                 ),
               ),
-              subtitle: Text(
-                '${'Qty:'.tr()} ${item.quantity} | ${'Price:'.tr()} \$${item.unitPrice.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600],
-                ),
-              ),
-            );
-          }).toList(),
+            ),
+          ],
         ),
       ),
     );
@@ -380,6 +499,9 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
       case 'cancelled':
         chipColor = Colors.red;
         break;
+      case 'assigned':
+        chipColor = Colors.purple;
+        break;
       default:
         chipColor = Colors.grey;
     }
@@ -393,7 +515,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
         border: Border.all(color: chipColor.withOpacity(0.3)),
       ),
       child: Text(
-        status.tr(),
+        status.toLowerCase().tr(),
         style: TextStyle(
           color: chipColor,
           fontWeight: FontWeight.w600,
@@ -433,7 +555,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
           Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
           const SizedBox(height: 16),
           Text(
-            _errorMessage.tr(),
+            _errorMessage,
             style: TextStyle(
               fontSize: 16,
               color: Theme.of(context).colorScheme.error,
@@ -442,9 +564,9 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
-            onPressed: _fetchOrders,
+            onPressed: _fetchData,
             icon: const Icon(Icons.refresh),
-            label: Text('Retry'.tr()),
+            label: Text('retry'.tr()),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).primaryColor,
               foregroundColor: Colors.white,
@@ -470,7 +592,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No orders found'.tr(),
+            'no_orders_found'.tr(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,

@@ -69,7 +69,9 @@ class PaymentSuccessScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => UserOrderStatusPage()),
+                          builder: (context) => UserOrderStatusPage(
+                                userId: 14,
+                              )),
                     );
                   },
                   style: ElevatedButton.styleFrom(

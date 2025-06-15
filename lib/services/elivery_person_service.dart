@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:graduation_project/core/constants/constant.dart';
-import 'package:graduation_project/screens/delivery/delivery_person_profile_page.dart';
 
 class DeliveryPersonService {
   static final String _baseUrl = '${baseUri}DeliveryPerson';
@@ -29,6 +28,36 @@ class DeliveryPersonService {
       client.badCertificateCallback = (cert, host, port) => true;
       return client;
     };
+  }
+
+  Future<List<DeliveryPersonRequestModel>> fetchDeliveryPersonInfoById(
+      int userId) async {
+    try {
+      final response = await _dio.get(
+        'https://10.0.2.2:7273/api/DeliveryPerson/userId?userId=$userId',
+      );
+
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        if (response.data is List) {
+          final data = response.data as List;
+          return data
+              .map((e) => DeliveryPersonRequestModel.fromJson(e))
+              .toList();
+        } else {
+          throw Exception(
+              'Unexpected response format: Status code ${response.statusCode}');
+        }
+      } else {
+        throw Exception(
+            'Failed to fetch delivery person. Status code: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
   }
 
   Future<void> submitDeliveryPersonRequest({
@@ -112,58 +141,58 @@ class DeliveryPersonService {
     }
   }
 
-//   static createDeliveryPersonRequestModel(
-//       {required String phone,
-//       required String address,
-//       required String cardNumber,
-//       required requestStatus,
-//       required isAvailable,
-//       required userId}) {}
-// }
+  static createDeliveryPersonRequestModel(
+      {required String phone,
+      required String address,
+      required String cardNumber,
+      required requestStatus,
+      required isAvailable,
+      required userId}) {}
+}
 
-// class DeliveryPersonRequestModel {
-//   String phone;
-//   String address;
-//   String cardNumber;
-//   String? requestStatus;
-//   bool? isAvailable;
-//   int? userId;
+class DeliveryPersonRequestModel {
+  String phone;
+  String address;
+  String cardNumber;
+  String? requestStatus;
+  bool? isAvailable;
+  int? userId;
 
-//   DeliveryPersonRequestModel({
-//     this.phone = '',
-//     this.address = '',
-//     this.cardNumber = '',
-//     this.requestStatus,
-//     this.isAvailable,
-//     this.userId,
-//   });
+  DeliveryPersonRequestModel({
+    this.phone = '',
+    this.address = '',
+    this.cardNumber = '',
+    this.requestStatus,
+    this.isAvailable,
+    this.userId,
+  });
 
-//   factory DeliveryPersonRequestModel.fromJson(Map<String, dynamic> json) {
-//     return DeliveryPersonRequestModel(
-//       phone: json['phone'] ?? '',
-//       address: json['address'] ?? '',
-//       cardNumber: json['cardNumber'] ?? '',
-//       requestStatus: json['requestStatus'],
-//       isAvailable: json['isAvailable'] as bool?,
-//       userId: (json['userId'] is int)
-//           ? json['userId']
-//           : int.tryParse(json['userId']?.toString() ?? '0'),
-//     );
-//   }
+  factory DeliveryPersonRequestModel.fromJson(Map<String, dynamic> json) {
+    return DeliveryPersonRequestModel(
+      phone: json['phone'] ?? '',
+      address: json['address'] ?? '',
+      cardNumber: json['cardNumber'] ?? '',
+      requestStatus: json['requestStatus'],
+      isAvailable: json['isAvailable'] as bool?,
+      userId: (json['userId'] is int)
+          ? json['userId']
+          : int.tryParse(json['userId']?.toString() ?? '0'),
+    );
+  }
 
-//   Map<String, dynamic> toJson() {
-//     return {
-//       'phone': phone,
-//       'address': address,
-//       'cardNumber': cardNumber,
-//       'requestStatus': requestStatus,
-//       'isAvailable': isAvailable,
-//       'userId': userId,
-//     };
-//   }
+  Map<String, dynamic> toJson() {
+    return {
+      'phone': phone,
+      'address': address,
+      'cardNumber': cardNumber,
+      'requestStatus': requestStatus,
+      'isAvailable': isAvailable,
+      'userId': userId,
+    };
+  }
 
-//   @override
-//   String toString() {
-//     return 'DeliveryPersonRequestModel(phone: $phone, address: $address, cardNumber: $cardNumber, requestStatus: $requestStatus, isAvailable: $isAvailable, userId: $userId)';
-//   }
+  @override
+  String toString() {
+    return 'DeliveryPersonRequestModel(phone: $phone, address: $address, cardNumber: $cardNumber, requestStatus: $requestStatus, isAvailable: $isAvailable, userId: $userId)';
+  }
 }

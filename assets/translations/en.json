@@ -805,7 +805,11 @@
   "job_instructions": "Job Instructions",
   "job_instructions_details": "As a delivery person, you will be responsible for delivering orders to customers in a timely manner. Ensure you have a valid ID and a reliable vehicle.",
   "personal_information": "Personal Information",
-
+"My Order Status": "My Order Status",
+  "Search by order ID...": "Search by order ID...",
+  "All": "All",
+  "Retry": "Retry",
+  "Failed to load orders: Exception: Network error in getAllOrders: The request connection took longer than 0:00:10.000000 and it was aborted. To get rid of this exception, try raising the RequestOptions.connectTimeout above the duration of 0:00:10.000000 or improve the response time of the server.": "Failed to load orders due to a network error. Please try again.",
   "card_number": "Card Number",
   "card_number_required": "Card number is required",
   "submit_request": "Submit Request",
