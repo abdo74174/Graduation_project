@@ -4,6 +4,7 @@ class OrderModel {
   final String userName;
   final int? deliveryPersonId;
   final String? deliveryPersonName;
+  final String address;
   final DateTime orderDate;
   final String status;
   final double totalPrice;
@@ -13,6 +14,7 @@ class OrderModel {
     required this.orderId,
     required this.userId,
     required this.userName,
+    required this.address,
     this.deliveryPersonId,
     this.deliveryPersonName,
     required this.orderDate,
@@ -26,6 +28,7 @@ class OrderModel {
       orderId: json['orderId'] ?? 0,
       userId: json['userId'] ?? 0,
       userName: json['userName'] ?? 'Unknown',
+      address: json['address'] ?? 'Unknown',
       deliveryPersonId: json['deliveryPersonId'],
       deliveryPersonName: json['deliveryPersonName'] ?? 'Unassigned',
       orderDate: DateTime.parse(json['orderDate'] ?? DateTime.now().toString()),

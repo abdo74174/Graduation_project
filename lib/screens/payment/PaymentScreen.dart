@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/Models/cart_item.dart';
+import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/payment/PaymentSuccessfulscreen.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/cart/cart_service.dart';
 import 'package:graduation_project/services/order/order_service.dart';
 import 'package:graduation_project/services/payment/payment_service.dart';
@@ -18,6 +20,8 @@ class Logger {
     final timestamp = DateTime.now().toIso8601String();
     debugPrint('[$timestamp] [$method] $message');
   }
+
+  void i(String s) {}
 }
 
 class PaymentScreen extends StatefulWidget {
@@ -42,13 +46,37 @@ class _PaymentScreenState extends State<PaymentScreen> {
   bool _isLoadingCards = true;
   late List<CartItems> _filteredCartItems;
 
+  UserModel? user;
+
   @override
   void initState() {
+    fetchUserData();
     super.initState();
     Logger.log('PaymentScreen.initState', 'Initializing PaymentScreen');
-    // Filter out-of-stock items (e.g., productId: 42 with stock 0)
     _filteredCartItems =
         widget.cartItems.where((item) => item.productId != 42).toList();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      final email = await UserServicee().getEmail();
+      if (email == null || email.isEmpty) {
+        print("No email found in SharedPreferences!");
+        return;
+      }
+      final fetchedUser = await USerService().fetchUserByEmail(email);
+      if (fetchedUser != null) {
+        setState(() {
+          user = fetchedUser;
+        });
+      } else {
+        print("User not found");
+      }
+    } catch (e) {
+      print("Error fetching user: $e");
+    } finally {
+      if (!mounted) return;
+    }
   }
 
   @override
@@ -285,14 +313,34 @@ class _PaymentScreenState extends State<PaymentScreen> {
               {'productId': item.productId, 'quantity': item.quantity})
           .toList();
 
-      await OrderService().createOrder(_customerId!, items);
-      Logger.log(method, 'Order created successfully');
+      // Create order
+      try {
+        await OrderService()
+            .createOrder(_customerId!, items, user!.address ?? 'sohag');
+        Logger.log(method, 'Order created successfully');
+      } catch (e) {
+        Logger.log(method, 'Order creation failed: $e');
+        throw Exception('Order creation failed: $e');
+      }
 
-      await _updateStock();
+      // Update stock
+      try {
+        await _updateStock();
+        Logger.log(method, 'Stock updated successfully');
+      } catch (e) {
+        Logger.log(method, 'Stock update failed: $e');
+        throw Exception('Stock update failed: $e');
+      }
 
-      for (var item in _filteredCartItems) {
-        await CartService().deleteFromCart(item.productId);
-        Logger.log(method, 'Removed product ${item.productId} from cart');
+      // Delete cart items
+      try {
+        for (var item in _filteredCartItems) {
+          await CartService().deleteFromCart(item.productId);
+          Logger.log(method, 'Removed product ${item.productId} from cart');
+        }
+      } catch (e) {
+        Logger.log(method, 'Cart deletion failed: $e');
+        throw Exception('Cart deletion failed: $e');
       }
 
       if (mounted) {
@@ -300,7 +348,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (c) => const PaymentSuccessScreen()),
-        );
+        ).then((_) {
+          // Pop back to ShoppingCartPage and refresh
+          Navigator.pop(context, true);
+        });
       }
     } catch (e, stackTrace) {
       Logger.log(method, 'Order creation failed: $e\n$stackTrace');

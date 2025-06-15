@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:graduation_project/Models/order_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/services/admin_dashboard.dart';
 
 class OrderService {
   static final String _baseUrl = '${baseUri}Order';
@@ -30,7 +31,8 @@ class OrderService {
     };
   }
 
-  Future<int> createOrder(int userId, List<Map<String, dynamic>> items) async {
+  Future<int> createOrder(
+      int userId, List<Map<String, dynamic>> items, String address) async {
     try {
       if (userId <= 0) throw Exception('Invalid userId: $userId');
       if (items.isEmpty) throw Exception('Items list cannot be empty');
@@ -50,6 +52,7 @@ class OrderService {
         data: {
           'userId': userId,
           'items': formattedItems,
+          "address": address,
         },
       );
 
@@ -201,34 +204,32 @@ class OrderService {
     }
   }
 
+  Future<void> confirmOrderDelivery(int orderId, bool isDelivered) async {
+    try {
+      if (orderId <= 0) throw Exception('Invalid orderId: $orderId');
+
+      final response = await _dio.put(
+        '$_baseUrl/$orderId/confirm-delivery',
+        data: {'isDelivered': isDelivered},
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception(
+            'Failed to confirm delivery: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      _handleDioError(e, 'confirmOrderDelivery');
+      rethrow;
+    } catch (e) {
+      throw Exception('Failed to confirm delivery: $e');
+    }
+  }
+
   void _handleDioError(DioException e, String methodName) {
     String errorMsg = 'Network error in $methodName: ${e.message}';
     if (e.response != null) {
       errorMsg += ' (Status: ${e.response?.statusCode})';
     }
     throw Exception(errorMsg);
-  }
-}
-
-class DeliveryPersonModel {
-  final int id;
-  final String name;
-  final String email;
-  final String phone;
-
-  DeliveryPersonModel({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.phone,
-  });
-
-  factory DeliveryPersonModel.fromJson(Map<String, dynamic> json) {
-    return DeliveryPersonModel(
-      id: json['id'] ?? 0,
-      name: json['name'] ?? 'Unknown',
-      email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
-    );
   }
 }

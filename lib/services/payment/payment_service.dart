@@ -104,6 +104,7 @@ class PaymentService {
     required double amount,
     required String paymentIntentId,
     required List<CartItems> cartItems,
+    required String address,
   }) async {
     try {
       await _dio.post(
@@ -124,7 +125,7 @@ class PaymentService {
               })
           .toList();
 
-      await OrderService().createOrder(int.parse(userId), orderItems);
+      await OrderService().createOrder(int.parse(userId), orderItems, address);
 
       for (var item in cartItems) {
         await CartService().deleteFromCart(item.productId);

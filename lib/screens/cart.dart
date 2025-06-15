@@ -57,13 +57,22 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
         final products = await ProductService().fetchAllProducts();
         final cart = await CartService().getCart();
 
-        setState(() {
-          productMap = {for (var p in products) p.productId: p};
-          cartModel = cart;
-        });
-        _animationController.forward();
-      } catch (_) {
-        if (!mounted) return;
+        if (mounted) {
+          setState(() {
+            productMap = {for (var p in products) p.productId: p};
+            cartModel = cart;
+          });
+          _animationController.forward();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to load cart: $e'.tr()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -226,7 +235,6 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
       );
     }
 
-    // Filter out cart items where the product is not in productMap
     final validCartItems = cartModel!.cartItems
         .asMap()
         .entries
@@ -455,7 +463,6 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Product Image
             Container(
               width: 80,
               height: 80,
@@ -483,8 +490,6 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
               ),
             ),
             SizedBox(width: 16),
-
-            // Product Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,8 +515,6 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
                     overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 12),
-
-                  // Quantity Controls
                   Row(
                     children: [
                       _buildQuantityButton(
@@ -546,8 +549,6 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
                 ],
               ),
             ),
-
-            // Price and Delete
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -630,7 +631,6 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Discount Code Section
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -678,10 +678,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
               ],
             ),
           ),
-
           SizedBox(height: 20),
-
-          // Price Summary
           Container(
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -710,10 +707,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
               ],
             ),
           ),
-
           SizedBox(height: 20),
-
-          // Checkout Button
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -721,7 +715,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
                 final isValid = await _validateStock();
                 if (!isValid) return;
 
-                Navigator.push(
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => PaymentScreen(
@@ -730,6 +724,11 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
                     ),
                   ),
                 );
+
+                // Refresh cart after payment
+                if (result == true && mounted) {
+                  await _loadEverything();
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: pkColor,

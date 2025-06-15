@@ -803,7 +803,22 @@
   "Refresh Requests": "تحديث الطلبات",
   "Email:": "البريد الإلكتروني:",
   "Status:": "الحالة:",
-  "Applied:": "تم التقديم:"
+  "Applied:": "تم التقديم:",
+  "Refresh Data": "تحديث البيانات",
+  "Order Statistics": "إحصائيات الطلبات",
+  "Filter by Address": "تصفية حسب العنوان",
+  "Orders": "الطلبات",
+  "No orders found": "لا توجد طلبات",
+  "Assign Orders": "تعيين الطلبات",
+  "Order ID:": "رقم الطلب:",
+  "User:": "المستخدم:",
+  "Delivery: Unassigned": "التوصيل: غير معين",
+  "Total: 1200.00 EGP": "الإجمالي: 1200.00 جنيه",
+  "Address:": "العنوان:",
+  "Pending": "قيد الانتظار",
+  "Qty: 1 | Price: 1200.00 EGP": "الكمية: 1 | السعر: 1200.00 جنيه",
+  "Assign Delivery:": "تعيين المندوب:",
+  "Select Delivery Person": "اختر مندوب التوصيل"
 
   
     

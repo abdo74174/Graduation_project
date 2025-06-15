@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/screens/Auth/login_page.dart';
 import 'package:graduation_project/screens/delivery/admin_dashboard_page.dart.dart';
+import 'package:graduation_project/screens/delivery/delivery_person_profile_page.dart';
 import 'package:graduation_project/screens/delivery/delivery_person_request_page.dart.dart';
 import 'package:graduation_project/screens/donation/DonationProductsScreen.dart';
 import 'package:graduation_project/screens/UserOrderStatusPage.dart';
@@ -115,8 +116,7 @@ class _DrawerItemsState extends State<DrawerItems> {
             title: Text('DeliveryPersonAdminPage'.tr()),
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (context) => const DeliveryPersonAdminPage()),
+              MaterialPageRoute(builder: (context) => AdminDashboardPage()),
             ),
           ),
           ListTile(
