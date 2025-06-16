@@ -8,7 +8,9 @@ class ProductModel {
   final bool isNew;
   final double discount;
   final int subCategoryId;
+  final String address;
   final int categoryId;
+  final int? guarantee;
   final int userId;
   final bool donation;
   final int StockQuantity;
@@ -26,6 +28,8 @@ class ProductModel {
     required this.description,
     required this.price,
     required this.isNew,
+    this.guarantee,
+    required this.address,
     required this.donation,
     required this.discount,
     required this.subCategoryId,
@@ -56,10 +60,12 @@ class ProductModel {
       description: parseStringField(json['description']),
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       isNew: json['isNew'] ?? false,
+      address: json['address'] ?? "unknownAddress",
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
       subCategoryId: json['subCategoryId'] ?? 0,
       categoryId: json['categoryId'] ?? 0,
       donation: json['donation'] ?? false,
+      guarantee: json['guarantee'] ?? 0,
       installmentAvailable: json['installmentAvailable'] ?? false,
       StockQuantity: json['stockQuantity'] ?? 0, // lowercase!
       userId: json['userId'] ?? 0,
@@ -76,7 +82,9 @@ class ProductModel {
         StockQuantity = 0,
         isNew = false,
         donation = false,
+        guarantee = 12,
         discount = 0,
+        address = "unKnownAddress",
         subCategoryId = 0,
         categoryId = 0,
         userId = 0,
@@ -90,7 +98,9 @@ class ProductModel {
       'description': description,
       'price': price,
       'isNew': isNew,
+      'guarantee': guarantee,
       'discount': discount,
+      "address": address,
       'subCategoryId': subCategoryId,
       'donation': donation, // ✅ Add this
       'categoryId': categoryId,

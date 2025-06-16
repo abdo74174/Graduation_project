@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/category_model.dart';
@@ -16,15 +18,16 @@ import 'package:graduation_project/components/productc/build_drop_down.dart';
 import 'package:graduation_project/components/productc/pricing_section.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
-import 'package:shimmer/main.dart';
+import 'package:graduation_project/Models/product_model.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:graduation_project/screens/chat/chat_page.dart';
 import 'package:dio/dio.dart';
 import 'package:path/path.dart' as path;
 import 'package:http_parser/http_parser.dart';
 
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+  final ProductModel? product;
+
+  const AddProductScreen({super.key, this.product});
 
   @override
   _AddProductScreenState createState() => _AddProductScreenState();
@@ -34,7 +37,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _comparePriceController = TextEditingController();
-  final TextEditingController _StockQuantity = TextEditingController();
+  final TextEditingController _stockQuantity = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _guaranteeController = TextEditingController();
@@ -43,6 +46,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _formKey = GlobalKey<FormState>();
 
   final List<File> _imageFiles = [];
+  final List<String> _existingImageUrls = [];
   final ImagePicker _picker = ImagePicker();
   String? selectedStatus;
   String? selectedCategory;
@@ -50,6 +54,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String? userId;
   String? userAddress;
   bool isDonation = false;
+  bool _isReturnAgreementAccepted = false;
+  bool _installmentAvailable = false;
 
   List<CategoryModel> _categories = [];
   List<SubCategory> _subcategories = [];
@@ -62,18 +68,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       ProductDescriptionService();
   bool _isLoading = false;
   bool _isSubmitting = false;
-  bool _isReturnAgreementAccepted = false;
 
   @override
   void initState() {
     super.initState();
     _loadInitialData();
-
-    // Initialize pricing fields with default values
-    _priceController.text = "0.00";
-    _comparePriceController.text = "0.00";
-    _discountController.text = "0";
-    _guaranteeController.text = "0.0";
   }
 
   Future<void> _loadInitialData() async {
@@ -90,33 +89,100 @@ class _AddProductScreenState extends State<AddProductScreen> {
         return;
       }
 
-      // Fetch user data to get address
+      // Fetch user data
       if (userId != null) {
         final user = await fetchUserById(int.parse(userId!));
         if (user != null && mounted) {
           setState(() {
             userAddress = user.address;
+            if (widget.product == null) {
+              _addressController.text = userAddress ?? "";
+            }
           });
-          if (userAddress == null || userAddress!.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("User address not found.".tr())),
-            );
-          }
         }
       }
 
       // Fetch categories
       final fetchedCategories = await CategoryService().fetchAllCategories();
+      print('Fetched Categories: ${fetchedCategories.map((c) => {
+            'id': c.categoryId,
+            'name': c.name
+          }).toList()}');
       if (mounted) {
         setState(() {
           _categories = fetchedCategories;
           productCategories =
               fetchedCategories.map((cat) => cat.name).toSet().toList();
         });
+
+        // Initialize fields for editing
+        if (widget.product != null) {
+          setState(() {
+            _productNameController.text = widget.product!.name;
+            _descriptionController.text = widget.product!.description;
+            _priceController.text = widget.product!.price.toStringAsFixed(2);
+            _comparePriceController.text =
+                widget.product!.price.toStringAsFixed(2);
+            _discountController.text = widget.product!.discount.toString();
+            _guaranteeController.text = widget.product!.guarantee.toString();
+            _stockQuantity.text = widget.product!.StockQuantity.toString();
+            _addressController.text = widget.product!.address;
+            isDonation = widget.product!.donation;
+            selectedStatus = widget.product!.isNew ? "New" : "Used";
+            _isReturnAgreementAccepted = !widget.product!.isNew;
+            _installmentAvailable = widget.product!.installmentAvailable;
+            _existingImageUrls.addAll(widget.product!.images);
+
+            // Set category
+            final category = _categories.firstWhere(
+              (c) => c.categoryId == widget.product!.categoryId,
+              orElse: () => CategoryModel(
+                  categoryId: 0,
+                  name: 'Unknown',
+                  description: '',
+                  subCategories: [],
+                  products: []),
+            );
+            if (category.categoryId != 0) {
+              selectedCategory = category.name;
+            }
+          });
+
+          // Load subcategories for the selected category and set subcategory
+          if (selectedCategory != null) {
+            await _updateSubcategories(selectedCategory);
+            if (mounted && _subcategories.isNotEmpty) {
+              setState(() {
+                final subCategory = _subcategories.firstWhere(
+                  (s) => s.subCategoryId == widget.product!.subCategoryId,
+                  orElse: () => SubCategory(
+                      subCategoryId: 0,
+                      name: 'Unknown',
+                      categoryId: 0,
+                      description: '',
+                      image: '',
+                      products: []),
+                );
+                if (subCategory.subCategoryId != 0) {
+                  selectedSubCategory = subCategory.name;
+                }
+              });
+            }
+          }
+        } else {
+          // Initialize pricing fields for new products
+          setState(() {
+            _priceController.text = "0.00";
+            _comparePriceController.text = "0.00";
+            _discountController.text = "0";
+            _guaranteeController.text = "0.0";
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         showSnackbar(context, "Error loading initial data: $e".tr());
+        print('Error in _loadInitialData: $e');
       }
     } finally {
       if (mounted) {
@@ -127,11 +193,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Future<UserModel?> fetchUserById(int userId) async {
     try {
-      final url = '/User/$userId';
+      final url = 'https://10.0.2.2:7273/api/User/$userId';
       print('Fetching from: $url');
-
-      final response = await Dio().get(url);
-
+      final dio = Dio();
+      (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate =
+          (client) {
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+        return client;
+      };
+      final response = await dio.get(url);
       if (response.statusCode == 200) {
         print('User data: ${response.data}');
         return UserModel.fromJson(response.data);
@@ -140,11 +211,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
         return null;
       }
     } on DioException catch (e) {
-      print('DioException: ${e.message}');
-      if (e.response != null) {
-        print('Status Code: ${e.response?.statusCode}');
-        print('Response Data: ${e.response?.data}');
-      }
+      print(
+          'DioException: ${e.message}, Response: ${e.response}, Type: ${e.type}');
       return null;
     } catch (e) {
       print('Unexpected error: $e');
@@ -157,7 +225,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _productNameController.dispose();
     _priceController.dispose();
     _comparePriceController.dispose();
-    _StockQuantity.dispose();
+    _stockQuantity.dispose();
     _discountController.dispose();
     _descriptionController.dispose();
     _guaranteeController.dispose();
@@ -169,11 +237,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final isEditing = widget.product != null;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          "Add New Product".tr(),
+          isEditing ? "Edit Product".tr() : "Add New Product".tr(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: isDark ? Colors.white : Colors.black87,
@@ -222,16 +291,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 },
                               ),
                               const SizedBox(height: 16),
-
-                              // Donation Toggle
                               _buildDonationToggle(),
                               const SizedBox(height: 16),
-
-                              // Product Status
                               _buildStatusSelector(),
                               const SizedBox(height: 16),
-
-                              // Category and Subcategory
                               BuildDropdown(
                                 label: "Product Category",
                                 options: productCategories,
@@ -247,7 +310,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 },
                               ),
                               const SizedBox(height: 16),
-
                               BuildDropdown(
                                 label: "Product SubCategory",
                                 options: productSubCategories,
@@ -276,9 +338,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                 },
                               ),
                               const SizedBox(height: 16),
-
                               BuildTextField(
-                                controller: _StockQuantity,
+                                controller: _stockQuantity,
                                 label: "Product Quantity".tr(),
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
@@ -327,6 +388,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   },
                                 ),
                               ],
+                              const SizedBox(height: 16),
+                              CheckboxListTile(
+                                title: Text("Installment Available".tr()),
+                                value: _installmentAvailable,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _installmentAvailable = value ?? false;
+                                  });
+                                },
+                                activeColor: theme.primaryColor,
+                              ),
                             ],
                           ),
                         ),
@@ -403,11 +475,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _imageFiles.isEmpty
+                              (_imageFiles.isEmpty &&
+                                      _existingImageUrls.isEmpty)
                                   ? "Please add at least one product image".tr()
-                                  : "${_imageFiles.length} image${_imageFiles.length > 1 ? 's' : ''} selected",
+                                  : "${_imageFiles.length + _existingImageUrls.length} image${(_imageFiles.length + _existingImageUrls.length) > 1 ? 's' : ''} selected",
                               style: TextStyle(
-                                color: _imageFiles.isEmpty
+                                color: (_imageFiles.isEmpty &&
+                                        _existingImageUrls.isEmpty)
                                     ? Colors.red
                                     : Colors.grey[600],
                                 fontSize: 14,
@@ -416,8 +490,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             const SizedBox(height: 16),
                             ImageUploadSection(
                               imageFiles: _imageFiles,
+                              existingImageUrls: _existingImageUrls,
                               onTap: _pickImages,
-                              onRemove: _removeImage,
+                              onRemoveFile: _removeImage,
+                              onRemoveUrl: _removeExistingImage,
                             ),
                           ],
                         ),
@@ -470,11 +546,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  Text("Adding Product...".tr()),
+                                  Text(isEditing
+                                      ? "Updating Product...".tr()
+                                      : "Adding Product...".tr()),
                                 ],
                               )
                             : Text(
-                                "Add Product".tr(),
+                                isEditing
+                                    ? "Update Product".tr()
+                                    : "Add Product".tr(),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -743,8 +823,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                            borderRadius: BorderRadius.circular(8)),
                       ),
                       child: Text("Confirm".tr()),
                     ),
@@ -780,7 +859,30 @@ class _AddProductScreenState extends State<AddProductScreen> {
         return;
       }
 
-      await _submitProduct();
+      if (_imageFiles.isEmpty && _existingImageUrls.isEmpty) {
+        showSnackbar(context, "Please add at least one product image".tr());
+        return;
+      }
+
+      final categoryId = getCategoryIdByName(selectedCategory);
+      if (categoryId == null || categoryId == 0) {
+        showSnackbar(context, "Invalid category selected".tr());
+        return;
+      }
+
+      if (productSubCategories.isNotEmpty) {
+        final subCategoryId = getSubCategoryIdByName(selectedSubCategory);
+        if (subCategoryId == null || subCategoryId == 0) {
+          showSnackbar(context, "Invalid subcategory selected".tr());
+          return;
+        }
+      }
+
+      if (widget.product != null) {
+        await _updateProduct();
+      } else {
+        await _submitProduct();
+      }
     }
   }
 
@@ -795,18 +897,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    // Use _addressController.text if userAddress is null or empty, otherwise use userAddress
     final String productAddress = (userAddress == null || userAddress!.isEmpty)
         ? _addressController.text
         : userAddress!;
 
     if (productAddress.isEmpty) {
       showSnackbar(context, "User address is required".tr());
-      return;
-    }
-
-    if (_imageFiles.isEmpty) {
-      showSnackbar(context, "Please add at least one product image".tr());
       return;
     }
 
@@ -829,9 +925,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         guarantee: isDonation
             ? 0.0
             : double.tryParse(_guaranteeController.text) ?? 0.0,
-        stockQuantity: int.tryParse(_StockQuantity.text) ?? 1,
-        categoryId: getCategoryIdByName(selectedCategory),
-        subCategoryId: getSubCategoryIdByName(selectedSubCategory),
+        stockQuantity: int.tryParse(_stockQuantity.text) ?? 1,
+        categoryId: getCategoryIdByName(selectedCategory) ?? 0,
+        subCategoryId: getSubCategoryIdByName(selectedSubCategory) ?? 0,
         imageFiles: _imageFiles,
       );
 
@@ -850,34 +946,112 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  int getCategoryIdByName(String? name) {
-    if (name == null) throw Exception("Category not selected".tr());
-    final category = _categories.firstWhere(
-      (c) => c.name == name,
-      orElse: () => throw Exception("Category not found".tr()),
-    );
-    return category.categoryId;
+  Future<void> _updateProduct() async {
+    if (selectedStatus == null) {
+      showSnackbar(context, "Please select product status (New or Used)".tr());
+      return;
+    }
+
+    if (userId == null) {
+      showSnackbar(context, "Please login to update a product".tr());
+      return;
+    }
+
+    final String productAddress = (userAddress == null || userAddress!.isEmpty)
+        ? _addressController.text
+        : userAddress!;
+
+    if (productAddress.isEmpty) {
+      showSnackbar(context, "User address is required".tr());
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await ProductService().updateProduct(
+        productId: widget.product!.productId,
+        userId: userId!,
+        name: _productNameController.text,
+        description: _descriptionController.text,
+        address: productAddress,
+        donation: isDonation,
+        price: isDonation ? 0.0 : double.tryParse(_priceController.text) ?? 0.0,
+        discount:
+            isDonation ? 0.0 : double.tryParse(_discountController.text) ?? 0.0,
+        guarantee: isDonation
+            ? 0.0
+            : double.tryParse(_guaranteeController.text) ?? 0.0,
+        categoryId: getCategoryIdByName(selectedCategory) ?? 0,
+        subCategoryId: getSubCategoryIdByName(selectedSubCategory) ?? 0,
+        isNew: selectedStatus == "New".tr(),
+        installmentAvailable: _installmentAvailable,
+        imageFiles: _imageFiles.isNotEmpty ? _imageFiles : null,
+      );
+
+      showSnackbar(context, "Product updated successfully!".tr());
+      Navigator.pop(context);
+    } catch (e) {
+      showSnackbar(context, "Error updating product: $e".tr());
+      if (kDebugMode) {
+        print("Error updating product: $e".tr());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
-  int getSubCategoryIdByName(String? name) {
-    if (name == null && productSubCategories.isNotEmpty) {
-      throw Exception("Subcategory not selected".tr());
+  int? getCategoryIdByName(String? name) {
+    if (name == null || _categories.isEmpty) return null;
+    try {
+      final category = _categories.firstWhere(
+        (c) => c.name == name,
+        orElse: () {
+          print('Category not found: $name');
+          return CategoryModel(
+              categoryId: 0,
+              name: 'Unknown',
+              description: '',
+              subCategories: [],
+              products: []);
+        },
+      );
+      return category.categoryId != 0 ? category.categoryId : null;
+    } catch (e) {
+      print('Error finding category $name: $e');
+      return null;
     }
-    if (selectedCategory == null) throw Exception("Category not selected".tr());
+  }
 
-    if (name == null) return 0;
-
-    final subCategory = _subcategories.firstWhere(
+  int? getSubCategoryIdByName(String? name) {
+    if (name == null ||
+        productSubCategories.isEmpty ||
+        selectedCategory == null) return null;
+    try {
+      final subCategory = _subcategories.firstWhere(
         (s) =>
-            s?.name == name &&
-            s?.categoryId == getCategoryIdByName(selectedCategory),
-        orElse: () => throw Exception(
-              "${"Subcategory".tr()}, $name not found in category ${selectedCategory}",
-            ));
-
-    print(
-        '✅ Found subcategory: ${subCategory.name} (ID: ${subCategory.subCategoryId}) in category: $selectedCategory');
-    return subCategory.subCategoryId;
+            s.name == name &&
+            s.categoryId == getCategoryIdByName(selectedCategory),
+        orElse: () {
+          print('Subcategory not found: $name in category $selectedCategory');
+          return SubCategory(
+              subCategoryId: 0,
+              name: 'Unknown',
+              categoryId: 0,
+              description: '',
+              image: '',
+              products: []);
+        },
+      );
+      print(
+          'Found subcategory: ${subCategory.name} (ID: ${subCategory.subCategoryId})');
+      return subCategory.subCategoryId != 0 ? subCategory.subCategoryId : null;
+    } catch (e) {
+      print('Error finding subcategory $name: $e');
+      return null;
+    }
   }
 
   void showSnackbar(BuildContext context, String message) {
@@ -897,6 +1071,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void _removeImage(File image) {
     setState(() {
       _imageFiles.remove(image);
+    });
+  }
+
+  void _removeExistingImage(String url) {
+    setState(() {
+      _existingImageUrls.remove(url);
     });
   }
 
@@ -932,7 +1112,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
   }
 
-  void _updateSubcategories(String? categoryName) async {
+  Future<void> _updateSubcategories(String? categoryName) async {
     if (categoryName == null) {
       setState(() {
         selectedCategory = null;
@@ -954,7 +1134,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     try {
       final category = _categories.firstWhere(
         (cat) => cat.name == categoryName,
-        orElse: () => throw Exception('Category not found'.tr()),
+        orElse: () => throw Exception('Category not found: $categoryName'.tr()),
       );
 
       print(
@@ -970,45 +1150,53 @@ class _AddProductScreenState extends State<AddProductScreen> {
       print(
           '📊 Filtered ${filteredSubcategories.length} subcategories for category ${category.categoryId}');
 
-      setState(() {
-        _subcategories = filteredSubcategories;
-        productSubCategories =
-            filteredSubcategories.map((subcat) => subcat.name).toSet().toList();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _subcategories = filteredSubcategories;
+          productSubCategories = filteredSubcategories
+              .map((subcat) => subcat.name)
+              .toSet()
+              .toList();
+          _isLoading = false;
+        });
 
-      if (filteredSubcategories.isEmpty) {
-        showSnackbar(
-            context, '${'No subcategories found for '.tr()} ${category.name}');
-        print(
-            '⚠️ No subcategories found for category ${category.name} (ID: ${category.categoryId})');
-      } else {
-        print(
-            '✅ Loaded ${filteredSubcategories.length} subcategories for ${category.name}');
-        print('📝 Subcategories: ${productSubCategories.join(", ")}');
+        if (filteredSubcategories.isEmpty) {
+          print(
+              '⚠️ No subcategories found for category ${category.name} (ID: ${category.categoryId})');
+        } else {
+          print(
+              '✅ Loaded ${filteredSubcategories.length} subcategories for ${category.name}');
+          print('📝 Subcategories: ${productSubCategories.join(", ")}');
+        }
       }
     } catch (e) {
       print('❌ Error loading subcategories: $e');
-      setState(() {
-        _subcategories = [];
-        productSubCategories = [];
-        _isLoading = false;
-      });
-      showSnackbar(context, 'Failed to load subcategories: $e'.tr());
+      if (mounted) {
+        setState(() {
+          _subcategories = [];
+          productSubCategories = [];
+          _isLoading = false;
+        });
+        showSnackbar(context, 'Failed to load subcategories: $e'.tr());
+      }
     }
   }
 }
 
 class ImageUploadSection extends StatelessWidget {
   final List<File> imageFiles;
+  final List<String> existingImageUrls;
   final VoidCallback onTap;
-  final Function(File) onRemove;
+  final Function(File) onRemoveFile;
+  final Function(String) onRemoveUrl;
 
   const ImageUploadSection({
     super.key,
     required this.imageFiles,
+    required this.existingImageUrls,
     required this.onTap,
-    required this.onRemove,
+    required this.onRemoveFile,
+    required this.onRemoveUrl,
   });
 
   @override
@@ -1054,7 +1242,7 @@ class ImageUploadSection extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: imageFiles.isEmpty
+              child: (imageFiles.isEmpty && existingImageUrls.isEmpty)
                   ? Text(
                       "No images selected".tr(),
                       style: TextStyle(
@@ -1066,12 +1254,14 @@ class ImageUploadSection extends StatelessWidget {
                       height: 120,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
-                        children: imageFiles
-                            .asMap()
-                            .entries
-                            .map((entry) => _buildImageItem(
-                                context, entry.value, entry.key))
-                            .toList(),
+                        children: [
+                          ...existingImageUrls.asMap().entries.map((entry) =>
+                              _buildNetworkImageItem(
+                                  context, entry.value, entry.key)),
+                          ...imageFiles.asMap().entries.map((entry) =>
+                              _buildFileImageItem(context, entry.value,
+                                  entry.key + existingImageUrls.length)),
+                        ],
                       ),
                     ),
             ),
@@ -1081,7 +1271,93 @@ class ImageUploadSection extends StatelessWidget {
     );
   }
 
-  Widget _buildImageItem(BuildContext context, File imageFile, int index) {
+  Widget _buildNetworkImageItem(BuildContext context, String url, int index) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: 100,
+      height: 100,
+      margin: const EdgeInsets.only(right: 12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: CachedNetworkImage(
+              imageUrl: url,
+              width: 100,
+              height: 100,
+              fit: BoxFit.cover,
+              placeholder: (context, url) =>
+                  Center(child: CircularProgressIndicator()),
+              errorWidget: (context, url, error) => Icon(Icons.error),
+            ),
+          ),
+          Positioned(
+            left: 8,
+            bottom: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                "${index + 1}",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: -5,
+            top: -5,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => onRemoveUrl(url),
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 3,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.close,
+                    color: Colors.red[700],
+                    size: 16,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileImageItem(BuildContext context, File imageFile, int index) {
     final theme = Theme.of(context);
 
     return Container(
@@ -1130,7 +1406,7 @@ class ImageUploadSection extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => onRemove(imageFile),
+                onTap: () => onRemoveFile(imageFile),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.all(5),

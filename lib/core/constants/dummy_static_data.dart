@@ -15,6 +15,7 @@ final dummyProducts = [
   ProductModel(
     productId: 1,
     installmentAvailable: false,
+    address: "sohag",
     name: "Blood Pressure Monitor",
     description: "Digital device with cuff and memory storage.",
     price: 450.0,
@@ -37,6 +38,7 @@ final dummyProducts = [
     donation: false,
     discount: 5.0,
     subCategoryId: 2,
+    address: "sohag",
     categoryId: 1,
     StockQuantity: 50,
     userId: 2,

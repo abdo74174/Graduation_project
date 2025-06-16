@@ -17,7 +17,8 @@ class DeliveryPersonProfilePage extends StatefulWidget {
       _DeliveryPersonProfilePageState();
 }
 
-class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
+class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
+    with SingleTickerProviderStateMixin {
   final DeliveryPersonService _deliveryPersonService = DeliveryPersonService();
   final OrderService _orderService = OrderService();
   bool _isLoading = false;
@@ -27,12 +28,31 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
   List<OrderModel> _orders = [];
   DeliveryPersonRequestModel? deliveryPerson;
   int? deliveryPersonId;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    print('DeliveryPersonProfilePage: userId = ${widget.userId}');
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
     _fetchData();
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchData() async {
@@ -130,6 +150,103 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
     }
   }
 
+  Widget _buildProfileHeader() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              border: Border.all(
+                color: Theme.of(context).primaryColor.withOpacity(0.2),
+                width: 2,
+              ),
+            ),
+            child: Icon(
+              Icons.person,
+              size: 40,
+              color: Theme.of(context).primaryColor,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "deliveryPerson?.name" ?? 'delivery_person'.tr(),
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "deliveryPerson?.email " ?? 'email@example.com',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(String title, String value, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: Theme.of(context).primaryColor),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -138,198 +255,119 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
     return Theme(
       data: Theme.of(context).copyWith(
         scaffoldBackgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          titleTextStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          iconTheme:
-              IconThemeData(color: isDark ? Colors.white : Colors.black87),
-        ),
       ),
       child: Scaffold(
-        extendBodyBehindAppBar: true,
         appBar: AppBar(
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  primaryColor.withOpacity(0.8),
-                  primaryColor.withOpacity(0.6),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          title: Text(
+            'delivery_person_profile'.tr(),
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          title: Text('delivery_person_profile'.tr()),
         ),
-        body: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [Colors.grey[900]!, Colors.grey[800]!]
-                      : [Colors.grey[50]!, Colors.white],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-            SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 80),
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    color: isDark ? Colors.grey[800] : Colors.white,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'profile_info'.tr(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: isDark ? Colors.white : Colors.black87,
+        body: _isLoading
+            ? _buildLoadingState()
+            : FadeTransition(
+                opacity: _fadeAnimation,
+                child: RefreshIndicator(
+                  onRefresh: _fetchData,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildProfileHeader(),
+                        const SizedBox(height: 24),
+                        _buildInfoCard(
+                          'phone'.tr(),
+                          deliveryPerson?.phone ?? 'no_phone_available'.tr(),
+                          Icons.phone,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoCard(
+                          'address'.tr(),
+                          deliveryPerson?.address ??
+                              'no_address_available'.tr(),
+                          Icons.location_on,
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoCard(
+                          'status'.tr(),
+                          _requestStatus?.toUpperCase() ?? 'no_status'.tr(),
+                          Icons.info,
+                        ),
+                        if (_requestStatus == 'Approved') ...[
+                          const SizedBox(height: 24),
+                          Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            deliveryPersonId != null
-                                ? 'delivery_person_id'.tr() +
-                                    ': $deliveryPersonId'
-                                : 'no_id_available'.tr(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            deliveryPerson != null
-                                ? 'phone'.tr() + ': ${deliveryPerson!.phone}'
-                                : 'no_phone_available'.tr(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            deliveryPerson != null
-                                ? 'address'.tr() +
-                                    ': ${deliveryPerson!.address}'
-                                : 'no_address_available'.tr(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color:
-                                  isDark ? Colors.grey[400] : Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'request_status'.tr(),
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: isDark ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _requestStatus != null
-                                ? 'request_status_$_requestStatus'.tr()
-                                : 'no_request_submitted'.tr(),
-                            style: TextStyle(
-                              color: _requestStatus == 'Approved'
-                                  ? Colors.green
-                                  : _requestStatus == 'Rejected'
-                                      ? Colors.red
-                                      : Colors.orange,
-                              fontSize: 16,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.circle,
+                                        size: 12,
+                                        color: _isAvailable ?? false
+                                            ? Colors.green
+                                            : Colors.red,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'availability'.tr(),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Switch(
+                                    value: _isAvailable ?? false,
+                                    onChanged:
+                                        _isLoading ? null : _updateAvailability,
+                                    activeColor: primaryColor,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                  ),
-                  if (_requestStatus == 'Approved') ...[
-                    const SizedBox(height: 16),
-                    Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      color: isDark ? Colors.grey[800] : Colors.white,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'availability'.tr(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: isDark ? Colors.white : Colors.black87,
-                              ),
-                            ),
-                            Switch(
-                              value: _isAvailable ?? false,
-                              onChanged:
-                                  _isLoading ? null : _updateAvailability,
-                              activeColor: primaryColor,
-                            ),
-                          ],
+                        const SizedBox(height: 24),
+                        Text(
+                          'assigned_orders'.tr(),
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                        _orders.isEmpty
+                            ? _buildEmptyState(
+                                isDark, 'no_orders_assigned'.tr())
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _orders.length,
+                                itemBuilder: (context, index) =>
+                                    _buildOrderCard(
+                                        _orders[index], isDark, index),
+                              ),
+                      ],
                     ),
-                  ],
-                  const SizedBox(height: 16),
-                  Text(
-                    'assigned_orders'.tr(),
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black87),
                   ),
-                  const SizedBox(height: 8),
-                  _isLoading
-                      ? _buildLoadingState()
-                      : _orders.isEmpty
-                          ? _buildEmptyState(isDark, 'no_orders_assigned'.tr())
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _orders.length,
-                              itemBuilder: (context, index) => _buildOrderCard(
-                                  _orders[index], isDark, index),
-                            ),
-                  if (_errorMessage.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text(
-                        _errorMessage.tr(),
-                        style: TextStyle(color: Colors.red[400]),
-                      ),
-                    ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -475,48 +513,55 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
   }
 
   Widget _buildLoadingState() {
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        itemCount: 3,
-        itemBuilder: (context, index) {
-          return Shimmer(
-            direction: ShimmerDirection.ltr,
-            gradient: LinearGradient(
-              colors: [
-                Colors.grey[300]!,
-                Colors.grey[100]!,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(20),
-              ),
-              height: 100,
-            ),
-          );
-        },
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 16),
+          _buildShimmerContainer(80),
+          const SizedBox(height: 24),
+          _buildShimmerContainer(100),
+          const SizedBox(height: 12),
+          _buildShimmerContainer(100),
+          const SizedBox(height: 12),
+          _buildShimmerContainer(100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerContainer(double height) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: Container(
+        width: double.infinity,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState(bool isDark, String message) {
-    return SizedBox(
+    return Container(
       height: 200,
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800]!.withOpacity(0.3) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+        ),
+      ),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.inbox,
+              Icons.inbox_outlined,
               size: 64,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
@@ -524,9 +569,10 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage> {
             Text(
               message,
               style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
             ),
           ],
         ),

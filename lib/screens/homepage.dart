@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:graduation_project/components/home_page/drawer.dart';
 import 'package:graduation_project/components/home_page/searchbar.dart';
-import 'package:graduation_project/core/constants/constant.dart';
+import 'package:graduation_project/core/constants/constant.dart' hide pkColor;
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/components/category/Category_view.dart';
 import 'package:graduation_project/components/productc/product.dart';
@@ -13,6 +14,8 @@ import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/screens/cart.dart';
 import 'package:graduation_project/screens/categories_page.dart';
 import 'package:graduation_project/screens/chat/chat_page.dart';
+import 'package:graduation_project/screens/delivery/delivery_person_request_page.dart.dart';
+import 'package:graduation_project/screens/delivery/user_order_confirmation_page.dart';
 import 'package:graduation_project/screens/discounted_products_page.dart';
 import 'package:graduation_project/screens/favourite_page.dart';
 import 'package:graduation_project/screens/installments/installment_product_page.dart';
@@ -24,7 +27,6 @@ import 'package:graduation_project/services/Product/category_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
-import 'package:easy_localization/easy_localization.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -44,6 +46,8 @@ class _HomePageState extends State<HomePage> {
   PageController _discountPageController =
       PageController(viewportFraction: 0.85);
   Timer? _autoSlideTimer;
+
+  int? UserIdd;
 
   @override
   void initState() {
@@ -461,7 +465,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      "${product.price} " "EGP".tr(),
+                                      "${product.price} EGP",
                                       style: const TextStyle(
                                         fontSize: 16,
                                         color: Colors.white,
@@ -494,7 +498,228 @@ class _HomePageState extends State<HomePage> {
             products: products,
             pkColor: Color(pkColor.value),
           ),
+        // Advertisement Section for "Work as Delivery"
+        _buildDeliveryAdSection(),
+        // Footer Section styled like the provided image
+        _buildFooterSection(),
       ],
+    );
+  }
+
+  Widget _buildDeliveryAdSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[800] : Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Work as Delivery".tr(),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Join our delivery team and earn extra income!".tr(),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isDark ? Colors.white70 : Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return DeliveryPersonRequestPage(
+                  userId: UserIdd as int,
+                );
+              }));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("Apply for Delivery Job".tr())),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color(pkColor.value),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text("Apply Now".tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFooterSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: isDark ? Colors.grey[900] : Colors.white,
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Quick Links".tr(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text("Makeup".tr()),
+                  Text("Skincare".tr()),
+                  Text("Hair Care".tr()),
+                  Text("Fragrances".tr()),
+                  Text("Brands".tr()),
+                  Text("Closets".tr()),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Policies".tr(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text("About Us".tr()),
+                  Text("Privacy Policy".tr()),
+                  Text("Refund Policy".tr()),
+                  Text("Terms of Service".tr()),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(color: isDark ? Colors.grey[700] : Colors.grey[300]),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Get in touch".tr(),
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text("+01200777863"),
+                  Text("+01228582843"),
+                ],
+              ),
+              Row(
+                children: [
+                  Icon(Icons.facebook,
+                      color: isDark ? Colors.white : Colors.black),
+                  const SizedBox(width: 8),
+                  Icon(Icons.facebook,
+                      color: isDark ? Colors.white : Colors.black),
+                  const SizedBox(width: 8),
+                  Icon(Icons.camera_alt,
+                      color: isDark
+                          ? Colors.white
+                          : Colors.black), // Placeholder for Snapchat
+                  const SizedBox(width: 8),
+                  Icon(Icons.videocam,
+                      color: isDark
+                          ? Colors.white
+                          : Colors.black), // Placeholder for TikTok
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.payment,
+                      color: isDark ? Colors.white : Colors.black),
+                  const SizedBox(width: 8),
+                  Icon(Icons.apple,
+                      color: isDark ? Colors.white : Colors.black),
+                  const SizedBox(width: 8),
+                  Icon(Icons.credit_card,
+                      color: isDark ? Colors.white : Colors.black),
+                  const SizedBox(width: 8),
+                  Icon(Icons.payment,
+                      color: isDark ? Colors.white : Colors.black),
+                  const SizedBox(width: 8),
+                  Icon(Icons.credit_card,
+                      color: isDark ? Colors.white : Colors.black),
+                ],
+              ),
+              DropdownButton<String>(
+                value: "English",
+                items: const [
+                  DropdownMenuItem(value: "English", child: Text("English")),
+                ],
+                onChanged: (_) {},
+                dropdownColor: isDark ? Colors.grey[800] : Colors.white,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "© 2025 Loolia Closet Egypt | LANCÔME".tr(),
+            style: TextStyle(
+              color: isDark ? Colors.white70 : Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text("Secure payments by ".tr()),
+              Icon(Icons.payment,
+                  color: isDark
+                      ? Colors.white
+                      : Colors.black), // Placeholder for PayPal
+              Text("VISA".tr()),
+              const SizedBox(width: 8),
+              Icon(Icons.chat, color: isDark ? Colors.white : Colors.black),
+              Text("Chat With Us".tr()),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -529,7 +754,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               trailing: Text(
-                "${product.price} " "EGP".tr(),
+                "${product.price} EGP",
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -554,7 +779,15 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initApp() async {
     await _checkOfflineStatus();
     await _loadCategories();
+
+    // ignore: await_only_futures
+    await getUserid(); // Remove await since getUserid() doesn't return a Future
     await _loadProducts();
+  }
+
+  Future getUserid() async {
+    final Userid = await UserServicee().getUserId();
+    UserIdd = int.parse(Userid!);
   }
 
   Future<void> _checkOfflineStatus() async {
@@ -699,7 +932,7 @@ class _HomePageState extends State<HomePage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('error_starting_chat'.tr(args: [e.toString()]))),
+        SnackBar(content: Text('error_starting_chat'.tr())),
       );
     }
   }
@@ -823,77 +1056,104 @@ class InstallmentSection extends StatelessWidget {
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey[900] : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [pkColor.withOpacity(0.1), Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Flexible(
-              child: Row(
-                children: [
-                  Image.asset(
-                    logo,
-                    height: 40,
-                    width: 60,
-                  ),
-                  const SizedBox(width: 12),
-                  Flexible(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+            Row(
+              children: [
+                Image.asset(
+                  logo,
+                  height: 50,
+                  width: 70,
+                  fit: BoxFit.contain,
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.account_balance_wallet_outlined,
-                              size: 20,
-                              color: Colors.blue,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                "zero_percent_installments".tr(),
-                                style: TextStyle(
-                                  color: pkColor,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+                        const Icon(
+                          Icons.account_balance_wallet_outlined,
+                          size: 24,
+                          color: Colors.blueAccent,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(width: 8),
                         Text(
-                          termsText,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          bankName,
                           style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.black54,
-                            fontSize: 14,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            "0% Interest",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
+                    const SizedBox(height: 8),
+                    Text(
+                      termsText.tr(),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.white70 : Colors.grey[600],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ],
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: onTap,
-              child: Text(
-                "learn_more".tr(),
-                style: const TextStyle(color: Colors.blue),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: pkColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: const Text(
+                "Learn More",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -904,109 +1164,147 @@ class InstallmentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "installment_products".tr(),
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : pkColor,
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [pkColor.withOpacity(0.05), Colors.white],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "installment_products".tr(),
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : pkColor,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
-                            "view_details".tr(),
-                            style: TextStyle(
-                              color: pkColor,
-                              fontSize: 16,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              "view_details".tr(),
+                              style: TextStyle(
+                                color: pkColor,
+                                fontSize: 16,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.account_balance_wallet_outlined,
-                          color: Colors.blue,
-                          size: 24,
-                        ),
-                      ],
-                    ),
-                  ],
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.account_balance_wallet_outlined,
+                            color: Colors.blueAccent,
+                            size: 24,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: const Icon(
-                  Icons.arrow_forward_ios,
-                  color: Colors.blue,
-                  size: 24,
+                IconButton(
+                  icon: const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.blueAccent,
+                    size: 24,
+                  ),
+                  tooltip: "view_all_installment_products".tr(),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            InstallmentProductsPage(products: products),
+                      ),
+                    );
+                  },
                 ),
-                tooltip: "view_all_installment_products".tr(),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          InstallmentProductsPage(products: products),
-                    ),
-                  );
-                },
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Column(
-            children: [
-              _buildBankPromotionCard(
-                logo: "assets/images/sapbank.png",
-                bankName: "SAB",
-                termsText: "when_using_sab_cards".tr(),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => InstallmentTermsPage(bank: "SAB"),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Column(
+              children: [
+                _buildBankPromotionCard(
+                  logo: "assets/images/sapbank.png",
+                  bankName: "SAB",
+                  termsText: "when_using_sab_cards",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => InstallmentTermsPage(bank: "SAB"),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _buildBankPromotionCard(
+                  logo: "assets/images/Enbd.png",
+                  bankName: "Emirates NBD",
+                  termsText: "when_using_enbd_cards",
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            InstallmentTermsPage(bank: "Emirates NBD"),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            InstallmentProductsPage(products: products),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: pkColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
-              _buildBankPromotionCard(
-                logo: "assets/images/Enbd.png",
-                bankName: "Emirates NBD".tr(),
-                termsText: "when_using_enbd_cards".tr(),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          InstallmentTermsPage(bank: "Emirates NBD"),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                  ),
+                  child: Text(
+                    "View All Installments".tr(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                },
-              ),
-            ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-      ],
+        ],
+      ),
     );
   }
 }

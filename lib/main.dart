@@ -39,7 +39,13 @@ Future<void> main() async {
           ChangeNotifierProvider(create: (_) => ThemeNotifier()),
           BlocProvider(create: (_) => UserCubit()),
         ],
-        child: MedicalApp(isLoggedIn: isLoggedIn),
+        child: Builder(
+          builder: (context) {
+            final notificationService = NotificationService(context);
+            notificationService.initNotifications();
+            return MedicalApp(isLoggedIn: isLoggedIn);
+          },
+        ),
       ),
     ),
   );

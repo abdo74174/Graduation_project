@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/screens/coupon_management.dart';
 import 'package:graduation_project/screens/contact_us/messages_list_page.dart';
+import 'package:graduation_project/screens/delivery/admin_dashboard_page.dart.dart';
 import 'package:graduation_project/screens/delivery/user_order_confirmation_page.dart';
 import 'package:graduation_project/screens/pr_cat_sub.dart/addCatandSub.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
@@ -248,12 +249,11 @@ class AdminDashboardScreen extends StatelessWidget {
                   ),
                   NavigationCard(
                     icon: Icons.message_outlined,
-                    title: 'DeliveryManagement'.tr(),
+                    title: 'DeliveryAdminDashboard'.tr(),
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => DeliveryManagementPage()),
+                        MaterialPageRoute(builder: (_) => AdminDashboardPage()),
                       );
                     },
                   ),

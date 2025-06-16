@@ -108,23 +108,9 @@ class _DrawerItemsState extends State<DrawerItems> {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => const UserOrderStatusPage()),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.inventory_2_outlined),
-            title: Text('DeliveryPersonAdminPage'.tr()),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AdminDashboardPage()),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.inventory_2_outlined),
-            title: Text('fixx'.tr()),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FixProductScreen()),
+                  builder: (context) => userId != null
+                      ? UserOrderStatusPage(userId: userId!)
+                      : const Center(child: Text('User ID not available'))),
             ),
           ),
           ListTile(
