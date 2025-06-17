@@ -1138,24 +1138,24 @@ class InstallmentSection extends StatelessWidget {
                 ),
               ],
             ),
-            ElevatedButton(
-              onPressed: onTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: pkColor,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              ),
-              child: const Text(
-                "Learn More",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+            // ElevatedButton(
+            //   onPressed: onTap,
+            //   style: ElevatedButton.styleFrom(
+            //     backgroundColor: pkColor,
+            //     shape: RoundedRectangleBorder(
+            //       borderRadius: BorderRadius.circular(10),
+            //     ),
+            //     padding:
+            //         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            //   ),
+            //   child: const Text(
+            //     "Learn More",
+            //     style: TextStyle(
+            //       color: Colors.white,
+            //       fontWeight: FontWeight.bold,
+            //     ),
+            //   ),
+            // ),
           ],
         ),
       ),

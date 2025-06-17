@@ -833,7 +833,44 @@
   "Shipped": "Shipped",
   "Delivered": "Delivered",
   "Cancelled": "Cancelled",
-  "Assigned": "Assigned"
+  "Assigned": "Assigned",
+  "pay_when_shipped": "Pay when shipped",
+  "payment_failed": "Payment failed: %s",
+  "payment_successful": "Payment successful",
+  "pay_now": "Pay Now",
+  "confirm_order": "Confirm Order",
+  "empty_cart": "Your cart is empty",
+  "customer_id_missing": "Customer ID is missing",
+  "payment_intent_failed": "Failed to create payment intent: %s",
+  "failed_to_load_customer": "Failed to load customer: %s",
+  "failed_to_load_cards": "Failed to load cards: %s",
+  "no_cards_added": "No cards added",
+  "card_added_successfully": "Card added successfully",
+  "payment_error": "Payment error: %s",
+  "order_failed": "Order creation failed: %s",
+  "validation_failed": "Validation failed: %s",
+  "product_not_found": "Product not found: %s",
+  "insufficient_stock": "Insufficient stock for %s: only %s available",
+  "stock_update_failed": "Failed to update stock: %s"
+,
+
+  "order_summary": "Order Summary",
+
+  "payment_card": "Payment Card",
+  "add_card_to_continue": "Add a card to continue with payment",
+  "default": "Default",
+  "expires": "Expires",
+
+  "no_cards_added_error": "No cards added. Please add a card to proceed.",
+
+  "payment_success_message": "Your payment has been processed successfully!",
+  "payment_success_message_with_order": "Your order {0} was successfully placed!",
+
+  "add_card_title": "Add a Payment Card",
+  "add_card_message": "Enter your card details to save it for future payments.",
+  "add_card": "Add Card",
+  "invalid_card_details": "Please enter valid card details.",
+  "card_add_failed": "Failed to add card: {0}"
   
 
 

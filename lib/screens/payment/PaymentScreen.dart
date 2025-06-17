@@ -20,8 +20,6 @@ class Logger {
     final timestamp = DateTime.now().toIso8601String();
     debugPrint('[$timestamp] [$method] $message');
   }
-
-  void i(String s) {}
 }
 
 class PaymentScreen extends StatefulWidget {
@@ -38,52 +36,72 @@ class PaymentScreen extends StatefulWidget {
   State<PaymentScreen> createState() => _PaymentScreenState();
 }
 
-class _PaymentScreenState extends State<PaymentScreen> {
+class _PaymentScreenState extends State<PaymentScreen>
+    with TickerProviderStateMixin {
   String _selectedPaymentMethod = 'card';
   bool _isProcessing = false;
   int? _customerId;
   List<dynamic> _savedCards = [];
   bool _isLoadingCards = true;
   late List<CartItems> _filteredCartItems;
-
   UserModel? user;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
-    fetchUserData();
     super.initState();
-    Logger.log('PaymentScreen.initState', 'Initializing PaymentScreen');
     _filteredCartItems =
         widget.cartItems.where((item) => item.productId != 42).toList();
+    _setupAnimations();
+    _fetchUserData();
+    Logger.log('PaymentScreen.initState', 'Initializing PaymentScreen');
   }
 
-  Future<void> fetchUserData() async {
-    try {
-      final email = await UserServicee().getEmail();
-      if (email == null || email.isEmpty) {
-        print("No email found in SharedPreferences!");
-        return;
-      }
-      final fetchedUser = await USerService().fetchUserByEmail(email);
-      if (fetchedUser != null) {
-        setState(() {
-          user = fetchedUser;
-        });
-      } else {
-        print("User not found");
-      }
-    } catch (e) {
-      print("Error fetching user: $e");
-    } finally {
-      if (!mounted) return;
-    }
+  void _setupAnimations() {
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+        parent: _animationController, curve: Curves.easeOutCubic));
+    _animationController.forward();
   }
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    Logger.log('PaymentScreen.didChangeDependencies', 'Dependencies changed');
-    _loadCustomerId();
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchUserData() async {
+    try {
+      final email = await UserServicee().getEmail();
+      if (email == null || email.isEmpty) {
+        Logger.log('PaymentScreen._fetchUserData',
+            'No email found in SharedPreferences');
+        return;
+      }
+      final fetchedUser = await USerService().fetchUserByEmail(email);
+      if (fetchedUser != null && mounted) {
+        setState(() {
+          user = fetchedUser;
+        });
+        await _loadCustomerId();
+      } else {
+        Logger.log('PaymentScreen._fetchUserData', 'User not found');
+      }
+    } catch (e, stackTrace) {
+      Logger.log('PaymentScreen._fetchUserData',
+          'Error fetching user: $e\n$stackTrace');
+    }
   }
 
   Future<void> _loadCustomerId() async {
@@ -91,13 +109,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     Logger.log(method, 'Starting to load customer ID');
     try {
       final customerId = await UserServicee().getUserId();
-      Logger.log(method,
-          'Loaded customerId: $customerId (type: ${customerId.runtimeType})');
-
       if (customerId == null || customerId.isEmpty) {
         throw Exception('Customer ID is null or empty');
       }
-
       if (mounted) {
         setState(() {
           _customerId = int.parse(customerId);
@@ -129,13 +143,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
     try {
       setState(() => _isLoadingCards = true);
       final response = await PaymentService().getCustomerCards(_customerId!);
-      Logger.log(method, 'Fetched cards: ${response['cards']}');
-
       if (mounted) {
         setState(() {
           _savedCards = (response['cards'] as List?) ?? [];
           _isLoadingCards = false;
         });
+        Logger.log(method, 'Fetched ${_savedCards.length} cards');
       }
     } catch (e, stackTrace) {
       Logger.log(method, 'Failed to load cards: $e\n$stackTrace');
@@ -149,21 +162,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
+  Map<String, dynamic>? get _lastCard {
+    if (_savedCards.isEmpty) return null;
+    return _savedCards.last;
+  }
+
   Future<Map<String, dynamic>> _createPaymentIntent(double amount) async {
     const method = 'PaymentScreen._createPaymentIntent';
     Logger.log(method, 'Creating payment intent for amount: $amount');
 
-    try {
-      if (_customerId == null) {
-        throw Exception('customer_id_missing'.tr());
-      }
+    if (_customerId == null) {
+      throw Exception('customer_id_missing'.tr());
+    }
 
+    try {
       final response = await PaymentService().createPaymentIntent(
         amount: amount,
         currency: 'egp',
         customerId: _customerId!,
       );
-      Logger.log(method, 'Payment intent response: $response');
+      Logger.log(method, 'Payment intent created: ${response['id']}');
       return response;
     } catch (e, stackTrace) {
       Logger.log(method, 'Failed to create payment intent: $e\n$stackTrace');
@@ -182,8 +200,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
 
       final paymentIntent = await _createPaymentIntent(amount);
-      Logger.log(method, 'Payment intent created: ${paymentIntent['id']}');
-
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           paymentIntentClientSecret: paymentIntent['client_secret'],
@@ -193,15 +209,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
             merchantCountryCode: 'EG',
             testEnv: true,
           ),
-          applePay: const PaymentSheetApplePay(
-            merchantCountryCode: 'EG',
-          ),
         ),
       );
       Logger.log(method, 'Payment sheet initialized');
 
       await Stripe.instance.presentPaymentSheet();
       Logger.log(method, 'Payment sheet presented successfully');
+
+      final verification = await PaymentService()
+          .verifyPayment(paymentIntentId: paymentIntent['id']);
+      if (verification['status'] != 'succeeded') {
+        throw Exception(
+            'Payment verification failed: ${verification['status']}');
+      }
 
       return true;
     } on StripeException catch (e) {
@@ -238,13 +258,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
       for (var item in _filteredCartItems) {
         final product = productMap[item.productId];
         if (product == null) {
-          Logger.log(method, 'Product not found: ${item.productId}');
           throw Exception(
               'product_not_found'.tr(args: [item.productId.toString()]));
         }
         if (product.StockQuantity < item.quantity) {
-          Logger.log(method,
-              'Insufficient stock for ${product.name}: Available ${product.StockQuantity}, Requested ${item.quantity}');
           throw Exception('insufficient_stock'
               .tr(args: [product.name, product.StockQuantity.toString()]));
         }
@@ -274,17 +291,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
         final product = productMap[item.productId];
         if (product != null) {
           final newStock = product.StockQuantity - item.quantity;
-          Logger.log(method,
-              'Updating stock for product ${product.productId}: ${product.StockQuantity} -> $newStock');
           await ProductService()
               .updateProductStock(product.productId, newStock);
+          Logger.log(method,
+              'Updated stock for product ${product.productId}: ${product.StockQuantity} -> $newStock');
         } else {
-          Logger.log(method, 'Product not found for ID: ${item.productId}');
           throw Exception(
               'product_not_found'.tr(args: [item.productId.toString()]));
         }
       }
-      Logger.log(method, 'Stock update completed');
     } catch (e, stackTrace) {
       Logger.log(method, 'Stock update failed: $e\n$stackTrace');
       throw Exception('stock_update_failed'.tr(args: [e.toString()]));
@@ -303,8 +318,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         return;
       }
 
-      if (_customerId == null) {
-        Logger.log(method, 'Customer ID is null');
+      if (_customerId == null || user == null) {
         throw Exception('customer_id_missing'.tr());
       }
 
@@ -313,43 +327,25 @@ class _PaymentScreenState extends State<PaymentScreen> {
               {'productId': item.productId, 'quantity': item.quantity})
           .toList();
 
-      // Create order
-      try {
-        await OrderService()
-            .createOrder(_customerId!, items, user!.address ?? 'sohag');
-        Logger.log(method, 'Order created successfully');
-      } catch (e) {
-        Logger.log(method, 'Order creation failed: $e');
-        throw Exception('Order creation failed: $e');
-      }
+      await OrderService()
+          .createOrder(_customerId!, items, user!.address ?? 'sohag');
+      await _updateStock();
 
-      // Update stock
-      try {
-        await _updateStock();
-        Logger.log(method, 'Stock updated successfully');
-      } catch (e) {
-        Logger.log(method, 'Stock update failed: $e');
-        throw Exception('Stock update failed: $e');
-      }
-
-      // Delete cart items
-      try {
-        for (var item in _filteredCartItems) {
-          await CartService().deleteFromCart(item.productId);
-          Logger.log(method, 'Removed product ${item.productId} from cart');
-        }
-      } catch (e) {
-        Logger.log(method, 'Cart deletion failed: $e');
-        throw Exception('Cart deletion failed: $e');
+      for (var item in _filteredCartItems) {
+        await CartService().deleteFromCart(item.productId);
+        Logger.log(method, 'Removed product ${item.productId} from cart');
       }
 
       if (mounted) {
-        Logger.log(method, 'Navigating to PaymentSuccessScreen');
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (c) => const PaymentSuccessScreen()),
+          MaterialPageRoute(
+            builder: (c) => PaymentSuccessScreen(
+              totalAmount: widget.total + 5.0,
+              customerId: _customerId!,
+            ),
+          ),
         ).then((_) {
-          // Pop back to ShoppingCartPage and refresh
           Navigator.pop(context, true);
         });
       }
@@ -363,7 +359,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
-        Logger.log(method, 'Processing completed');
       }
     }
   }
@@ -372,46 +367,40 @@ class _PaymentScreenState extends State<PaymentScreen> {
     const method = 'PaymentScreen._handlePayment';
     Logger.log(method, 'Handling payment for total: ${widget.total + 5.0}');
 
-    bool paymentSuccessful = false;
-    final totalAmount = widget.total + 5.0;
-
     try {
       if (_filteredCartItems.isEmpty) {
-        Logger.log(method, 'No valid items in cart');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('empty_cart'.tr())),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('empty_cart'.tr())),
+        );
         return;
       }
 
-      if (_selectedPaymentMethod == 'card' && _savedCards.isEmpty) {
-        Logger.log(method, 'No saved cards, navigating to AddCardScreen');
-        final result = await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AddCardScreen()),
-        );
-        if (result == true) {
-          await _fetchSavedCards();
-        } else {
-          Logger.log(method, 'User cancelled adding card');
-          return;
-        }
-      }
+      setState(() => _isProcessing = true);
+
+      bool paymentSuccessful = false;
+      final totalAmount = widget.total + 5.0;
 
       if (_selectedPaymentMethod == 'card') {
+        if (_savedCards.isEmpty) {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddCardScreen()),
+          );
+          if (result == true) {
+            await _fetchSavedCards();
+          } else {
+            Logger.log(method, 'User cancelled adding card');
+            setState(() => _isProcessing = false);
+            return;
+          }
+        }
         paymentSuccessful = await _processPayment(context, totalAmount);
       } else {
-        Logger.log(method, 'Cash on delivery selected');
-        paymentSuccessful = true;
+        paymentSuccessful = true; // Cash on delivery
       }
 
       if (paymentSuccessful) {
-        Logger.log(method, 'Payment successful, creating order');
         await _createOrder();
-      } else {
-        Logger.log(method, 'Payment failed');
       }
     } catch (e, stackTrace) {
       Logger.log(method, 'Payment handling error: $e\n$stackTrace');
@@ -420,215 +409,430 @@ class _PaymentScreenState extends State<PaymentScreen> {
           SnackBar(content: Text('payment_error'.tr(args: [e.toString()]))),
         );
       }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
     }
+  }
+
+  Widget _buildPriceRow(String label, String amount, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+              color: isBold ? Color(0xFF1A1A1A) : Colors.grey[700],
+            ),
+          ),
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
+              color: isBold ? Color(0xFF1A1A1A) : Colors.grey[700],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardDisplay() {
+    final card = _lastCard;
+    if (card == null) {
+      return Container(
+        margin: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.credit_card_off, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            Text(
+              'no_cards_added'.tr(),
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'add_card_to_continue'.tr(),
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: pkColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: pkColor.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Image.network(
+                card['brand']?.toLowerCase() == 'visa'
+                    ? 'https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg'
+                    : 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg',
+                width: 50,
+                height: 30,
+                color: Colors.white,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                    Icons.credit_card,
+                    color: Colors.white,
+                    size: 30),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'default'.tr().toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Text(
+            '•••• •••• •••• ${card['last4'] ?? 'XXXX'}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 2,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'expires'.tr().toUpperCase(),
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                '${card['exp_month']?.toString().padLeft(2, '0') ?? 'XX'}/${card['exp_year']?.toString().substring(2) ?? 'XX'}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentMethodSelector() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Text(
+              'select_payment_method'.tr(),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+          ),
+          _buildPaymentOption(
+            'card',
+            'pay_with_card'.tr(),
+            Icons.credit_card,
+            pkColor,
+          ),
+          const Divider(height: 1, indent: 60),
+          _buildPaymentOption(
+            'cod',
+            'pay_when_shipped'.tr(),
+            Icons.local_shipping,
+            Colors.orange,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentOption(
+      String value, String title, IconData icon, Color color) {
+    final isSelected = _selectedPaymentMethod == value;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? color.withOpacity(0.05) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            color: isSelected ? color : Color(0xFF1A1A1A),
+          ),
+        ),
+        trailing: Radio<String>(
+          value: value,
+          groupValue: _selectedPaymentMethod,
+          activeColor: color,
+          onChanged: (newValue) {
+            setState(() {
+              _selectedPaymentMethod = newValue!;
+            });
+          },
+        ),
+        onTap: () {
+          setState(() {
+            _selectedPaymentMethod = value;
+          });
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    const method = 'PaymentScreen.build';
-    Logger.log(method,
-        'Building UI, isLoadingCards: $_isLoadingCards, savedCards: ${_savedCards.length}');
-
     final total = widget.total;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('payment'.tr()),
+        title: Text(
+          'payment'.tr(),
+          style: const TextStyle(
+              fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A)),
+        ),
         backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Color(0xFF1A1A1A),
       ),
       body: _isLoadingCards
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                const SizedBox(height: 20),
-                Center(
-                  child: Text(
-                    'payment'.tr(),
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('subtotal'.tr(), style: const TextStyle(fontSize: 18)),
-                    Text(
-                      '${total.toStringAsFixed(2)} EGP',
-                      style: const TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('shipping'.tr(), style: const TextStyle(fontSize: 18)),
-                    Text(
-                      '5.00 EGP',
-                      style: const TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Divider(thickness: 1, color: Colors.grey),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('total'.tr(),
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text(
-                      '${(total + 5.0).toStringAsFixed(2)} EGP',
-                      style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                if (_savedCards.isNotEmpty)
-                  ..._savedCards.map((card) => Container(
-                        margin: const EdgeInsets.symmetric(vertical: 5),
-                        padding: const EdgeInsets.all(10),
+          ? Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(pkColor),
+              ),
+            )
+          : FadeTransition(
+              opacity: _fadeAnimation,
+              child: SlideTransition(
+                position: _slideAnimation,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Image.network(
-                              card['brand']?.toLowerCase() == 'visa'
-                                  ? 'https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg'
-                                  : 'https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg',
-                              width: 40,
-                              height: 24,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.credit_card),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              '•••• •••• •••• ${card['last4'] ?? 'XXXX'}',
-                              style: const TextStyle(fontSize: 16),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 15,
+                              offset: const Offset(0, 5),
                             ),
                           ],
                         ),
-                      ))
-                else
-                  Container(
-                    margin: const EdgeInsets.symmetric(vertical: 5),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text('no_cards_added'.tr()),
-                  ),
-                const SizedBox(height: 20),
-                Center(
-                  child: TextButton(
-                    onPressed: () async {
-                      Logger.log(method, 'Navigating to AddCardScreen');
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const AddCardScreen()),
-                      );
-                      if (result == true && mounted) {
-                        Logger.log(method,
-                            'Card added successfully, refetching cards');
-                        await _fetchSavedCards();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                              content: Text('card_added_successfully'.tr())),
-                        );
-                      }
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.add, color: Colors.blue),
-                        const SizedBox(width: 4),
-                        Text(
-                          'add_new_card'.tr(),
-                          style:
-                              const TextStyle(color: Colors.blue, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    child: Column(
-                      children: [
-                        Text(
-                          'select_payment_method'.tr(),
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        ListTile(
-                          title: Text('pay_with_card'.tr()),
-                          leading: Radio<String>(
-                            value: 'card',
-                            groupValue: _selectedPaymentMethod,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedPaymentMethod = value!;
-                                Logger.log(
-                                    method, 'Selected payment method: $value');
-                              });
-                            },
-                          ),
-                        ),
-                        ListTile(
-                          title: Text('pay_when_shipped'.tr()),
-                          leading: Radio<String>(
-                            value: 'cod',
-                            groupValue: _selectedPaymentMethod,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedPaymentMethod = value!;
-                                Logger.log(
-                                    method, 'Selected payment method: $value');
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Center(
-                  child: SizedBox(
-                    width: 200,
-                    child: ElevatedButton(
-                      onPressed: _isProcessing ? null : _handlePayment,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4285F4),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'order_summary'.tr(),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1A1A1A),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            _buildPriceRow('subtotal'.tr(),
+                                '${total.toStringAsFixed(2)} EGP'),
+                            _buildPriceRow('shipping'.tr(), '5.00 EGP'),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Divider(thickness: 1),
+                            ),
+                            _buildPriceRow(
+                              'total'.tr(),
+                              '${(total + 5.0).toStringAsFixed(2)} EGP',
+                              isBold: true,
+                            ),
+                          ],
                         ),
                       ),
-                      child: _isProcessing
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              _selectedPaymentMethod == 'card'
-                                  ? 'pay_now'.tr()
-                                  : 'confirm_order'.tr(),
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16),
+                      const SizedBox(height: 24),
+                      _buildPaymentMethodSelector(),
+                      const SizedBox(height: 24),
+                      if (_selectedPaymentMethod == 'card') ...[
+                        Text(
+                          'payment_card'.tr(),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildCardDisplay(),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: TextButton.icon(
+                            onPressed: () async {
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AddCardScreen(),
+                                ),
+                              );
+                              if (result == true && mounted) {
+                                await _fetchSavedCards();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content:
+                                        Text('card_added_successfully'.tr()),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: Icon(Icons.add, color: pkColor),
+                            label: Text(
+                              'add_new_card'.tr(),
+                              style: TextStyle(
+                                color: pkColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                    ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 12,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: pkColor),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                      ],
+                      Container(
+                        width: double.infinity,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: pkColor,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: pkColor.withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _isProcessing ? null : _handlePayment,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: _isProcessing
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  _selectedPaymentMethod == 'card'
+                                      ? 'pay_now'.tr()
+                                      : 'confirm_order'.tr(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
     );
   }

@@ -19,7 +19,8 @@ Future<void> main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await EasyLocalization.ensureInitialized();
-  Stripe.publishableKey = 'your_stripe_publishable_key_here';
+  Stripe.publishableKey =
+      'pk_test_51RYLblBFAxgnDhPb4pRPAmaoIiPTrfgJK4tfm5UYs8cnlZm19KYTuQplPfsXMWRkiPWTraQda979TjChHvkTfpKd00HAoPcRSm';
   if (kDebugMode) {
     HttpOverrides.global = MyHttpOverrides();
   }

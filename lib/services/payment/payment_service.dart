@@ -11,21 +11,27 @@ class PaymentService {
     baseUrl: baseUri,
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
+    validateStatus: (status) => status != null && status < 500,
   ));
 
   PaymentService() {
-    // Bypass SSL for local testing (REMOVE IN PRODUCTION)
     (_dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
         (client) {
       client.badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
       return client;
     };
-    _dio.interceptors
-        .add(LogInterceptor(responseBody: true, requestBody: true));
+    _dio.interceptors.add(LogInterceptor(
+      request: true,
+      requestBody: true,
+      responseBody: true,
+      error: true,
+    ));
   }
 
   Future<Map<String, dynamic>> getCustomerCards(int customerId) async {
+    if (customerId <= 0) throw Exception('Invalid customer ID');
+
     try {
       final response = await _dio.get('payments/customer/$customerId/cards');
       if (response.data is! Map<String, dynamic>) {
@@ -44,6 +50,10 @@ class PaymentService {
     required String currency,
     required int customerId,
   }) async {
+    if (amount <= 0) throw Exception('Invalid payment amount');
+    if (customerId <= 0) throw Exception('Invalid customer ID');
+    if (currency.isEmpty) throw Exception('Currency cannot be empty');
+
     try {
       final response = await _dio.post(
         'payments/create-payment-intent',
@@ -67,6 +77,8 @@ class PaymentService {
   Future<Map<String, dynamic>> createSetupIntent({
     required int customerId,
   }) async {
+    if (customerId <= 0) throw Exception('Invalid customer ID');
+
     try {
       final response = await _dio.post(
         'payments/create-setup-intent',
@@ -86,6 +98,8 @@ class PaymentService {
   Future<Map<String, dynamic>> verifyPayment({
     required String paymentIntentId,
   }) async {
+    if (paymentIntentId.isEmpty) throw Exception('Invalid payment intent ID');
+
     try {
       final response = await _dio.get('payments/verify/$paymentIntentId');
       if (response.data is! Map<String, dynamic>) {
@@ -106,8 +120,14 @@ class PaymentService {
     required List<CartItems> cartItems,
     required String address,
   }) async {
+    if (userId.isEmpty) throw Exception('Invalid user ID');
+    if (amount <= 0) throw Exception('Invalid payment amount');
+    if (paymentIntentId.isEmpty) throw Exception('Invalid payment intent ID');
+    if (cartItems.isEmpty) throw Exception('Cart cannot be empty');
+    if (address.isEmpty) throw Exception('Address cannot be empty');
+
     try {
-      await _dio.post(
+      final paymentResponse = await _dio.post(
         'payments',
         data: {
           'userId': int.parse(userId),
@@ -117,6 +137,12 @@ class PaymentService {
           'paymentMethod': 'stripe',
         },
       );
+
+      if (paymentResponse.statusCode != 200 &&
+          paymentResponse.statusCode != 201) {
+        throw Exception(
+            'Failed to save payment: ${paymentResponse.statusMessage}');
+      }
 
       final orderItems = cartItems
           .map((item) => {

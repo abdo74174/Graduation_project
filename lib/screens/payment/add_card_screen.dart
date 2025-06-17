@@ -1,9 +1,8 @@
-import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
-import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/services/payment/payment_service.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 
 class AddCardScreen extends StatefulWidget {
   const AddCardScreen({super.key});
@@ -12,229 +11,219 @@ class AddCardScreen extends StatefulWidget {
   State<AddCardScreen> createState() => _AddCardScreenState();
 }
 
-class _AddCardScreenState extends State<AddCardScreen> {
-  final _cardNumberController = TextEditingController();
-  final _expiryDateController = TextEditingController();
-  final _cvvController = TextEditingController();
-  final _cardHolderNameController = TextEditingController();
-  bool _isProcessing = false;
+class _AddCardScreenState extends State<AddCardScreen>
+    with TickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  bool _isLoading = false;
+  final _cardFormKey = GlobalKey<FormState>();
+  CardFieldInputDetails? _cardDetails;
 
-  Future<void> _saveCard() async {
-    try {
-      setState(() => _isProcessing = true);
-      debugPrint("[AddCardScreen._saveCard] Starting card save process...");
-
-      // Create a setup intent
-      final setupIntent = await _createSetupIntent();
-      debugPrint(
-          "[AddCardScreen._saveCard] Setup intent created: ${setupIntent['client_secret']}");
-
-      // Initialize payment sheet
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          setupIntentClientSecret: setupIntent['client_secret'],
-          merchantDisplayName: 'Medical Store',
-          googlePay: const PaymentSheetGooglePay(
-            merchantCountryCode: 'EG',
-            testEnv: true,
-          ),
-          // Apple Pay disabled for testing (requires merchantIdentifier)
-          applePay: null,
-        ),
-      );
-      debugPrint("[AddCardScreen._saveCard] Payment sheet initialized");
-
-      // Present payment sheet
-      await Stripe.instance.presentPaymentSheet();
-      debugPrint("[AddCardScreen._saveCard] Payment sheet presented");
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('card_added_successfully'.tr())),
-        );
-        Navigator.pop(context, true); // Return success status
-      }
-    } on StripeException catch (e) {
-      debugPrint(
-          "[AddCardScreen._saveCard] StripeException: ${e.error.localizedMessage}");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('failed_to_add_card'
-                .tr(args: [e.error.localizedMessage ?? 'Unknown error'])),
-          ),
-        );
-      }
-    } on DioException catch (e) {
-      debugPrint("[AddCardScreen._saveCard] DioException: ${e.message}");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('network_error'.tr(args: [e.message ?? 'Unknown error'])),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint("[AddCardScreen._saveCard] General Exception: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('failed_to_add_card'.tr(args: [e.toString()]))),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-      }
-    }
-  }
-
-  Future<Map<String, dynamic>> _createSetupIntent() async {
-    try {
-      final dio = Dio();
-      final userId = await _getUserId();
-      debugPrint(
-          "[AddCardScreen._createSetupIntent] Creating setup intent for userId: $userId");
-
-      // Bypass SSL verification for development (remove in production)
-      (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate =
-          (client) {
-        client.badCertificateCallback = (cert, host, port) => true;
-        return client;
-      };
-
-      final response = await dio.post(
-        'https://10.0.2.2:7273/api/payments/create-setup-intent',
-        data: {'customerId': int.parse(userId)}, // Convert userId to int
-        options: Options(
-          validateStatus: (status) =>
-              status != null && status < 500, // Accept 200-499
-          headers: {'Content-Type': 'application/json'},
-        ),
-      );
-
-      if (response.data is! Map<String, dynamic>) {
-        debugPrint(
-            "[AddCardScreen._createSetupIntent] Invalid response: ${response.data}");
-        throw Exception('Invalid API response format');
-      }
-
-      debugPrint(
-          "[AddCardScreen._createSetupIntent] Response: ${response.data}");
-      return response.data;
-    } catch (e) {
-      debugPrint(
-          "[AddCardScreen._createSetupIntent] Setup intent creation failed: $e");
-      throw Exception('Setup intent creation failed: $e');
-    }
-  }
-
-  Future<String> _getUserId() async {
-    try {
-      final userId = await UserServicee().getUserId();
-      if (userId == null || userId.isEmpty) {
-        debugPrint("[AddCardScreen._getUserId] User ID not available");
-        throw Exception('User ID not available');
-      }
-      debugPrint("[AddCardScreen._getUserId] User ID: $userId");
-      return userId;
-    } catch (e) {
-      debugPrint("[AddCardScreen._getUserId] Failed to get user ID: $e");
-      rethrow;
-    }
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+    _animationController.forward();
   }
 
   @override
   void dispose() {
-    _cardNumberController.dispose();
-    _expiryDateController.dispose();
-    _cvvController.dispose();
-    _cardHolderNameController.dispose();
+    _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleAddCard() async {
+    if (!_cardFormKey.currentState!.validate() ||
+        _cardDetails?.complete != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('invalid_card_details'.tr()),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final paymentService = PaymentService();
+      // await paymentService.addCustomerCard();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('card_added_successfully'.tr()),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('card_add_failed'.tr(args: [e.toString()])),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 360;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Text('add_new_card'.tr()),
+        title: Text(
+          'add_new_card'.tr(),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
         backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: Color(0xFF1A1A1A),
+        centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'add_new_card'.tr(),
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _cardHolderNameController,
-              decoration: InputDecoration(
-                labelText: 'card_holder_name'.tr(),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 400,
+                minWidth: isSmallScreen ? screenWidth * 0.85 : 300,
+              ),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.all(isSmallScreen ? 20 : 24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'add_card_title'.tr(),
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 22 : 24,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1A1A1A),
+                      ),
+                      textAlign: TextAlign.center,
+                      semanticsLabel: 'add_card_title'.tr(),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'add_card_message'.tr(),
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 14 : 16,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                      semanticsLabel: 'add_card_message'.tr(),
+                    ),
+                    const SizedBox(height: 24),
+                    Form(
+                      key: _cardFormKey,
+                      child: CardFormField(
+                        style: CardFormStyle(
+                          backgroundColor: Colors.grey[50]!,
+                          borderColor: Colors.grey[200]!,
+                          borderRadius: 12,
+                          textColor: Color(0xFF1A1A1A),
+                          placeholderColor: Colors.grey[500]!,
+                          fontSize: isSmallScreen ? 14 : 16,
+                        ),
+                        onCardChanged: (details) {
+                          setState(() {
+                            _cardDetails = details;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    Container(
+                      width: double.infinity,
+                      height: isSmallScreen ? 48 : 56,
+                      decoration: BoxDecoration(
+                        color: pkColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: pkColor.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleAddCard,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              )
+                            : Text(
+                                'add_card'.tr(),
+                                style: TextStyle(
+                                  fontSize: isSmallScreen ? 14 : 16,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _cardNumberController,
-              decoration: InputDecoration(
-                labelText: 'card_number'.tr(),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _expiryDateController,
-                    decoration: InputDecoration(
-                      labelText: 'expiry_date'.tr(),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    keyboardType: TextInputType.datetime,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _cvvController,
-                    decoration: InputDecoration(
-                      labelText: 'cvv'.tr(),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isProcessing ? null : _saveCard,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4285F4),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: _isProcessing
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : Text(
-                      'add'.tr(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                    ),
-            ),
-          ],
+          ),
         ),
       ),
     );

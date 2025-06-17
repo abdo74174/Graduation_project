@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'package:graduation_project/components/dashboard/latest_products_card.dart';
 import 'package:graduation_project/components/dashboard/sales_overview_card.dart';
 import 'package:graduation_project/components/dashboard/stats_card.dart';
@@ -37,7 +38,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   String _searchQuery = '';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  late AnimationController _refreshController; // Already marked as late
+  late AnimationController _refreshController;
 
   // New features
   bool _showFinancialDetails = false;
@@ -48,6 +49,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     'This Month',
     'This Year'
   ];
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Future<Map<String, dynamic>> _loadDashboardData() async {
     try {
       setState(() => _isLoading = true);
-      await _refreshController.forward(); // No need to check isAnimating first
+      await _refreshController.forward();
       final data = await _dashboardService.getDashboardSummary();
       setState(() => _isLoading = false);
       _refreshController.reset();
@@ -161,7 +163,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
+                  DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now()),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.9),
                     fontSize: 16,
@@ -221,8 +223,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               onTap: () {
                 setState(() {
                   _selectedTimePeriod = period;
-                  _dashboardFuture =
-                      _loadDashboardData(); // Refresh data for new period
+                  _dashboardFuture = _loadDashboardData();
                 });
               },
               child: AnimatedContainer(
@@ -430,7 +431,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 2),
                     Text(
                       stat['title'] as String,
                       style: TextStyle(
@@ -439,11 +440,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                         color: Colors.grey[600],
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    // const SizedBox(height: 4),
                     Text(
                       stat['value'] as String,
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: stat['color'] as Color,
                       ),
@@ -463,7 +464,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final userCount = data['userCount'] ?? 0;
     final productCount = data['productCount'] ?? 0;
 
-    // Mock growth percentages (replace with real calculations if available)
+    // Mock growth percentages
     final orderGrowth = 12.5;
     final userGrowth = 8.3;
     final productGrowth = 15.2;
@@ -658,6 +659,116 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
+  // Updated method to build the Used vs New Products chart
+  Widget _buildUsedVsNewProductsChart(Map<String, dynamic> data) {
+    // Placeholder data (replace with actual data from DashboardService)
+    final double newProducts = 60; // Example: 60 new products
+    final double usedProducts = 40; // Example: 40 used products
+    final total =
+        newProducts + usedProducts > 0 ? newProducts + usedProducts : 1;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Text(
+              'Used vs New Products'.tr(),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+          ),
+          SizedBox(
+            height: 20,
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 180, // Reduced to accommodate legend
+            child: PieChart(
+              PieChartData(
+                sections: [
+                  PieChartSectionData(
+                    color: Colors.blue,
+                    value: newProducts,
+                    title: '${(newProducts / total * 100).toStringAsFixed(1)}%',
+                    radius: 80,
+                    titleStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  PieChartSectionData(
+                    color: Colors.orange,
+                    value: usedProducts,
+                    title:
+                        '${(usedProducts / total * 100).toStringAsFixed(1)}%',
+                    radius: 80,
+                    titleStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+                sectionsSpace: 2,
+                centerSpaceRadius: 40,
+                borderData: FlBorderData(show: false),
+              ),
+            ),
+          ),
+          const SizedBox(height: 38),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildLegendItem(Colors.blue, 'New Products'),
+              const SizedBox(width: 16),
+              _buildLegendItem(Colors.orange, 'Used Products'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Helper method for legend items
+  Widget _buildLegendItem(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label.tr(),
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -749,7 +860,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                         [];
 
                 // Calculate financial metrics
-                final commission = totalRevenue * 0.04; // 4% commission rate
+                final commission = totalRevenue * 0.04;
                 final grossProfit = totalRevenue - commission;
                 final averageOrderValue =
                     orderCount > 0 ? totalRevenue / orderCount : 0.0;
@@ -979,6 +1090,9 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 : const SizedBox.shrink(),
                           ),
                           const SizedBox(height: 32),
+
+                          // Used vs New Products Chart
+                          _buildUsedVsNewProductsChart(data),
 
                           // Sales Overview
                           SalesOverviewCard(
