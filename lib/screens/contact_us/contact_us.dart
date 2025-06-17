@@ -236,12 +236,12 @@ class _ContactUsPageState extends State<ContactUsPage> {
                 children: [
                   SocialMediaButton(
                     imagePath: 'assets/images/whatsapp.jpg',
-                    onTap: () => _launchUrl('https://wa.me/1234567890'),
+                    onTap: () => _launchUrl('https://wa.me/201125411335'),
                     label: 'WhatsApp',
                   ),
                   SocialMediaButton(
                     imagePath: 'assets/images/phone.png',
-                    onTap: () => _launchUrl('tel:+1234567890'),
+                    onTap: () => _launchUrl('tel:+201125411335'),
                     label: 'call'.tr(),
                   ),
                 ],

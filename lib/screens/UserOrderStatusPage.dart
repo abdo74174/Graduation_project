@@ -7,7 +7,7 @@ import 'package:graduation_project/services/order/order_service.dart';
 import 'package:shimmer/shimmer.dart';
 
 class UserOrderStatusPage extends StatefulWidget {
-  final int userId; // Add userId parameter
+  final int userId;
   const UserOrderStatusPage({Key? key, required this.userId}) : super(key: key);
 
   @override
@@ -15,14 +15,10 @@ class UserOrderStatusPage extends StatefulWidget {
 }
 
 class _UserOrderStatusPageState extends State<UserOrderStatusPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final OrderService _orderService = OrderService();
-  final DeliveryPersonService _deliveryPersonService =
-      DeliveryPersonService(); // Initialize service
+  final DeliveryPersonService _deliveryPersonService = DeliveryPersonService();
   int? _deliveryPersonId;
-  DeliveryPersonRequestModel? _deliveryPerson;
-  String? _requestStatus;
-  bool _isAvailable = false;
   List<OrderModel> _orders = [];
   List<OrderModel> _filteredOrdersShipped = [];
   List<OrderModel> _filteredOrdersOther = [];
@@ -42,19 +38,46 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
     'Assigned',
   ];
   late TabController _tabController;
+  late AnimationController _fadeController;
+  late AnimationController _slideController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fadeController, curve: Curves.easeOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
+
     _fetchData();
     _searchController.addListener(_filterOrders);
+    _fadeController.forward();
+    _slideController.forward();
+
+    print("===== Initializing UserOrderStatusPage =====");
+    print("User ID: ${widget.userId}");
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _tabController.dispose();
+    _fadeController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
@@ -64,7 +87,11 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       _errorMessage = '';
     });
     try {
-      // Fetch delivery person data
+      if (widget.userId <= 0) {
+        throw Exception('Invalid userId: ${widget.userId}');
+      }
+      print("===== Fetching Data for User ID: ${widget.userId} =====");
+
       final deliveryList = await _deliveryPersonService
           .fetchDeliveryPersonInfoById(widget.userId);
       DeliveryPersonRequestModel? profile;
@@ -73,37 +100,35 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       if (deliveryList != null && deliveryList.isNotEmpty) {
         profile = deliveryList.first;
         fetchedDeliveryPersonId = profile.userId;
-        print("Delivery person ID: $fetchedDeliveryPersonId");
+        print("Delivery Person ID: $fetchedDeliveryPersonId");
+        print("Delivery Person Profile: ${profile.toString()}");
       } else {
         print("No delivery person found for userId ${widget.userId}");
-        setState(() {
-          _errorMessage = 'error_no_delivery_person'.tr();
-        });
-        return;
       }
 
-      // Fetch orders if deliveryPersonId is available
       List<OrderModel> orders = [];
-      if (fetchedDeliveryPersonId != null) {
-        try {
-          orders = await _orderService
-              .getOrdersByDeliveryPerson(fetchedDeliveryPersonId);
-          print(
-              'Orders fetched for deliveryPersonId $fetchedDeliveryPersonId: $orders');
-        } catch (e) {
-          print('Error fetching orders: $e');
-          setState(() {
-            _errorMessage = 'error_fetching_orders'.tr();
-          });
-        }
+      try {
+        orders = await _orderService.getOrdersByforUserbyUserId(widget.userId);
+        print('Orders fetched for userId ${widget.userId}: ${orders.map((o) => {
+              'id': o.orderId,
+              'status': o.status
+            }).toList()}');
+      } catch (e) {
+        print('Error fetching orders: $e');
+        setState(() {
+          _errorMessage =
+              'error_fetching_orders'.tr(namedArgs: {'error': e.toString()});
+        });
       }
 
       setState(() {
-        _deliveryPerson = profile;
         _deliveryPersonId = fetchedDeliveryPersonId;
-        _requestStatus = profile?.requestStatus;
-        _isAvailable = profile?.isAvailable ?? false;
         _orders = orders;
+        _selectedStatus = 'All';
+        print('Unfiltered Orders: ${orders.map((o) => {
+              'id': o.orderId,
+              'status': o.status
+            }).toList()}');
         _filterOrders();
         _isLoading = false;
       });
@@ -131,12 +156,31 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
     });
 
     try {
+      print(
+          "Updating order ID $orderId to status: $newStatus by deliveryPersonId: $_deliveryPersonId");
       await _orderService.updateOrderStatus(
           orderId, _deliveryPersonId!, newStatus);
-      await _fetchData(); // Refresh orders after status update
+      await _fetchData();
       setState(() {
         _isUpdatingStatus = false;
       });
+
+      // Show success snackbar
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 8),
+              Text('Order status updated successfully'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     } catch (e) {
       String errorKey = 'error_generic';
       if (e.toString().contains('Status: 403')) {
@@ -146,6 +190,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       } else if (e.toString().contains('Status: 404')) {
         errorKey = 'error_order_not_found';
       }
+      print('Error updating order status: $e');
       setState(() {
         _errorMessage = errorKey.tr(namedArgs: {'error': e.toString()});
         _isUpdatingStatus = false;
@@ -155,6 +200,8 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
 
   void _filterOrders() {
     final query = _searchController.text.toLowerCase();
+    print("===== Filtering Orders =====");
+    print("Search Query: $query, Selected Status: $_selectedStatus");
     setState(() {
       _filteredOrdersShipped = _orders.where((order) {
         final matchesQuery =
@@ -176,6 +223,14 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
             matchesStatus &&
             order.status.toLowerCase() != 'shipped';
       }).toList();
+      print('Filtered Shipped Orders: ${_filteredOrdersShipped.map((o) => {
+            'id': o.orderId,
+            'status': o.status
+          }).toList()}');
+      print('Filtered Other Orders: ${_filteredOrdersOther.map((o) => {
+            'id': o.orderId,
+            'status': o.status
+          }).toList()}');
     });
   }
 
@@ -184,158 +239,309 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor;
 
-    return Theme(
-      data: Theme.of(context).copyWith(
-        scaffoldBackgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          titleTextStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          iconTheme:
-              IconThemeData(color: isDark ? Colors.white : Colors.black87),
-        ),
-      ),
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  primaryColor.withOpacity(0.8),
-                  primaryColor.withOpacity(0.6),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          title: Text('my_order_status'.tr()),
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(text: 'shipped'.tr()),
-              Tab(text: 'other'.tr()),
-            ],
-            labelColor: primaryColor,
-            unselectedLabelColor: isDark ? Colors.grey[400] : Colors.grey[600],
-            indicatorColor: primaryColor,
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    const Color(0xFF1A1A2E),
+                    const Color(0xFF16213E),
+                    const Color(0xFF0F3460),
+                  ]
+                : [
+                    const Color(0xFFF8FAFF),
+                    const Color(0xFFE8F4FD),
+                    const Color(0xFFDCEEFC),
+                  ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
-        body: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [Colors.grey[900]!, Colors.grey[800]!]
-                      : [Colors.grey[50]!, Colors.white],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
-            ),
-            Column(
-              children: [
-                const SizedBox(height: 80),
-                _buildSearchBar(isDark),
-                _buildStatusFilters(isDark),
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildOrdersList(isDark, _filteredOrdersShipped, true),
-                      _buildOrdersList(isDark, _filteredOrdersOther, false),
-                    ],
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildModernAppBar(isDark, primaryColor),
+              Expanded(
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      children: [
+                        _buildSearchBar(isDark),
+                        _buildStatusFilters(isDark),
+                        Expanded(
+                          child: TabBarView(
+                            controller: _tabController,
+                            children: [
+                              _buildOrdersList(
+                                  isDark, _filteredOrdersShipped, true),
+                              _buildOrdersList(
+                                  isDark, _filteredOrdersOther, false),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildModernAppBar(bool isDark, Color primaryColor) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    Icons.arrow_back_ios_new,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'my_order_status'.tr(),
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      'Track and manage your orders',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.notifications_none, color: primaryColor),
+                  onPressed: () {},
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withOpacity(0.1)
+                  : Colors.white.withOpacity(0.8),
+              borderRadius: BorderRadius.circular(25),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: TabBar(
+              controller: _tabController,
+              tabs: [
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.local_shipping, size: 18),
+                      const SizedBox(width: 8),
+                      Text('shipped'.tr()),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.inventory, size: 18),
+                      const SizedBox(width: 8),
+                      Text('other'.tr()),
+                    ],
+                  ),
+                ),
+              ],
+              labelColor: primaryColor,
+              unselectedLabelColor:
+                  isDark ? Colors.grey[400] : Colors.grey[600],
+              indicator: BoxDecoration(
+                color: primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              dividerColor: Colors.transparent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSearchBar(bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withOpacity(0.1)
+            : Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: TextField(
         controller: _searchController,
         decoration: InputDecoration(
           hintText: 'search_by_order_id'.tr(),
-          prefixIcon: Icon(
-            Icons.search,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          hintStyle: TextStyle(
+            color: isDark ? Colors.grey[400] : Colors.grey[500],
+          ),
+          prefixIcon: Container(
+            margin: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.search,
+              color: Theme.of(context).primaryColor,
+              size: 20,
+            ),
           ),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, size: 20),
+                  icon: Icon(
+                    Icons.clear,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                  ),
                   onPressed: () {
                     _searchController.clear();
                     _filterOrders();
                   },
                 )
               : null,
-          filled: true,
-          fillColor: isDark
-              ? Colors.grey[800]!.withOpacity(0.7)
-              : Colors.white.withOpacity(0.9),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: Colors.transparent),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: pkColor, width: 2),
-          ),
+          border: InputBorder.none,
           contentPadding:
-              const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
         ),
-        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+        style: TextStyle(
+          color: isDark ? Colors.white : Colors.black87,
+          fontSize: 16,
+        ),
       ),
     );
   }
 
   Widget _buildStatusFilters(bool isDark) {
     return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 50,
+      margin: const EdgeInsets.fromLTRB(20, 20, 0, 0),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: _statusFilters.length,
         itemBuilder: (context, index) {
           final status = _statusFilters[index];
           final isSelected = _selectedStatus == status;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(status.toLowerCase().tr(),
-                  style: const TextStyle(fontSize: 14)),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  _selectedStatus = status;
-                  _filterOrders();
-                });
-              },
-              selectedColor: Theme.of(context).primaryColor.withOpacity(0.2),
-              backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
-              labelStyle: TextStyle(
+          return Container(
+            margin: const EdgeInsets.only(right: 12),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? LinearGradient(
+                        colors: [
+                          Theme.of(context).primaryColor,
+                          Theme.of(context).primaryColor.withOpacity(0.8),
+                        ],
+                      )
+                    : null,
                 color: isSelected
-                    ? Theme.of(context).primaryColor
+                    ? null
                     : isDark
-                        ? Colors.grey[300]
-                        : Colors.grey[700],
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.white.withOpacity(0.8),
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(25),
+                  onTap: () {
+                    setState(() {
+                      _selectedStatus = status;
+                      print("Status Filter Selected: $status");
+                      _filterOrders();
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    child: Text(
+                      status.toLowerCase().tr(),
+                      style: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : isDark
+                                ? Colors.grey[300]
+                                : Colors.grey[700],
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           );
@@ -346,6 +552,10 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
 
   Widget _buildOrdersList(
       bool isDark, List<OrderModel> orders, bool isShippedTab) {
+    print(
+        "===== Building Orders List for ${isShippedTab ? 'Shipped' : 'Other'} Tab =====");
+    print("Orders Count: ${orders.length}");
+
     if (_isLoading) {
       return _buildLoadingState();
     } else if (_errorMessage.isNotEmpty) {
@@ -357,8 +567,9 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
     return RefreshIndicator(
       onRefresh: _fetchData,
       color: Theme.of(context).primaryColor,
+      backgroundColor: isDark ? Colors.grey[800] : Colors.white,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         itemCount: orders.length,
         itemBuilder: (context, index) =>
             _buildOrderCard(orders[index], isDark, index, isShippedTab),
@@ -370,177 +581,404 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       OrderModel order, bool isDark, int index, bool isShippedTab) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 300 + (index * 100)),
+      duration: Duration(milliseconds: 400 + (index * 100)),
       builder: (context, value, child) {
         return Transform.translate(
-          offset: Offset(0, 20 * (1 - value)),
+          offset: Offset(30 * (1 - value), 0),
           child: Opacity(
             opacity: value,
             child: child,
           ),
         );
       },
-      child: Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        elevation: 4,
-        color: isDark
-            ? Colors.grey[850]!.withOpacity(0.8)
-            : Colors.white.withOpacity(0.95),
-        child: ExpansionTile(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          backgroundColor: Colors.transparent,
-          collapsedBackgroundColor: Colors.transparent,
-          leading: CircleAvatar(
-            backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-            child: Icon(Icons.local_shipping,
-                color: Theme.of(context).primaryColor),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    Colors.grey[850]!.withOpacity(0.8),
+                    Colors.grey[800]!.withOpacity(0.6),
+                  ]
+                : [
+                    Colors.white,
+                    Colors.grey[50]!.withOpacity(0.8),
+                  ],
           ),
-          title: Text(
-            '${'order_id'.tr()} ${order.orderId}',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(
-              '${'date'.tr()} ${order.orderDate.toLocal().toString().split(' ')[0]}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-          ),
-          trailing: _buildStatusChip(order.status, isDark),
-          children: [
-            ...order.items.map((item) {
-              return ListTile(
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.image, color: Colors.grey, size: 20),
-                ),
-                title: Text(
-                  item.productName,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                subtitle: Text(
-                  '${'quantity'.tr()} ${item.quantity} | ${'price'.tr()} \$${item.unitPrice.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                  ),
-                ),
-              );
-            }).toList(),
-            ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-              title: ElevatedButton(
-                onPressed: _isUpdatingStatus
-                    ? null
-                    : () {
-                        final newStatus =
-                            isShippedTab ? 'Processing' : 'Shipped';
-                        _updateOrderStatus(order.orderId, newStatus);
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-                child: Text(
-                  isShippedTab
-                      ? 'mark_as_not_shipped'.tr()
-                      : 'mark_as_shipped'.tr(),
-                  style: const TextStyle(fontSize: 14),
-                ),
-              ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: ExpansionTile(
+            backgroundColor: Colors.transparent,
+            collapsedBackgroundColor: Colors.transparent,
+            leading: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).primaryColor,
+                    Theme.of(context).primaryColor.withOpacity(0.7),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.shopping_bag,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${'order_id'.tr()} #${order.orderId}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${order.orderDate.toLocal().toString().split(' ')[0]}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            trailing: _buildEnhancedStatusChip(order.status, isDark),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Order Items',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ...order.items.map((item) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.grey[50],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withOpacity(0.1)
+                                : Colors.grey[200]!,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.grey[300]!,
+                                    Colors.grey[200]!,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.inventory_2,
+                                color: Colors.grey,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.productName,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .primaryColor
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          'Qty: ${item.quantity}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '\$${item.unitPrice.toStringAsFixed(2)}',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark
+                                              ? Colors.grey[300]
+                                              : Colors.grey[700],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    const SizedBox(height: 16),
+                    Container(
+                      width: double.infinity,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Theme.of(context).primaryColor,
+                            Theme.of(context).primaryColor.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Theme.of(context).primaryColor.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: _isUpdatingStatus
+                              ? null
+                              : () {
+                                  final newStatus =
+                                      isShippedTab ? 'Processing' : 'Shipped';
+                                  _updateOrderStatus(order.orderId, newStatus);
+                                },
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: _isUpdatingStatus
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        isShippedTab
+                                            ? Icons.undo
+                                            : Icons.local_shipping,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        isShippedTab
+                                            ? 'mark_as_not_shipped'.tr()
+                                            : 'mark_as_shipped'.tr(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildStatusChip(String status, bool isDark) {
+  Widget _buildEnhancedStatusChip(String status, bool isDark) {
     Color chipColor;
+    IconData icon;
+
     switch (status.toLowerCase()) {
       case 'pending':
-        chipColor = Colors.grey;
+        chipColor = Colors.orange;
+        icon = Icons.schedule;
         break;
       case 'processing':
-        chipColor = Colors.orange;
+        chipColor = Colors.blue;
+        icon = Icons.settings;
         break;
       case 'shipped':
-        chipColor = Colors.blue;
+        chipColor = Colors.purple;
+        icon = Icons.local_shipping;
         break;
       case 'delivered':
         chipColor = Colors.green;
+        icon = Icons.check_circle;
         break;
       case 'cancelled':
         chipColor = Colors.red;
+        icon = Icons.cancel;
         break;
       case 'assigned':
-        chipColor = Colors.purple;
+        chipColor = Colors.teal;
+        icon = Icons.assignment;
         break;
       default:
         chipColor = Colors.grey;
+        icon = Icons.help;
     }
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: chipColor.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: chipColor.withOpacity(0.3)),
-      ),
-      child: Text(
-        status.toLowerCase().tr(),
-        style: TextStyle(
-          color: chipColor,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
+        gradient: LinearGradient(
+          colors: [
+            chipColor,
+            chipColor.withOpacity(0.8),
+          ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: chipColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: Colors.white,
+            size: 16,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            status.toLowerCase().tr().toUpperCase(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildLoadingState() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       itemCount: 5,
       itemBuilder: (context, index) {
-        return Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: Duration(milliseconds: 300 + (index * 100)),
+          builder: (context, value, child) {
+            return Transform.scale(
+              scale: value,
+              child: Opacity(
+                opacity: value,
+                child: child,
+              ),
+            );
+          },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            height: 100,
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+            ),
           ),
         );
       },
@@ -552,27 +990,103 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
-          const SizedBox(height: 16),
-          Text(
-            _errorMessage,
-            style: TextStyle(
-              fontSize: 16,
-              color: Theme.of(context).colorScheme.error,
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.red[400]!,
+                  Colors.red[300]!,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(60),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red[400]!.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
+            child: const Icon(
+              Icons.error_outline,
+              size: 60,
+              color: Colors.white,
+            ),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: _fetchData,
-            icon: const Icon(Icons.refresh),
-            label: Text('retry'.tr()),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+          const SizedBox(height: 24),
+          Text(
+            'Oops! Something went wrong',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 40),
+            child: Text(
+              _errorMessage,
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.grey[400]
+                    : Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).primaryColor.withOpacity(0.8),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: _fetchData,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.refresh,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'retry'.tr(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -585,18 +1099,101 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.inbox,
-            size: 64,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: 1),
+            duration: const Duration(milliseconds: 800),
+            builder: (context, value, child) {
+              return Transform.scale(
+                scale: value,
+                child: Opacity(
+                  opacity: value,
+                  child: child,
+                ),
+              );
+            },
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.grey[400]!,
+                    Colors.grey[300]!,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(60),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey[400]!.withOpacity(0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.shopping_bag_outlined,
+                size: 60,
+                color: Colors.white,
+              ),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
             'no_orders_found'.tr(),
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.grey[300] : Colors.grey[700],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'You don\'t have any orders matching your criteria',
+            style: TextStyle(
+              fontSize: 14,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey[100],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color:
+                    isDark ? Colors.white.withOpacity(0.2) : Colors.grey[300]!,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: _fetchData,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.refresh,
+                        color: isDark ? Colors.grey[300] : Colors.grey[700],
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Refresh',
+                        style: TextStyle(
+                          color: isDark ? Colors.grey[300] : Colors.grey[700],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],

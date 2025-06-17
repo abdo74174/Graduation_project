@@ -118,6 +118,38 @@ class OrderService {
     }
   }
 
+  Future<List<OrderModel>> getOrdersByforUserbyUserId(int userId) async {
+    if (userId <= 0) {
+      throw Exception('Invalid userId: $userId');
+    }
+    try {
+      print('Calling API: $_baseUrl/user/$userId');
+      final response = await _dio.get('$_baseUrl/user/$userId');
+      print('API Response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        if (response.data is List) {
+          final List<dynamic> data = response.data;
+          print(
+              'Parsed Orders: ${data.map((json) => json['status']).toList()}');
+          return data.map((json) => OrderModel.fromJson(json)).toList();
+        } else {
+          throw Exception('Invalid response format: Expected a list');
+        }
+      } else {
+        throw Exception('Failed to fetch orders: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      print(
+          'DioException in getOrdersByforUserbyUserId: ${e.message}, Status: ${e.response?.statusCode}');
+      _handleDioError(e, 'getOrdersByforUserbyUserId');
+      rethrow;
+    } catch (e) {
+      print('Error in getOrdersByforUserbyUserId: $e');
+      throw Exception('Failed to fetch orders: $e');
+    }
+  }
+
   Future<List<DeliveryPersonModel>> getAvailableDeliveryPersons() async {
     try {
       final response = await _dio.get('$_baseUrl/delivery-persons');

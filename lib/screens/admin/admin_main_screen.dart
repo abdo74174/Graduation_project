@@ -615,10 +615,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             Text('Logout'.tr()),
           ],
         ),
-        content: Text('Are you sure you want to logout?'.tr()),
+        // content: Text('Are you sure you want to logout?'.tr()),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (context) => const HomePage())),
             child: Text(
               'Cancel'.tr(),
               style: TextStyle(

@@ -120,7 +120,7 @@ class _DrawerItemsState extends State<DrawerItems> {
                 ? () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DeliveryPersonRequestPage(
+                        builder: (context) => DeliveryPersonProfilePage(
                           userId: userId!,
                         ),
                       ),

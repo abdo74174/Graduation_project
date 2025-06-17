@@ -27,6 +27,7 @@ import 'package:graduation_project/services/Product/category_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -498,9 +499,7 @@ class _HomePageState extends State<HomePage> {
             products: products,
             pkColor: Color(pkColor.value),
           ),
-        // Advertisement Section for "Work as Delivery"
         _buildDeliveryAdSection(),
-        // Footer Section styled like the provided image
         _buildFooterSection(),
       ],
     );
@@ -574,148 +573,256 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildFooterSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    Future<void> _launchURL(String url) async {
+      final Uri uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not launch $url".tr())),
+        );
+      }
+    }
+
+    Future<void> _launchWhatsApp() async {
+      const phoneNumber =
+          "+201125411335"; // Replace with actual WhatsApp number
+      const message = "Hello, I have a question about Loolia Closet!";
+      final whatsappUrl = Uri.parse(
+        "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}",
+      );
+      if (await canLaunchUrl(whatsappUrl)) {
+        await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Could not launch WhatsApp".tr())),
+        );
+      }
+    }
+
     return Container(
-      padding: const EdgeInsets.all(16),
-      color: isDark ? Colors.grey[900] : Colors.white,
+      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[850] : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        gradient: LinearGradient(
+          colors: [
+            isDark ? Colors.grey[900]! : Colors.grey[100]!,
+            isDark ? Colors.grey[850]! : Colors.white,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Quick Links".tr(),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Policies".tr(),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text("Makeup".tr()),
-                  Text("Skincare".tr()),
-                  Text("Hair Care".tr()),
-                  Text("Fragrances".tr()),
-                  Text("Brands".tr()),
-                  Text("Closets".tr()),
-                ],
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () =>
+                          _launchURL("https://looliacloset.com/about"),
+                      child: Text(
+                        "About Us".tr(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          _launchURL("https://looliacloset.com/privacy"),
+                      child: Text(
+                        "Privacy Policy".tr(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          _launchURL("https://looliacloset.com/refund"),
+                      child: Text(
+                        "Refund Policy".tr(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          _launchURL("https://looliacloset.com/terms"),
+                      child: Text(
+                        "Terms of Service".tr(),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Policies".tr(),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Get in touch".tr(),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text("About Us".tr()),
-                  Text("Privacy Policy".tr()),
-                  Text("Refund Policy".tr()),
-                  Text("Terms of Service".tr()),
-                ],
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: () => _launchURL("tel:+01200777863"),
+                      child: Text(
+                        "+01200777863",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    GestureDetector(
+                      onTap: () => _launchURL("tel:+01228582843"),
+                      child: Text(
+                        "+01228582843",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDark ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          const SizedBox(height: 20),
+          Divider(color: isDark ? Colors.grey[600] : Colors.grey[300]),
           const SizedBox(height: 16),
-          Divider(color: isDark ? Colors.grey[700] : Colors.grey[300]),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
                 children: [
-                  Text(
-                    "Get in touch".tr(),
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
+                  IconButton(
+                    icon: Icon(Icons.facebook,
+                        color: isDark ? Colors.white : Colors.black),
+                    onPressed: () =>
+                        _launchURL("https://facebook.com/looliacloset"),
+                    tooltip: "Facebook",
                   ),
-                  const SizedBox(height: 8),
-                  Text("+01200777863"),
-                  Text("+01228582843"),
-                ],
-              ),
-              Row(
-                children: [
-                  Icon(Icons.facebook,
-                      color: isDark ? Colors.white : Colors.black),
                   const SizedBox(width: 8),
-                  Icon(Icons.facebook,
-                      color: isDark ? Colors.white : Colors.black),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt,
+                        color: isDark ? Colors.white : Colors.black),
+                    onPressed: () =>
+                        _launchURL("https://snapchat.com/looliacloset"),
+                    tooltip: "Snapchat",
+                  ),
                   const SizedBox(width: 8),
-                  Icon(Icons.camera_alt,
-                      color: isDark
-                          ? Colors.white
-                          : Colors.black), // Placeholder for Snapchat
-                  const SizedBox(width: 8),
-                  Icon(Icons.videocam,
-                      color: isDark
-                          ? Colors.white
-                          : Colors.black), // Placeholder for TikTok
+                  IconButton(
+                    icon: Icon(Icons.videocam,
+                        color: isDark ? Colors.white : Colors.black),
+                    onPressed: () =>
+                        _launchURL("https://tiktok.com/looliacloset"),
+                    tooltip: "TikTok",
+                  ),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 12,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.payment,
-                      color: isDark ? Colors.white : Colors.black),
-                  const SizedBox(width: 8),
-                  Icon(Icons.apple,
-                      color: isDark ? Colors.white : Colors.black),
-                  const SizedBox(width: 8),
-                  Icon(Icons.credit_card,
-                      color: isDark ? Colors.white : Colors.black),
-                  const SizedBox(width: 8),
-                  Icon(Icons.payment,
-                      color: isDark ? Colors.white : Colors.black),
-                  const SizedBox(width: 8),
-                  Icon(Icons.credit_card,
-                      color: isDark ? Colors.white : Colors.black),
-                ],
-              ),
-              DropdownButton<String>(
-                value: "English",
-                items: const [
-                  DropdownMenuItem(value: "English", child: Text("English")),
-                ],
-                onChanged: (_) {},
-                dropdownColor: isDark ? Colors.grey[800] : Colors.white,
-              ),
+              Icon(Icons.payment,
+                  color: isDark ? Colors.white : Colors.black, size: 20),
+              Icon(Icons.apple,
+                  color: isDark ? Colors.white : Colors.black, size: 20),
+              Icon(Icons.credit_card,
+                  color: isDark ? Colors.white : Colors.black, size: 20),
+              Icon(Icons.payment,
+                  color: isDark ? Colors.white : Colors.black, size: 20),
+              Icon(Icons.credit_card,
+                  color: isDark ? Colors.white : Colors.black, size: 20),
             ],
           ),
           const SizedBox(height: 16),
-          Text(
-            "© 2025 Loolia Closet Egypt | LANCÔME".tr(),
-            style: TextStyle(
-              color: isDark ? Colors.white70 : Colors.black54,
+          Center(
+            child: Text(
+              "© 2025 Loolia Closet Egypt | LANCÔME".tr(),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white60 : Colors.black54,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Secure payments by ".tr()),
+              Text(
+                "Secure payments by ".tr(),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
               Icon(Icons.payment,
-                  color: isDark
-                      ? Colors.white
-                      : Colors.black), // Placeholder for PayPal
-              Text("VISA".tr()),
-              const SizedBox(width: 8),
-              Icon(Icons.chat, color: isDark ? Colors.white : Colors.black),
-              Text("Chat With Us".tr()),
+                  color: isDark ? Colors.white : Colors.black, size: 16),
+              Text(
+                "VISA".tr(),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? Colors.white70 : Colors.black54,
+                ),
+              ),
+              const SizedBox(width: 16),
+              TextButton.icon(
+                onPressed: _launchWhatsApp,
+                icon: Icon(Icons.chat, color: Color(pkColor.value), size: 16),
+                label: Text(
+                  "Chat With Us".tr(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(pkColor.value),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -779,9 +886,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initApp() async {
     await _checkOfflineStatus();
     await _loadCategories();
-
-    // ignore: await_only_futures
-    await getUserid(); // Remove await since getUserid() doesn't return a Future
+    await getUserid();
     await _loadProducts();
   }
 
@@ -1138,24 +1243,6 @@ class InstallmentSection extends StatelessWidget {
                 ),
               ],
             ),
-            // ElevatedButton(
-            //   onPressed: onTap,
-            //   style: ElevatedButton.styleFrom(
-            //     backgroundColor: pkColor,
-            //     shape: RoundedRectangleBorder(
-            //       borderRadius: BorderRadius.circular(10),
-            //     ),
-            //     padding:
-            //         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            //   ),
-            //   child: const Text(
-            //     "Learn More",
-            //     style: TextStyle(
-            //       color: Colors.white,
-            //       fontWeight: FontWeight.bold,
-            //     ),
-            //   ),
-            // ),
           ],
         ),
       ),
