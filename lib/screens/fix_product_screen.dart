@@ -82,6 +82,7 @@ class _FixProductScreenState extends State<FixProductScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           "Request Product Repair".tr(),
           style: TextStyle(

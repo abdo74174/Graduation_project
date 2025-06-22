@@ -114,7 +114,9 @@ class _OrdersPageState extends State<OrdersPage> {
               ),
             ),
           ),
-          title: Text('All Orders'.tr()),
+          title: Text('All Orders'.tr() ,style: TextStyle(color: Colors.white
+          ),),
+          centerTitle: true,
           actions: [
             IconButton(
               icon: const Icon(Icons.sort),
@@ -125,14 +127,14 @@ class _OrdersPageState extends State<OrdersPage> {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: primaryColor,
-          onPressed: () {
-            // Navigate to create order page
-          },
-          child: const Icon(Icons.add),
-          tooltip: 'Create Order'.tr(),
-        ),
+        // floatingActionButton: FloatingActionButton(
+        //   backgroundColor: primaryColor,
+        //   onPressed: () {
+        //     // Navigate to create order page
+        //   },
+        //   child: const Icon(Icons.add),
+        //   tooltip: 'Create Order'.tr(),
+        // ),
         body: Stack(
           children: [
             Container(

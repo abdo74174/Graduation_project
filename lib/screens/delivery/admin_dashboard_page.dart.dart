@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:graduation_project/Models/order_model.dart';
-import 'package:flutter/foundation.dart';
 import 'package:graduation_project/services/admin_dashboard.dart';
 import 'package:shimmer/shimmer.dart';
 import 'dart:ui';
@@ -17,7 +16,7 @@ class AdminDashboardPage extends StatefulWidget {
 
 class _AdminDashboardPageState extends State<AdminDashboardPage>
     with TickerProviderStateMixin {
-  final AdminDeliveryService _orderService = AdminDeliveryService();
+  final AdminDeliveryService _deliveryService = AdminDeliveryService();
   final ScrollController _scrollController = ScrollController();
 
   List<OrderModel> _orders = [];
@@ -72,44 +71,40 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       duration: const Duration(milliseconds: 800),
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
-    _slideAnimation = Tween<double>(
-      begin: 50.0,
-      end: 0.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
-    ));
+    _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: const Interval(0.2, 0.8, curve: Curves.elasticOut),
+      ),
+    );
 
-    _pulseAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.08,
-    ).animate(CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOut,
-    ));
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.08).animate(
+      CurvedAnimation(
+        parent: _pulseController,
+        curve: Curves.easeInOut,
+      ),
+    );
 
-    _cardAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _cardController,
-      curve: Curves.elasticOut,
-    ));
+    _cardAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _cardController,
+        curve: Curves.elasticOut,
+      ),
+    );
   }
 
   void _startAnimations() {
     _animationController.forward();
     _pulseController.repeat(reverse: true);
     Future.delayed(const Duration(milliseconds: 400), () {
-      _cardController.forward();
+      if (mounted) _cardController.forward();
     });
   }
 
@@ -123,6 +118,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
   }
 
   Future<void> _fetchData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = '';
@@ -130,16 +126,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       _hasMoreOrders = true;
     });
     try {
-      final orders = await _orderService.GetAllOrders();
+      final orders =
+          await _deliveryService.getAllOrders(page: _page, pageSize: _pageSize);
       final deliveryPersons =
-          await _orderService.GetAvailableDeliveryPersons(_selectedAddress);
-      final requests = await _orderService.GetDeliveryPersonRequests();
-      final stats = await _orderService.GetOrderStatistics();
+          await _deliveryService.getAvailableDeliveryPersons(_selectedAddress);
+      final requests = await _deliveryService.getDeliveryPersonRequests();
+      final stats = await _deliveryService.getOrderStatistics();
       if (mounted) {
         setState(() {
           _orders = orders;
-          _deliveryPersons = deliveryPersons.cast<DeliveryPersonModel>();
-          _requests = requests.cast<DeliveryPersonRequestModel>();
+          _deliveryPersons = deliveryPersons;
+          _requests = requests;
           _orderStats = stats;
           _isLoading = false;
           _isInitialLoad = false;
@@ -158,12 +155,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
   }
 
   Future<void> _fetchMoreOrders() async {
-    if (_isLoadingMore || !_hasMoreOrders) return;
+    if (_isLoadingMore || !_hasMoreOrders || !mounted) return;
     setState(() {
       _isLoadingMore = true;
     });
     try {
-      final newOrders = await _orderService.GetAllOrders();
+      final newOrders = await _deliveryService.getAllOrders(
+          page: _page + 1, pageSize: _pageSize);
       if (mounted) {
         setState(() {
           _page++;
@@ -187,53 +185,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
     }
   }
 
-  Future<void> _handleRequest(int requestId, String action) async {
-    try {
-      await _orderService.HandleDeliveryPersonRequest(requestId, action);
-      await _fetchData();
-      if (mounted) {
-        _showCustomSnackBar(
-          'Request $action successfully'.tr(),
-          Colors.green,
-          Icons.check_circle,
-        );
-      }
-    } catch (e) {
-      debugPrint('AdminDashboardPage: Failed to $action request: $e');
-      if (mounted) {
-        _showCustomSnackBar(
-          'Failed to $action request: $e'.tr(),
-          Colors.red,
-          Icons.error,
-        );
-      }
-    }
-  }
-
-  Future<void> _assignDeliveryPerson(int orderId, int deliveryPersonId) async {
-    try {
-      await _orderService.AssignDeliveryPerson(orderId, deliveryPersonId);
-      await _fetchData();
-      if (mounted) {
-        _showCustomSnackBar(
-          'Delivery person assigned successfully'.tr(),
-          Colors.green,
-          Icons.check_circle,
-        );
-      }
-    } catch (e) {
-      debugPrint('AdminDashboardPage: Failed to assign delivery person: $e');
-      if (mounted) {
-        _showCustomSnackBar(
-          'Failed to assign delivery person: $e'.tr(),
-          Colors.red,
-          Icons.error,
-        );
-      }
-    }
-  }
-
   void _showCustomSnackBar(String message, Color color, IconData icon) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -260,16 +213,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [
-                  Colors.grey[900]!,
-                  Colors.grey[850]!,
-                  Colors.grey[900]!,
-                ]
-              : [
-                  Colors.grey[50]!,
-                  Colors.white,
-                  Colors.grey[100]!,
-                ],
+              ? [Colors.grey[900]!, Colors.grey[850]!, Colors.grey[900]!]
+              : [Colors.grey[50]!, Colors.white, Colors.grey[100]!],
           stops: const [0.0, 0.5, 1.0],
         ),
       ),
@@ -328,15 +273,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
               : Colors.white.withOpacity(0.8),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: Theme.of(context).primaryColor.withOpacity(0.2),
-          ),
+              color: Theme.of(context).primaryColor.withOpacity(0.2)),
         ),
         child: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back,
+              color: isDark ? Colors.white : Colors.black87),
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
           tooltip: 'Back'.tr(),
         ),
       ),
@@ -349,14 +291,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                 : Colors.white.withOpacity(0.8),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Theme.of(context).primaryColor.withOpacity(0.2),
-            ),
+                color: Theme.of(context).primaryColor.withOpacity(0.2)),
           ),
           child: IconButton(
-            icon: Icon(
-              Icons.refresh,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
+            icon: Icon(Icons.refresh,
+                color: isDark ? Colors.white : Colors.black87),
             onPressed: _fetchData,
             tooltip: 'Refresh Data'.tr(),
           ),
@@ -399,11 +338,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                   colors: isDark
                       ? [
                           Colors.grey[800]!.withOpacity(0.9),
-                          Colors.grey[850]!.withOpacity(0.7),
+                          Colors.grey[850]!.withOpacity(0.7)
                         ]
                       : [
                           Colors.white.withOpacity(0.9),
-                          Colors.grey[50]!.withOpacity(0.8),
+                          Colors.grey[50]!.withOpacity(0.8)
                         ],
                 ),
                 borderRadius: BorderRadius.circular(24),
@@ -416,10 +355,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                     offset: const Offset(0, 8),
                   ),
                 ],
-                border: Border.all(
-                  color: primaryColor.withOpacity(0.1),
-                  width: 1,
-                ),
+                border:
+                    Border.all(color: primaryColor.withOpacity(0.1), width: 1),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -466,10 +403,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: _orderStats.entries.map((entry) {
-                        return _buildEnhancedStatusChip(
-                            entry.key, isDark, entry.value.toString());
-                      }).toList(),
+                      children: _orderStats.entries
+                          .map((entry) => _buildEnhancedStatusChip(
+                              entry.key, isDark, entry.value.toString()))
+                          .toList(),
                     ),
                   ],
                 ),
@@ -501,18 +438,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                       colors: isDark
                           ? [
                               Colors.grey[800]!.withOpacity(0.7),
-                              Colors.grey[850]!.withOpacity(0.5),
+                              Colors.grey[850]!.withOpacity(0.5)
                             ]
                           : [
                               Colors.white.withOpacity(0.8),
-                              Colors.grey[50]!.withOpacity(0.6),
+                              Colors.grey[50]!.withOpacity(0.6)
                             ],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: primaryColor.withOpacity(0.2),
-                      width: 1,
-                    ),
+                        color: primaryColor.withOpacity(0.2), width: 1),
                     boxShadow: [
                       BoxShadow(
                         color: isDark
@@ -535,7 +470,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    onChanged: (value) {
+                    onSubmitted: (value) {
+                      if (!mounted) return;
                       setState(() {
                         _selectedAddress = value.isEmpty ? 'Sohag' : value;
                       });
@@ -569,13 +505,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                     gradient: LinearGradient(
                       colors: [
                         Colors.red.withOpacity(0.2),
-                        Colors.red.withOpacity(0.1),
+                        Colors.red.withOpacity(0.1)
                       ],
                     ),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.red.withOpacity(0.3),
-                    ),
+                    border: Border.all(color: Colors.red.withOpacity(0.3)),
                   ),
                   child: Row(
                     children: [
@@ -635,10 +569,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       builder: (context, value, child) {
         return Transform.translate(
           offset: Offset(0, 20 * (1 - value)),
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
+          child: Opacity(opacity: value, child: child),
         );
       },
       child: Container(
@@ -650,18 +581,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
             colors: isDark
                 ? [
                     Colors.grey[800]!.withOpacity(0.9),
-                    Colors.grey[850]!.withOpacity(0.7),
+                    Colors.grey[850]!.withOpacity(0.7)
                   ]
                 : [
                     Colors.white.withOpacity(0.9),
-                    Colors.grey[50]!.withOpacity(0.8),
+                    Colors.grey[50]!.withOpacity(0.8)
                   ],
           ),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: Theme.of(context).primaryColor.withOpacity(0.1),
-            width: 1,
-          ),
+              color: Theme.of(context).primaryColor.withOpacity(0.1), width: 1),
           boxShadow: [
             BoxShadow(
               color: isDark
@@ -793,19 +722,85 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                           _buildActionButton(
                             'Set to Pending'.tr(),
                             Colors.grey[600]!,
-                            () => _handleRequest(request.id, 'pending'),
+                            () async {
+                              try {
+                                await _deliveryService
+                                    .handleDeliveryPersonRequest(
+                                        request.id, 'pending');
+                                if (mounted) {
+                                  _showCustomSnackBar(
+                                    'Request set to pending successfully'.tr(),
+                                    Colors.green,
+                                    Icons.check_circle,
+                                  );
+                                  await _fetchData();
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  _showCustomSnackBar(
+                                    'Failed to set request to pending: $e'.tr(),
+                                    Colors.red,
+                                    Icons.error,
+                                  );
+                                }
+                              }
+                            },
                           ),
                         if (request.status.toLowerCase() != 'approved')
                           _buildActionButton(
                             'Approve'.tr(),
                             Colors.green[600]!,
-                            () => _handleRequest(request.id, 'approve'),
+                            () async {
+                              try {
+                                await _deliveryService
+                                    .handleDeliveryPersonRequest(
+                                        request.id, 'approve');
+                                if (mounted) {
+                                  _showCustomSnackBar(
+                                    'Request approved successfully'.tr(),
+                                    Colors.green,
+                                    Icons.check_circle,
+                                  );
+                                  await _fetchData();
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  _showCustomSnackBar(
+                                    'Failed to approve request: $e'.tr(),
+                                    Colors.red,
+                                    Icons.error,
+                                  );
+                                }
+                              }
+                            },
                           ),
                         if (request.status.toLowerCase() != 'rejected')
                           _buildActionButton(
                             'Reject'.tr(),
                             Colors.red[600]!,
-                            () => _handleRequest(request.id, 'reject'),
+                            () async {
+                              try {
+                                await _deliveryService
+                                    .handleDeliveryPersonRequest(
+                                        request.id, 'reject');
+                                if (mounted) {
+                                  _showCustomSnackBar(
+                                    'Request rejected successfully'.tr(),
+                                    Colors.green,
+                                    Icons.check_circle,
+                                  );
+                                  await _fetchData();
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  _showCustomSnackBar(
+                                    'Failed to reject request: $e'.tr(),
+                                    Colors.red,
+                                    Icons.error,
+                                  );
+                                }
+                              }
+                            },
                           ),
                         _buildActionButton(
                           'Contact'.tr(),
@@ -831,7 +826,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
         .where((dp) =>
             dp.address.toLowerCase() == order.address.toLowerCase() &&
             dp.requestStatus == 'Approved' &&
-            dp.isAvailable == true)
+            dp.isAvailable)
         .toList();
 
     final shouldAnimate = _isInitialLoad && index < 5;
@@ -844,10 +839,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
             builder: (context, value, child) {
               return Transform.translate(
                 offset: Offset(0, 20 * (1 - value)),
-                child: Opacity(
-                  opacity: value,
-                  child: child,
-                ),
+                child: Opacity(opacity: value, child: child),
               );
             },
             child:
@@ -858,6 +850,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
 
   Widget _buildOrderCardContent(OrderModel order, bool isDark,
       List<DeliveryPersonModel> availableDeliveryPersons) {
+    bool isAssigning = false; // Track assignment state
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20, left: 16, right: 16),
       decoration: BoxDecoration(
@@ -867,18 +861,16 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
           colors: isDark
               ? [
                   Colors.grey[800]!.withOpacity(0.9),
-                  Colors.grey[850]!.withOpacity(0.7),
+                  Colors.grey[850]!.withOpacity(0.7)
                 ]
               : [
                   Colors.white.withOpacity(0.9),
-                  Colors.grey[50]!.withOpacity(0.8),
+                  Colors.grey[50]!.withOpacity(0.8)
                 ],
         ),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
-          width: 1,
-        ),
+            color: Theme.of(context).primaryColor.withOpacity(0.1), width: 1),
         boxShadow: [
           BoxShadow(
             color: isDark
@@ -966,9 +958,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                             : Colors.grey[100]!.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color:
-                              Theme.of(context).primaryColor.withOpacity(0.1),
-                        ),
+                            color: Theme.of(context)
+                                .primaryColor
+                                .withOpacity(0.1)),
                       ),
                       child: Row(
                         children: [
@@ -976,12 +968,10 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                             width: 50,
                             height: 50,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.grey[300]!,
-                                  Colors.grey[200]!,
-                                ],
-                              ),
+                              gradient: LinearGradient(colors: [
+                                Colors.grey[300]!,
+                                Colors.grey[200]!
+                              ]),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(Icons.fastfood_rounded,
@@ -1029,8 +1019,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                           : Colors.grey[100]!.withOpacity(0.7),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
-                      ),
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1056,73 +1046,152 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                                   fontWeight: FontWeight.w500,
                                 ),
                               )
-                            : Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Expanded(
-                                    child: DropdownButton<int>(
-                                      isExpanded: true,
-                                      value: order.deliveryPersonId,
-                                      hint: Text(
-                                        'Select Delivery Person'.tr(),
-                                        style: TextStyle(
-                                          color: isDark
-                                              ? Colors.grey[400]
-                                              : Colors.grey[600],
+                            : StatefulBuilder(
+                                builder: (context, setState) {
+                                  return Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: DropdownButton<int>(
+                                          isExpanded: true,
+                                          value: order.deliveryPersonId,
+                                          hint: Text(
+                                            'Select Delivery Person'.tr(),
+                                            style: TextStyle(
+                                                color: isDark
+                                                    ? Colors.grey[400]
+                                                    : Colors.grey[600]),
+                                          ),
+                                          onChanged: isAssigning
+                                              ? null
+                                              : (value) async {
+                                                  if (value == null || !mounted)
+                                                    return;
+                                                  final selectedPerson =
+                                                      _deliveryPersons
+                                                          .firstWhere((dp) =>
+                                                              dp.id == value);
+
+                                                  if (selectedPerson
+                                                              .requestStatus !=
+                                                          'Approved' ||
+                                                      !selectedPerson
+                                                          .isAvailable) {
+                                                    if (mounted) {
+                                                      _showCustomSnackBar(
+                                                        'Selected delivery person is not approved or available'
+                                                            .tr(),
+                                                        Colors.red,
+                                                        Icons.error,
+                                                      );
+                                                    }
+                                                    return;
+                                                  }
+
+                                                  final confirm =
+                                                      await showDialog<bool>(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        _buildConfirmDialog(
+                                                      title:
+                                                          'Confirm Assignment'
+                                                              .tr(),
+                                                      content:
+                                                          'Assign this order to ${selectedPerson.name} at ${order.address}?'
+                                                              .tr(),
+                                                      confirmText:
+                                                          'Confirm'.tr(),
+                                                      cancelText: 'Cancel'.tr(),
+                                                      confirmColor:
+                                                          Theme.of(context)
+                                                              .primaryColor,
+                                                    ),
+                                                  );
+
+                                                  if (confirm == true &&
+                                                      mounted) {
+                                                    setState(() =>
+                                                        isAssigning = true);
+                                                    try {
+                                                      await _deliveryService
+                                                          .assignDeliveryPerson(
+                                                              order.orderId,
+                                                              value);
+                                                      if (mounted) {
+                                                        _showCustomSnackBar(
+                                                          'Delivery person assigned successfully'
+                                                              .tr(),
+                                                          Colors.green,
+                                                          Icons.check_circle,
+                                                        );
+                                                        await _fetchData();
+                                                      }
+                                                    } catch (e) {
+                                                      if (mounted) {
+                                                        _showCustomSnackBar(
+                                                          'Failed to assign delivery person: $e'
+                                                              .tr(),
+                                                          Colors.red,
+                                                          Icons.error,
+                                                        );
+                                                      }
+                                                    } finally {
+                                                      if (mounted) {
+                                                        setState(() =>
+                                                            isAssigning =
+                                                                false);
+                                                      }
+                                                    }
+                                                  }
+                                                },
+                                          items: availableDeliveryPersons
+                                              .map((dp) {
+                                            return DropdownMenuItem<int>(
+                                              value: dp.id,
+                                              child: Text(
+                                                '${dp.name} (${dp.phone})'.tr(),
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: isDark
+                                                      ? Colors.white
+                                                      : Colors.black87,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          style: TextStyle(
+                                            color: isDark
+                                                ? Colors.white
+                                                : Colors.black87,
+                                            fontSize: 14,
+                                          ),
+                                          dropdownColor: isDark
+                                              ? Colors.grey[800]
+                                              : Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12),
                                         ),
                                       ),
-                                      onChanged: (value) async {
-                                        if (value != null) {
-                                          bool? confirm = await showDialog(
-                                            context: context,
-                                            builder: (context) =>
-                                                _buildConfirmDialog(
-                                              title: 'Confirm Assignment'.tr(),
-                                              content:
-                                                  'Assign this order to ${(_deliveryPersons.firstWhere((dp) => dp.id == value)).name} at ${order.address}?'
-                                                      .tr(),
-                                              confirmText: 'Confirm'.tr(),
-                                              cancelText: 'Cancel'.tr(),
-                                              confirmColor: Theme.of(context)
+                                      if (isAssigning)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 8),
+                                          child: SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Theme.of(context)
                                                   .primaryColor,
                                             ),
-                                          );
-                                          if (confirm == true) {
-                                            await _assignDeliveryPerson(
-                                                order.orderId, value);
-                                          }
-                                        }
-                                      },
-                                      items: availableDeliveryPersons.map((dp) {
-                                        return DropdownMenuItem<int>(
-                                          value: dp.id,
-                                          child: Text(
-                                            '${dp.name} (${dp.phone})'.tr(),
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: isDark
-                                                  ? Colors.white
-                                                  : Colors.black87,
-                                            ),
                                           ),
-                                        );
-                                      }).toList(),
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? Colors.white
-                                            : Colors.black87,
-                                        fontSize: 14,
-                                      ),
-                                      dropdownColor: isDark
-                                          ? Colors.grey[800]
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12),
-                                    ),
-                                  ),
-                                ],
+                                        ),
+                                    ],
+                                  );
+                                },
                               ),
                       ],
                     ),
@@ -1140,11 +1209,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       {Widget? trailing}) {
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Theme.of(context).primaryColor,
-        ),
+        Icon(icon, size: 16, color: Theme.of(context).primaryColor),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
@@ -1176,7 +1241,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
               gradient: LinearGradient(
                 colors: [
                   chipColor.withOpacity(0.8),
-                  chipColor.withOpacity(0.6),
+                  chipColor.withOpacity(0.6)
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
@@ -1219,119 +1284,116 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.3,
-        ),
+            fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0.3),
       ),
     );
   }
-
-  Widget _buildConfirmDialog({
-    required String title,
-    required String content,
-    required String confirmText,
-    required String cancelText,
-    required Color confirmColor,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark
-                    ? [
-                        Colors.grey[800]!.withOpacity(0.9),
-                        Colors.grey[850]!.withOpacity(0.7),
-                      ]
-                    : [
-                        Colors.white.withOpacity(0.9),
-                        Colors.grey[50]!.withOpacity(0.8),
-                      ],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
+Widget _buildConfirmDialog({
+  required String title,
+  required String content,
+  required String confirmText,
+  required String cancelText,
+  required Color confirmColor,
+}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  return Dialog(
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      Colors.grey[800]!.withOpacity(0.9),
+                      Colors.grey[850]!.withOpacity(0.7)
+                    ]
+                  : [
+                      Colors.white.withOpacity(0.9),
+                      Colors.grey[50]!.withOpacity(0.8)
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
                 color: Theme.of(context).primaryColor.withOpacity(0.1),
-                width: 1,
+                width: 1),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : Colors.black87,
+                  letterSpacing: 0.3,
+                ),
               ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : Colors.black87,
-                    letterSpacing: 0.3,
-                  ),
+              const SizedBox(height: 16),
+              Text(
+                content,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDark ? Colors.grey[300] : Colors.grey[700],
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.3,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  content,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isDark ? Colors.grey[300] : Colors.grey[700],
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: 0.3,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: Text(
-                        cancelText,
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: isDark ? Colors.grey[400] : Colors.grey[600],
-                          fontWeight: FontWeight.w600,
-                        ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.of(context, rootNavigator: true).pop(false),
+                    child: Text(
+                      cancelText,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: confirmColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16)),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 24, vertical: 12),
-                        elevation: 4,
-                        shadowColor: confirmColor.withOpacity(0.3),
-                      ),
-                      child: Text(
-                        confirmText,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                        ),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: () =>
+                        Navigator.of(context, rootNavigator: true).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: confirmColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      elevation: 4,
+                      shadowColor: confirmColor.withOpacity(0.3),
+                    ),
+                    child: Text(
+                      confirmText,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
@@ -1415,18 +1477,17 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                 colors: isDark
                     ? [
                         Colors.grey[800]!.withOpacity(0.5),
-                        Colors.grey[850]!.withOpacity(0.3),
+                        Colors.grey[850]!.withOpacity(0.3)
                       ]
                     : [
                         Colors.white.withOpacity(0.8),
-                        Colors.grey[50]!.withOpacity(0.6),
+                        Colors.grey[50]!.withOpacity(0.6)
                       ],
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                width: 1,
-              ),
+                  color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                  width: 1),
               boxShadow: [
                 BoxShadow(
                   color: isDark
@@ -1447,7 +1508,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                       gradient: LinearGradient(
                         colors: [
                           Colors.grey.withOpacity(0.3),
-                          Colors.grey.withOpacity(0.1),
+                          Colors.grey.withOpacity(0.1)
                         ],
                       ),
                       shape: BoxShape.circle,
@@ -1497,9 +1558,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
       data: Theme.of(context).copyWith(
         scaffoldBackgroundColor: Colors.transparent,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
+            backgroundColor: Colors.transparent, elevation: 0),
       ),
       child: Scaffold(
         body: Stack(
@@ -1529,9 +1588,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                         ),
                       ),
                       SliverToBoxAdapter(
-                        child: _buildSectionTitle(
-                            'Delivery Person Requests'.tr(), isDark),
-                      ),
+                          child: _buildSectionTitle(
+                              'Delivery Person Requests'.tr(), isDark)),
                       _requests.isEmpty
                           ? SliverToBoxAdapter(
                               child: _buildEnhancedEmptyState(
@@ -1539,19 +1597,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                             )
                           : SliverList(
                               delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  return _buildRequestCard(
-                                      _requests[index], isDark, index);
-                                },
+                                (context, index) => _buildRequestCard(
+                                    _requests[index], isDark, index),
                                 childCount: _requests.length,
                               ),
                             ),
+                      SliverToBoxAdapter(child: const SizedBox(height: 24)),
                       SliverToBoxAdapter(
-                        child: const SizedBox(height: 24),
-                      ),
-                      SliverToBoxAdapter(
-                        child: _buildSectionTitle('Assign Orders'.tr(), isDark),
-                      ),
+                          child:
+                              _buildSectionTitle('Assign Orders'.tr(), isDark)),
                       _orders.isEmpty
                           ? SliverToBoxAdapter(
                               child: _buildEnhancedEmptyState(
@@ -1559,10 +1613,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                             )
                           : SliverList(
                               delegate: SliverChildBuilderDelegate(
-                                (context, index) {
-                                  return _buildOrderCard(
-                                      _orders[index], isDark, index);
-                                },
+                                (context, index) => _buildOrderCard(
+                                    _orders[index], isDark, index),
                                 childCount: _orders.length,
                               ),
                             ),
@@ -1571,15 +1623,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage>
                           child: Padding(
                             padding: const EdgeInsets.all(16),
                             child: Center(
-                              child: CircularProgressIndicator(
-                                color: primaryColor,
-                              ),
-                            ),
+                                child: CircularProgressIndicator(
+                                    color: primaryColor)),
                           ),
                         ),
-                      SliverToBoxAdapter(
-                        child: const SizedBox(height: 24),
-                      ),
+                      SliverToBoxAdapter(child: const SizedBox(height: 24)),
                     ],
                   ),
           ],

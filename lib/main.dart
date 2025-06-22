@@ -29,12 +29,23 @@ Future<void> main() async {
   final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
   final savedLocaleCode = prefs.getString('locale') ?? 'en';
 
+  // Validate saved locale against supported locales
+  const supportedLocaleCodes = ['en', 'ar', 'de', 'zh'];
+  final startLocale = supportedLocaleCodes.contains(savedLocaleCode)
+      ? Locale(savedLocaleCode)
+      : const Locale('en'); // Default to English if saved locale is invalid
+
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('ar')],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
+        Locale('de'),
+        Locale('zh'),
+      ],
       path: 'assets/translations',
       fallbackLocale: const Locale('en'),
-      startLocale: Locale(savedLocaleCode),
+      startLocale: startLocale,
       child: MultiProvider(
         providers: [
           ChangeNotifierProvider(create: (_) => ThemeNotifier()),

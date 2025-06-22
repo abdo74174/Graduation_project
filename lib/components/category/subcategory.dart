@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/subcateoery_model.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -29,7 +30,7 @@ class SubCategoryView extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: borderColor!, width: 2),
+                border: Border.all(color: Color(0xffC7C9D9), width: 2),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),

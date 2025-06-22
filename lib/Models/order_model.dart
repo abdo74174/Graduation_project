@@ -9,6 +9,8 @@ class OrderModel {
   final String status;
   final double totalPrice;
   final List<OrderItemModel> items;
+  final bool userConfirmedShipped;
+  final bool deliveryPersonConfirmedShipped;
 
   OrderModel({
     required this.orderId,
@@ -21,6 +23,8 @@ class OrderModel {
     required this.status,
     required this.totalPrice,
     required this.items,
+    required this.userConfirmedShipped,
+    required this.deliveryPersonConfirmedShipped,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -34,6 +38,9 @@ class OrderModel {
       orderDate: DateTime.parse(json['orderDate'] ?? DateTime.now().toString()),
       status: json['status'] ?? 'Pending',
       totalPrice: (json['totalPrice'] as num?)?.toDouble() ?? 0.0,
+      userConfirmedShipped: json['userConfirmedShipped'] ?? false,
+      deliveryPersonConfirmedShipped:
+          json['deliveryPersonConfirmedShipped'] ?? false,
       items: (json['items'] as List<dynamic>?)
               ?.map((item) => OrderItemModel.fromJson(item))
               .toList() ??

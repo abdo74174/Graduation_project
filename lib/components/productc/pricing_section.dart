@@ -206,7 +206,8 @@ class _PricingSectionState extends State<PricingSection> {
             label: "Price".tr(),
             controller: widget.priceController,
             readOnly: false,
-            prefix: '\$',
+            prefix: 'EGP '
+                '',
           ),
           SizedBox(height: 16),
 
@@ -230,7 +231,7 @@ class _PricingSectionState extends State<PricingSection> {
             controller: widget.comparePriceController,
             readOnly: true,
             isStrikethrough: false,
-            prefix: '\$',
+            prefix: 'EGP ',
             hintText: "Calculated based on discount".tr(),
             helperText: "This is the final price after applying discount".tr(),
             filled: true,

@@ -48,6 +48,7 @@ class _PaymentScreenState extends State<PaymentScreen>
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  String? _selectedAddress;
 
   @override
   void initState() {
@@ -93,6 +94,7 @@ class _PaymentScreenState extends State<PaymentScreen>
       if (fetchedUser != null && mounted) {
         setState(() {
           user = fetchedUser;
+          _selectedAddress = fetchedUser.address ?? 'sohag';
         });
         await _loadCustomerId();
       } else {
@@ -328,7 +330,7 @@ class _PaymentScreenState extends State<PaymentScreen>
           .toList();
 
       await OrderService()
-          .createOrder(_customerId!, items, user!.address ?? 'sohag');
+          .createOrder(_customerId!, items, _selectedAddress ?? 'sohag');
       await _updateStock();
 
       for (var item in _filteredCartItems) {
@@ -655,6 +657,143 @@ class _PaymentScreenState extends State<PaymentScreen>
     );
   }
 
+  Widget _buildAddressSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'delivery_address'.tr(),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 16),
+          if (_selectedAddress != null)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.location_on, color: pkColor, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _selectedAddress!,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Text(
+              'no_address_selected'.tr(),
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          const SizedBox(height: 16),
+          Center(
+            child: TextButton.icon(
+              onPressed: () async {
+                final newAddress = await showDialog<String>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Text('enter_address'.tr()),
+                    content: TextField(
+                      decoration: InputDecoration(
+                        labelText: 'address'.tr(),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      maxLines: 3,
+                      onChanged: (value) {
+                        _selectedAddress = value;
+                      },
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('cancel'.tr()),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if (_selectedAddress?.isNotEmpty ?? false) {
+                            Navigator.pop(context, _selectedAddress);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    Text('please_enter_valid_address'.tr()),
+                              ),
+                            );
+                          }
+                        },
+                        child: Text('save'.tr()),
+                      ),
+                    ],
+                  ),
+                );
+                if (newAddress != null && mounted) {
+                  setState(() {
+                    _selectedAddress = newAddress;
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('address_updated_successfully'.tr()),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              icon: Icon(Icons.edit_location, color: pkColor),
+              label: Text(
+                _selectedAddress != null
+                    ? 'change_address'.tr()
+                    : 'add_address'.tr(),
+                style: TextStyle(
+                  color: pkColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: pkColor),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final total = widget.total;
@@ -726,6 +865,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                           ],
                         ),
                       ),
+                      const SizedBox(height: 24),
+                      _buildAddressSection(),
                       const SizedBox(height: 24),
                       _buildPaymentMethodSelector(),
                       const SizedBox(height: 24),

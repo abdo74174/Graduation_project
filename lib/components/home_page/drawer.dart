@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:graduation_project/Models/user_model.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/Auth/login_page.dart';
 import 'package:graduation_project/screens/admin/admin_main_screen.dart';
 import 'package:graduation_project/screens/chat/chat_list_screen.dart';
@@ -86,7 +87,7 @@ class _DrawerHomeState extends State<DrawerHome> {
               // Drawer Header
               DrawerHeader(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
+                  color: pkColor,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,7 +98,7 @@ class _DrawerHomeState extends State<DrawerHome> {
                       child: Icon(
                         Icons.person,
                         size: 40,
-                        color: Theme.of(context).primaryColor,
+                        color: pkColor,
                       ),
                     ),
                     const SizedBox(height: 10),

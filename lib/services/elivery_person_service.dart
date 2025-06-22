@@ -34,7 +34,7 @@ class DeliveryPersonService {
       int userId) async {
     try {
       final response = await _dio.get(
-        'https://10.0.2.2:7273/api/DeliveryPerson/userId?userId=$userId',
+        '$_baseUrl/userId?userId=$userId',
       );
 
       if (response.statusCode != null &&
@@ -52,6 +52,36 @@ class DeliveryPersonService {
       } else {
         throw Exception(
             'Failed to fetch delivery person. Status code: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  Future<List<DeliveryPersonRequestModel>> fetchDeliveryPersonInfo(
+      int userId) async {
+    try {
+      final response = await _dio.get(
+        '$_baseUrl/data/$userId',
+      );
+
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        if (response.data is List) {
+          final data = response.data as List;
+          return data
+              .map((e) => DeliveryPersonRequestModel.fromJson(e))
+              .toList();
+        } else {
+          throw Exception(
+              'Unexpected response format: Status code ${response.statusCode}');
+        }
+      } else {
+        throw Exception(
+            'Failed to fetch delivery person data. Status code: ${response.statusCode}');
       }
     } on DioException catch (e) {
       throw Exception('Network error: ${e.message}');
@@ -151,48 +181,67 @@ class DeliveryPersonService {
 }
 
 class DeliveryPersonRequestModel {
+  int deliveryPersonId;
   String phone;
   String address;
   String cardNumber;
   String? requestStatus;
   bool? isAvailable;
   int? userId;
+  String? name;
+  String? email;
 
   DeliveryPersonRequestModel({
+    this.deliveryPersonId = 0,
     this.phone = '',
     this.address = '',
     this.cardNumber = '',
     this.requestStatus,
     this.isAvailable,
     this.userId,
+    this.name,
+    this.email,
   });
 
   factory DeliveryPersonRequestModel.fromJson(Map<String, dynamic> json) {
+    print('JSON Input: $json'); // Debug log to inspect raw JSON
     return DeliveryPersonRequestModel(
+      deliveryPersonId: json['deliveryPesonId'] != null
+          ? int.parse(json['deliveryPesonId'].toString())
+          : json['DeliveryPesonId'] != null
+              ? int.parse(json['DeliveryPesonId'].toString())
+              : json['deliveryPersonId'] != null
+                  ? int.parse(json['deliveryPersonId'].toString())
+                  : 0,
       phone: json['phone'] ?? '',
       address: json['address'] ?? '',
       cardNumber: json['cardNumber'] ?? '',
-      requestStatus: json['requestStatus'],
+      requestStatus: json['requestStatus'] as String?,
       isAvailable: json['isAvailable'] as bool?,
       userId: (json['userId'] is int)
           ? json['userId']
           : int.tryParse(json['userId']?.toString() ?? '0'),
+      name: json['name'] as String?,
+      email: json['email'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
+      'deliveryPersonId': deliveryPersonId, // Use correct key for serialization
       'phone': phone,
       'address': address,
       'cardNumber': cardNumber,
       'requestStatus': requestStatus,
       'isAvailable': isAvailable,
       'userId': userId,
+      'name': name,
+      'email': email,
     };
   }
 
   @override
   String toString() {
-    return 'DeliveryPersonRequestModel(phone: $phone, address: $address, cardNumber: $cardNumber, requestStatus: $requestStatus, isAvailable: $isAvailable, userId: $userId)';
+    return 'DeliveryPersonRequestModel(deliveryPersonId: $deliveryPersonId, phone: $phone, address: $address, cardNumber: $cardNumber, requestStatus: $requestStatus, isAvailable: $isAvailable, userId: $userId, name: $name, email: $email)';
   }
 }

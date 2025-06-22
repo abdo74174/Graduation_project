@@ -268,7 +268,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildQuickActions() {
     final quickActions = [
       {
-        'title': 'Add Product'.tr(),
+        'title': 'Products'.tr(),
         'icon': Icons.add_box,
         'color': Colors.green,
         'onTap': () => Navigator.push(
@@ -867,7 +867,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
                 // Format as currency
                 final formatter =
-                    NumberFormat.currency(locale: 'en_US', symbol: '\$');
+                    NumberFormat.currency(locale: 'en_US', symbol: 'EGP ');
                 final formattedRevenue = formatter.format(totalRevenue);
                 final formattedCommission = formatter.format(commission);
                 final formattedGrossProfit = formatter.format(grossProfit);

@@ -32,36 +32,25 @@ class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
   }
 
   void _listen() async {
-    print('Attempting to start speech recognition');
     if (!_isListening) {
-      // Request microphone permission
       var status = await Permission.microphone.request();
       if (status != PermissionStatus.granted) {
-        print('Microphone permission denied');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Microphone permission is required')),
         );
         return;
       }
 
-      // Check if speech recognition is available
       bool available = await _speech.initialize(
         onStatus: (status) {
-          print('Speech status: $status');
           if (status == 'done' || status == 'notListening') {
             setState(() => _isListening = false);
-            if (Navigator.canPop(context)) {
-              Navigator.pop(context);
-            }
+            if (Navigator.canPop(context)) Navigator.pop(context);
           }
         },
         onError: (errorNotification) {
-          print(
-              'Speech error: ${errorNotification.errorMsg}, Code: ${errorNotification.errorMsg}');
           setState(() => _isListening = false);
-          if (Navigator.canPop(context)) {
-            Navigator.pop(context);
-          }
+          if (Navigator.canPop(context)) Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -73,12 +62,10 @@ class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
       );
 
       if (available) {
-        print('Speech recognition initialized successfully');
         setState(() => _isListening = true);
         _showListeningModal();
         _speech.listen(
           onResult: (result) {
-            print('Recognized words: ${result.recognizedWords}');
             setState(() {
               _lastWords = result.recognizedWords;
               _controller.text = _lastWords;
@@ -88,15 +75,10 @@ class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
           localeId: context.locale.languageCode,
         );
 
-        // Auto stop after 10 seconds
         Future.delayed(const Duration(seconds: 10), () {
-          if (_isListening) {
-            print('Auto-stopping speech recognition');
-            _stopListening();
-          }
+          if (_isListening) _stopListening();
         });
       } else {
-        print('Speech recognition not available');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Speech recognition not available on this device'),
@@ -105,22 +87,17 @@ class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
         );
       }
     } else {
-      print('Stopping speech recognition');
       _stopListening();
     }
   }
 
   void _stopListening() {
-    print('Stopping speech recognition');
     _speech.stop();
     setState(() => _isListening = false);
-    if (Navigator.canPop(context)) {
-      Navigator.pop(context);
-    }
+    if (Navigator.canPop(context)) Navigator.pop(context);
   }
 
   void _showListeningModal() {
-    print('Showing listening modal');
     showModalBottomSheet(
       context: context,
       isDismissible: true,
@@ -155,7 +132,6 @@ class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
                     const SizedBox(height: 20),
                     ElevatedButton.icon(
                       onPressed: () {
-                        print('Stop button pressed in modal');
                         _stopListening();
                         setModalState(() {});
                       },
@@ -179,16 +155,12 @@ class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
         );
       },
     ).whenComplete(() {
-      if (_isListening) {
-        print('Modal dismissed, stopping speech recognition');
-        _stopListening();
-      }
+      if (_isListening) _stopListening();
     });
   }
 
   @override
   void dispose() {
-    print('Disposing CustomizeSearchBar');
     _speech.stop();
     _controller.dispose();
     super.dispose();
@@ -198,52 +170,74 @@ class _CustomizeSearchBarState extends State<CustomizeSearchBar> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      child: TextField(
-        controller: _controller,
-        onChanged: widget.onChanged,
-        decoration: InputDecoration(
-          hintText: "Search...".tr(),
-          hintStyle: TextStyle(color: Color(pkColor.value)),
-          prefixIcon: IconButton(
-            icon: Icon(
-              _isListening ? Icons.mic : Icons.mic_none,
-              color: _isListening
-                  ? Colors.red
-                  : (isDark ? Colors.white : Color(pkColor.value)),
+    return Center(
+      // ⬅ Ensures it's centered and width respected
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * .93,
+        child: Container(
+          margin: const EdgeInsets.only(top: 16),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[800] : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withOpacity(0.3)
+                    : Colors.grey.withOpacity(0.4),
+                spreadRadius: 3,
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withOpacity(0.2)
+                    : Colors.grey.withOpacity(0.2),
+                spreadRadius: 1,
+                blurRadius: 2,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: TextField(
+            controller: _controller,
+            onChanged: widget.onChanged,
+            decoration: InputDecoration(
+              hintText: "Search...".tr(),
+              hintStyle: TextStyle(color: Colors.grey[600]),
+              prefixIcon: IconButton(
+                icon: Icon(
+                  _isListening ? Icons.mic : Icons.mic_none,
+                  color: _isListening
+                      ? Colors.red
+                      : (isDark ? Colors.white : Colors.grey[600]),
+                ),
+                onPressed: _listen,
+              ),
+              suffixIcon: _controller.text.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear,
+                          color: isDark ? Colors.white : Colors.black),
+                      onPressed: () {
+                        _controller.clear();
+                        widget.onChanged('');
+                      },
+                    )
+                  : null,
+              filled: true,
+              fillColor: Colors.transparent,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide.none,
+              ),
             ),
-            onPressed: () {
-              print('Microphone button pressed');
-              _listen();
-            },
-          ),
-          suffixIcon: _controller.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                  onPressed: () {
-                    print('Clear button pressed');
-                    _controller.clear();
-                    widget.onChanged('');
-                  },
-                )
-              : null,
-          filled: true,
-          fillColor: isDark ? Colors.grey[800] : Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(pkColor.value)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(pkColor.value)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Color(pkColor.value)),
           ),
         ),
       ),

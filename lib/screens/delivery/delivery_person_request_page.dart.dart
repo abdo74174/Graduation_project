@@ -141,7 +141,8 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
             fontSize: 24,
             color: isDark ? Colors.white : Colors.black87,
           ),
-          iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+          iconTheme:
+              IconThemeData(color: isDark ? Colors.white : Colors.black87),
         ),
       ),
       child: Scaffold(
@@ -186,12 +187,13 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 80),
-                  if (_requestStatus != null) ...[                    
+                  if (_requestStatus != null) ...[
                     AnimatedContainer(
                       duration: Duration(milliseconds: 300),
                       child: Card(
                         elevation: 4,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                         color: isDark ? Colors.grey[800] : Colors.white,
                         child: Padding(
                           padding: const EdgeInsets.all(20),
@@ -201,7 +203,7 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                               Row(
                                 children: [
                                   Icon(
-                                    _requestStatus == 'Approved' 
+                                    _requestStatus == 'Approved'
                                         ? Icons.check_circle
                                         : _requestStatus == 'Rejected'
                                             ? Icons.cancel
@@ -219,20 +221,24 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20,
-                                      color: isDark ? Colors.white : Colors.black87,
+                                      color: isDark
+                                          ? Colors.white
+                                          : Colors.black87,
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 16),
                               Container(
-                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
                                 decoration: BoxDecoration(
-                                  color: (_requestStatus == 'Approved' 
-                                      ? Colors.green
-                                      : _requestStatus == 'Rejected'
-                                          ? Colors.red
-                                          : Colors.orange).withOpacity(0.1),
+                                  color: (_requestStatus == 'Approved'
+                                          ? Colors.green
+                                          : _requestStatus == 'Rejected'
+                                              ? Colors.red
+                                              : Colors.orange)
+                                      .withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -252,7 +258,8 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                               Text(
                                 'existing_request_message'.tr(),
                                 style: TextStyle(
-                                  color: isDark ? Colors.white70 : Colors.black54,
+                                  color:
+                                      isDark ? Colors.white70 : Colors.black54,
                                   fontSize: 15,
                                 ),
                               ),
@@ -264,18 +271,23 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            DeliveryPersonProfilePage(userId: widget.userId),
+                                            DeliveryPersonProfilePage(
+                                          userId: widget.userId,
+                                        ),
                                       ),
                                     );
                                   },
-                                  icon: Icon(Icons.person_outline),
-                                  label: Text('view_profile'.tr()),
+                                  icon: Icon(Icons.person_outline , color: Colors.white,),
+                                  label: Text('view_profile'.tr() , style: TextStyle(
+                                    color: Colors.white
+                                  ),),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: primaryColor,
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 32, vertical: 16),
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12)),
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
                                   ),
                                 ),
                               ),
@@ -284,7 +296,7 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                         ),
                       ),
                     ),
-                  ] else ...[                    
+                  ] else ...[
                     Form(
                       key: _formKey,
                       child: Column(
@@ -296,8 +308,8 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                 borderRadius: BorderRadius.circular(12)),
                             color: isDark ? Colors.grey[800] : Colors.white,
                             child: ExpansionTile(
-                              leading: Icon(Icons.info_outline,
-                                  color: primaryColor),
+                              leading:
+                                  Icon(Icons.info_outline, color: primaryColor),
                               title: Text(
                                 'job_instructions'.tr(),
                                 style: TextStyle(
@@ -311,12 +323,15 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                   child: Column(
                                     children: [
                                       Icon(Icons.delivery_dining,
-                                          size: 48, color: primaryColor.withOpacity(0.7)),
+                                          size: 48,
+                                          color: primaryColor.withOpacity(0.7)),
                                       SizedBox(height: 16),
                                       Text(
                                         'job_instructions_details'.tr(),
                                         style: TextStyle(
-                                          color: isDark ? Colors.white70 : Colors.black54,
+                                          color: isDark
+                                              ? Colors.white70
+                                              : Colors.black54,
                                           fontSize: 15,
                                           height: 1.5,
                                         ),
@@ -360,7 +375,9 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                       style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
-                                        color: isDark ? Colors.white : Colors.black87,
+                                        color: isDark
+                                            ? Colors.white
+                                            : Colors.black87,
                                       ),
                                     ),
                                   ],
@@ -373,7 +390,8 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                     prefixIcon: Icon(Icons.phone_outlined,
                                         color: primaryColor),
                                     border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12)),
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
                                     filled: true,
                                     fillColor: isDark
                                         ? Colors.grey[700]
@@ -387,8 +405,9 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                       ),
                                     ),
                                   ),
-                                  validator: (value) =>
-                                      value!.isEmpty ? 'phone_required'.tr() : null,
+                                  validator: (value) => value!.isEmpty
+                                      ? 'phone_required'.tr()
+                                      : null,
                                   keyboardType: TextInputType.phone,
                                 ),
                                 const SizedBox(height: 16),
@@ -399,7 +418,8 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                     prefixIcon: Icon(Icons.location_on_outlined,
                                         color: primaryColor),
                                     border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12)),
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
                                     filled: true,
                                     fillColor: isDark
                                         ? Colors.grey[700]
@@ -413,8 +433,9 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                       ),
                                     ),
                                   ),
-                                  validator: (value) =>
-                                      value!.isEmpty ? 'address_required'.tr() : null,
+                                  validator: (value) => value!.isEmpty
+                                      ? 'address_required'.tr()
+                                      : null,
                                 ),
                                 const SizedBox(height: 16),
                                 TextFormField(
@@ -424,7 +445,8 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                     prefixIcon: Icon(Icons.credit_card_outlined,
                                         color: primaryColor),
                                     border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(12)),
+                                        borderRadius:
+                                            BorderRadius.circular(12)),
                                     filled: true,
                                     fillColor: isDark
                                         ? Colors.grey[700]
@@ -485,7 +507,8 @@ class _DeliveryPersonRequestPageState extends State<DeliveryPersonRequestPage> {
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 40, vertical: 16),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12)),
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
                                       elevation: 2,
                                     ),
                                   ),

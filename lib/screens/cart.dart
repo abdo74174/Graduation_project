@@ -4,12 +4,18 @@ import 'package:graduation_project/Models/cart_model.dart' show CartModel;
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
+import 'package:graduation_project/screens/coupon_management.dart';
+import 'package:graduation_project/screens/coupon_management_page.dart';
 import 'package:graduation_project/screens/homepage.dart';
 import 'package:graduation_project/screens/payment/PaymentScreen.dart';
 import 'package:graduation_project/services/Cart/cart_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
+
 import 'package:easy_localization/easy_localization.dart';
+import 'dart:convert';
+
+import 'package:graduation_project/services/cuoponService.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -24,7 +30,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
   Map<int, ProductModel> productMap = {};
   final TextEditingController discountController = TextEditingController();
   double discountPercent = 0.0;
-  String appliedCode = 'SAVE100';
+  String appliedCode = '';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
@@ -87,29 +93,67 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
 
   double get total => subtotal * (1 - discountPercent);
 
-  void _applyDiscount() {
+  void _applyDiscount() async {
     String enteredCode = discountController.text.trim().toUpperCase();
-    if (enteredCode == 'SAVE100') {
-      setState(() {
-        discountPercent = 1;
-        appliedCode = enteredCode;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Text('Discount applied successfully!'),
-            ],
+    try {
+      final couponService = CouponService();
+      final coupon = await couponService.validateCoupon(enteredCode);
+
+      if (coupon != null) {
+        setState(() {
+          discountPercent = coupon['discountPercent'] / 100;
+          appliedCode = enteredCode;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Discount applied successfully!'.tr(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    } else {
+        );
+      } else {
+        setState(() {
+          discountPercent = 0.0;
+          appliedCode = '';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.error, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Invalid or expired coupon code'.tr(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error applying coupon: $e'); // Log for debugging
       setState(() {
         discountPercent = 0.0;
         appliedCode = '';
@@ -120,7 +164,13 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
             children: [
               Icon(Icons.error, color: Colors.white),
               SizedBox(width: 8),
-              Text('Invalid discount code'),
+              Expanded(
+                child: Text(
+                  'Expired Coupon.'.tr(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           backgroundColor: Colors.red,
@@ -243,56 +293,55 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: _buildAppBar(),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        shadowColor: Colors.black.withOpacity(0.1),
+        title: Text(
+          'my_cart'.tr(),
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            color: Color(0xFF1A1A1A),
+          ),
+        ),
+        centerTitle: true,
+        leading: Container(
+          margin: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+            color: Colors.grey[700],
+            onPressed: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const HomePage()),
+            ),
+          ),
+        ),
+        actions: [
+          Container(
+            margin: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: pkColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: IconButton(
+              icon: Icon(Icons.local_offer_outlined, color: pkColor),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Cuopon()),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: validCartItems.isEmpty
           ? _buildEmptyCart()
           : _buildCartContent(validCartItems.cast<MapEntry<int, CartItems>>()),
       bottomNavigationBar: validCartItems.isNotEmpty ? _buildBottomBar() : null,
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      shadowColor: Colors.black.withOpacity(0.1),
-      title: Text(
-        'my_cart'.tr(),
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
-          fontSize: 20,
-          color: Color(0xFF1A1A1A),
-        ),
-      ),
-      centerTitle: true,
-      leading: Container(
-        margin: EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          color: Colors.grey[700],
-          onPressed: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
-          ),
-        ),
-      ),
-      actions: [
-        Container(
-          margin: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: pkColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: IconButton(
-            icon: Icon(Icons.shopping_bag_outlined, color: pkColor),
-            onPressed: () {},
-          ),
-        ),
-      ],
     );
   }
 
@@ -715,6 +764,23 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
                 final isValid = await _validateStock();
                 if (!isValid) return;
 
+                if (appliedCode.isNotEmpty) {
+                  final couponService = CouponService();
+                  final success = await couponService.useCoupon(appliedCode);
+                  if (!success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Failed to use coupon'.tr()),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    );
+                    return;
+                  }
+                }
+
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -725,9 +791,13 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
                   ),
                 );
 
-                // Refresh cart after payment
                 if (result == true && mounted) {
                   await _loadEverything();
+                  setState(() {
+                    discountPercent = 0.0;
+                    appliedCode = '';
+                    discountController.clear();
+                  });
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -772,7 +842,8 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Product ${item.productId} has been removed as it is no longer available'),
+                  'Product ${item.productId} has been removed as it is no longer available'
+                      .tr()),
               backgroundColor: Colors.orange,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -789,8 +860,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                '${'Not enough stock for '.tr()}${product.name}${'. Available:'.tr()} ${product.StockQuantity}',
-              ),
+                  '${'Not enough stock for '.tr()}${product.name}${'. Available:'.tr()} ${product.StockQuantity}'),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(

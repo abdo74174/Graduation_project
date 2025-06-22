@@ -870,13 +870,83 @@
   "add_card_message": "Enter your card details to save it for future payments.",
   "add_card": "Add Card",
   "invalid_card_details": "Please enter valid card details.",
-  "card_add_failed": "Failed to add card: {0}"
+  "card_add_failed": "Failed to add card: {0}",
+  
+    "Work as Delivery": "Work as Delivery",
+    "Join our delivery team and earn extra income!": "Join our delivery team and earn extra income!",
+    "Apply Now": "Apply Now",
+    "Policies": "Policies",
+    "About Us": "About Us",
+    "Privacy Policy": "Privacy Policy",
+    "Refund Policy": "Refund Policy",
+    "Terms of Service": "Terms of Service",
+    "Get in touch": "Get in touch",
+    "© 2025 Loolia Closet Egypt | LANCÔME": "© 2025 Loolia Closet Egypt | LANCÔME",
+    "Secure payments by ": "Secure payments by ",
+    "VISA": "VISA",
+    "Chat With Us": "Chat With Us",
+    "Blood Pressure Monitors": "Blood Pressure Monitors",
+    "Blood Glucose Meters": "Blood Glucose Meters",
+    "Thermometers": "Thermometers",
+    "Wheelchairs": "Wheelchairs",
+    "guest": "Guest",
+    "Order Status": "Order Status",
+    "DeliveryPersonRequestPage": "Delivery Person Request Page",
+    "manage_assigned_orders": "Manage Assigned Orders",
+    "search_by_order_id": "Search by Order ID",
+    "all": "All",
+    "pending": "Pending",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "assigned": "Assigned",
+    "order_items": "Order Items",
+    "View All Installments": "View All Installments",
+    "Error applying coupon: Exception: Error validating coupon: DioException [bad response]: This exception was thrown because the response has a status code of 404 and RequestOptions.validateStatus was configured to throw for this status code.": "Error applying coupon: Exception: Error validating coupon: DioException [bad response]: This exception was thrown because the response has a status code of 404 and RequestOptions.validateStatus was configured to throw for this status code."
   
 
+    ,
+      "my_order_status": "My Order Status",
+      "track_manage_orders": "Track and manage your orders",
+      "other": "Other",
+      "error_fetching_orders": "Error fetching orders: {error}",
+      "shipped_status_confirmed_successfully": "Shipped status confirmed successfully",
+      "error_generic": "An error occurred: {error}",
+      "error_not_authorized": "Not authorized to confirm this order: {error}",
+      "error_not_awaiting_confirmation": "Order is not awaiting confirmation: {error}",
+      "error_order_not_found": "Order not found: {error}",
+ 
+      "confirm_shipped": "Confirm Shipped",
+      "error_title": "Error",
+    
+      "no_orders_matching_criteria": "No orders match the selected criteria",
+      "refresh": "Refresh",
 
+      "awaitinguserconfirmation": "Awaiting User Confirmation",
+      "awaitingdeliveryconfirmation": "Awaiting Delivery Confirmation"
+    
+,
 
+  "manage_coupons": "Manage Coupons",
+  "add_coupon": "Add Coupon",
+  "edit_coupon": "Edit Coupon",
+  "coupon_code": "Coupon Code",
+  "discount_percent": "Discount Percent",
+  "add": "Add",
+  "update": "Update",
+  "no_coupons_available": "No Coupons Available",
+
+  "delete_coupon": "Delete Coupon",
+  "delete_coupon_confirmation": "Are you sure you want to delete this coupon?",
+  "Error fetching coupons: {error}": "Error fetching coupons: {error}",
+  "Error: {error}": "Error: {error}",
+  "Please enter a valid coupon code and discount percentage": "Please enter a valid coupon code and discount percentage",
+  "Coupon added successfully": "Coupon added successfully",
+  "Coupon updated successfully": "Coupon updated successfully",
+  "Coupon deleted successfully": "Coupon deleted successfully",
+  "Failed to add coupon": "Failed to add coupon",
+  "Failed to update coupon": "Failed to update coupon",
+  "Failed to delete coupon": "Failed to delete coupon"
                                 
-                                                  
                                                 
                                               
                                               

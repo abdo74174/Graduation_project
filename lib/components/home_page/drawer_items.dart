@@ -16,6 +16,7 @@ import 'package:graduation_project/screens/userInfo/profile.dart';
 import 'package:graduation_project/screens/user_coupons.dart';
 import 'package:graduation_project/screens/user_products_page.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/services/USer/sign.dart';
 import 'drawer.dart';
 
 class DrawerItems extends StatefulWidget {
@@ -36,27 +37,46 @@ class DrawerItems extends StatefulWidget {
 
 class _DrawerItemsState extends State<DrawerItems> {
   int? userId;
+  final _userService = USerService();
+  bool isDelivery = false;
 
   @override
   void initState() {
     super.initState();
-    _loadUserId();
+    _loadUserId(); // Load userId and check delivery status
   }
 
   Future<void> _loadUserId() async {
     String? id = await UserServicee().getUserId();
-    setState(() {
-      if (id != null && id.isNotEmpty) {
-        try {
-          userId = int.parse(id);
-        } catch (e) {
-          debugPrint('Error parsing userId: $e');
+
+    if (id != null && id.isNotEmpty) {
+      try {
+        int parsedId = int.parse(id);
+        setState(() {
+          userId = parsedId;
+        });
+        checkIfDelivery(parsedId);
+      } catch (e) {
+        debugPrint('Error parsing userId: $e');
+        setState(() {
           userId = null;
-        }
-      } else {
-        userId = null;
+        });
       }
+    }
+  }
+
+  void checkIfDelivery(int userId) async {
+    bool result = await _userService.isDelivery(userId);
+
+    setState(() {
+      isDelivery = result;
     });
+
+    if (isDelivery) {
+      print("✅ User is a delivery person.");
+    } else {
+      print("❌ User is NOT a delivery person.");
+    }
   }
 
   @override
@@ -87,14 +107,6 @@ class _DrawerItemsState extends State<DrawerItems> {
       case DrawerType.main:
         items.addAll([
           ListTile(
-            leading: const Icon(Icons.phone),
-            title: Text('drawer.contact_us'.tr()),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ContactUsPage()),
-            ),
-          ),
-          ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
             title: Text('drawer.my_products'.tr()),
             onTap: () => Navigator.push(
@@ -104,39 +116,37 @@ class _DrawerItemsState extends State<DrawerItems> {
           ),
           ListTile(
             leading: const Icon(Icons.inventory_2_outlined),
-            title: Text('UserOrderStatusPage'.tr()),
+            title: Text('Order Status'.tr()),
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => userId != null
-                      ? UserOrderStatusPage(userId: userId!)
-                      : const Center(child: Text('User ID not available'))),
-            ),
-          ),
-          ListTile(
-            leading: const Icon(Icons.inventory_2_outlined),
-            title: Text('DeliveryPersonRequestPage'.tr()),
-            onTap: userId != null
-                ? () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DeliveryPersonProfilePage(
-                          userId: userId!,
-                        ),
-                      ),
-                    )
-                : null,
-          ),
-          ListTile(
-            leading: const Icon(Icons.inventory_2_outlined),
-            title: Text('DonationProduct'.tr()),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const DonationProductsScreen(),
+                builder: (context) => userId != null
+                    ? UserOrderStatusPage(userId: userId!)
+                    : const Center(child: Text('User ID not available')),
               ),
             ),
           ),
+          ListTile(
+            leading: const Icon(Icons.phone),
+            title: Text('drawer.contact_us'.tr()),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ContactUsPage()),
+            ),
+          ),
+          if (isDelivery && userId != null)
+            ListTile(
+              leading: const Icon(Icons.delivery_dining),
+              title: Text('DeliveyProfile'.tr()),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DeliveryPersonProfilePage(
+                    userId: userId!,
+                  ),
+                ),
+              ),
+            ),
         ]);
         break;
 
@@ -164,18 +174,6 @@ class _DrawerItemsState extends State<DrawerItems> {
               MaterialPageRoute(builder: (context) => const UserProductsPage()),
             ),
           ),
-          if (userId != null)
-            ListTile(
-              leading: const Icon(Icons.card_giftcard),
-              title: Text('drawer.my_coupons'.tr()),
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => UserCouponsPage(
-                          userId: userId.toString(),
-                        )),
-              ),
-            ),
         ]);
         break;
 

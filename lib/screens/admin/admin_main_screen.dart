@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:graduation_project/screens/coupon_management.dart';
 import 'package:graduation_project/screens/contact_us/messages_list_page.dart';
+import 'package:graduation_project/screens/coupon_management_page.dart';
 import 'package:graduation_project/screens/delivery/admin_dashboard_page.dart.dart';
 import 'package:graduation_project/screens/delivery/user_order_confirmation_page.dart';
 import 'package:graduation_project/screens/pr_cat_sub.dart/addCatandSub.dart';
@@ -469,7 +469,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       },
       {
         'icon': Icons.admin_panel_settings_outlined,
-        'title': 'Assign Admin'.tr(),
+        'title': 'Manage Uesr Role'.tr(),
         'onTap': () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => CustomersPage()),
@@ -488,7 +488,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
         'title': 'Manage Coupons'.tr(),
         'onTap': () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => CouponManagementPage()),
+              MaterialPageRoute(builder: (_) => Cuopon()),
             ),
       },
       {
@@ -502,10 +502,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       {
         'icon': Icons.delivery_dining_outlined,
         'title': 'Delivery Dashboard'.tr(),
-        'onTap': () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => AdminDashboardPage()),
-            ),
+        'onTap': () {
+          Navigator.push(context, MaterialPageRoute(builder: (Context) {
+            return AdminDashboardPage();
+          }));
+        }
       },
     ];
   }

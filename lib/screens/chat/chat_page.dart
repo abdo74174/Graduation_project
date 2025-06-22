@@ -71,6 +71,7 @@ class _ChatPageState extends State<ChatPage> {
 
     return Scaffold(
       appBar: AppBar(
+
         title: Text(
           widget.contactName,
           style: const TextStyle(

@@ -312,7 +312,7 @@ class _CategoryScreenState extends State<CategoryScreen>
                                             ? Theme.of(context).primaryColor
                                             : isDark
                                                 ? Colors.white24
-                                                : Colors.black12,
+                                                : Colors.black,
                                         subCategory:
                                             filteredSubCategories[index],
                                         onTap: () {
@@ -528,7 +528,7 @@ class _CustomProductTileState extends State<CustomProductTile> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                        color: Color(0xff003F5C),
                       ),
                     ),
                     const SizedBox(height: 4),

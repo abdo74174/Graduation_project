@@ -254,6 +254,39 @@ class OrderService {
     }
   }
 
+  Future<void> confirmOrderShippedByUser(int orderId, int userId) async {
+    try {
+      if (orderId <= 0) throw Exception('Invalid orderId: $orderId');
+      if (userId <= 0) throw Exception('Invalid userId: $userId');
+
+      final response = await _dio.put(
+        '$_baseUrl/$orderId/user-confirm-shipped',
+        queryParameters: {
+          'userId': userId,
+        },
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception(
+            'Failed to confirm shipped status: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      String errorMsg =
+          'Network error in confirmOrderShippedByUser: ${e.message}';
+      if (e.response != null) {
+        errorMsg += ' (Status: ${e.response?.statusCode})';
+        if (e.response?.statusCode == 403) {
+          errorMsg = 'You are not authorized to confirm this order.';
+        } else if (e.response?.statusCode == 400) {
+          errorMsg = 'Order is not awaiting user confirmation.';
+        }
+      }
+      throw Exception(errorMsg);
+    } catch (e) {
+      throw Exception('Failed to confirm shipped status: $e');
+    }
+  }
+
   Future<void> confirmOrderDelivery(int orderId, bool isDelivered) async {
     try {
       if (orderId <= 0) throw Exception('Invalid orderId: $orderId');

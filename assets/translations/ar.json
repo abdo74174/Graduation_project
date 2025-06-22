@@ -820,10 +820,77 @@
   "Assign Delivery:": "تعيين المندوب:",
   "Select Delivery Person": "اختر مندوب التوصيل"
 
-  
-    
-  
-                    
+  ,
+    "Work as Delivery": "اعمل كسائق توصيل",
+    "Join our delivery team and earn extra income!": "انضم إلى فريق التوصيل الخاص بنا واكسب دخلاً إضافيًا!",
+    "Apply Now": "تقدم الآن",
+    "Policies": "السياسات",
+    "About Us": "معلومات عنا",
+    "Privacy Policy": "سياسة الخصوصية",
+    "Refund Policy": "سياسة الاسترداد",
+    "Terms of Service": "شروط الخدمة",
+    "Get in touch": "تواصل معنا",
+    "© 2025 Loolia Closet Egypt | LANCÔME": "© 2025 لوليا كلوسيت مصر | لانكوم",
+    "Secure payments by ": "مدفوعات آمنة بواسطة ",
+    "VISA": "فيزا",
+    "Chat With Us": "تحدث معنا",
+ 
+    "Thermometers": "مقاييس الحرارة",
+    "Wheelchairs": "كراسي متحركة",
+    "guest": "ضيف",
+    "Order Status": "حالة الطلب",
+    "DeliveryPersonRequestPage": "صفحة طلب سائق التوصيل",
+    "manage_assigned_orders": "إدارة الطلبات المعينة",
+    "search_by_order_id": "البحث حسب معرف الطلب",
+    "all": "الكل",
+    "pending": "قيد الانتظار",
+    "delivered": "تم التوصيل",
+    "cancelled": "ملغى",
+    "assigned": "معين",
+    "order_items": "عناصر الطلب",
+    "View All Installments": "عرض جميع الأقساط",
+    "Error applying coupon: Exception: Error validating coupon: DioException [bad response]: This exception was thrown because the response has a status code of 404 and RequestOptions.validateStatus was configured to throw for this status code.": "خطأ في تطبيق الكوبون: استثناء: خطأ في التحقق من الكوبون: استثناء Dio [استجابة سيئة]: تم إلقاء هذا الاستثناء لأن الاستجابة تحتوي على رمز حالة 404 وتم تهيئة RequestOptions.validateStatus لإلقاء استثناء لهذا الرمز."
+,
+
+  "my_order_status": "حالة طلباتي",
+  "track_manage_orders": "تتبع وإدارة طلباتك",
+  "other": "أخرى",
+  "error_fetching_orders": "خطأ في جلب الطلبات: {error}",
+  "shipped_status_confirmed_successfully": "تم تأكيد حالة الشحن بنجاح",
+  "error_generic": "حدث خطأ: {error}",
+  "error_not_authorized": "غير مصرح لك بتأكيد هذا الطلب: {error}",
+  "error_not_awaiting_confirmation": "الطلب ليس في انتظار التأكيد: {error}",
+  "error_order_not_found": "الطلب غير موجود: {error}",
+ 
+  "confirm_shipped": "تأكيد الشحن",
+  "error_title": "خطأ",
+  "no_orders_matching_criteria": "لا توجد طلبات تطابق المعايير",
+  "refresh": "تحديث",
+
+  "awaitinguserconfirmation": "في انتظار تأكيد المستخدم",
+  "awaitingdeliveryconfirmation": "في انتظار تأكيد التوصيل",
+
+    "manage_coupons": "إدارة الكوبونات",
+    "add_coupon": "إضافة كوبون",
+    "edit_coupon": "تعديل الكوبون",
+    "coupon_code": "كود الكوبون",
+    "discount_percent": "نسبة الخصم",
+
+    "add": "إضافة",
+    "update": "تحديث",
+    "no_coupons_available": "لا توجد كوبونات متاحة",
+
+    "delete_coupon": "حذف الكوبون",
+    "delete_coupon_confirmation": "هل أنت متأكد أنك تريد حذف هذا الكوبون؟",
+    "Error fetching coupons: {error}": "خطأ في جلب الكوبونات: {error}",
+    "Error: {error}": "خطأ: {error}",
+    "Please enter a valid coupon code and discount percentage": "يرجى إدخال كود كوبون صالح ونسبة خصم",
+    "Coupon added successfully": "تم إضافة الكوبون بنجاح",
+    "Coupon updated successfully": "تم تحديث الكوبون بنجاح",
+    "Coupon deleted successfully": "تم حذف الكوبون بنجاح",
+    "Failed to add coupon": "فشل في إضافة الكوبون",
+    "Failed to update coupon": "فشل في تحديث الكوبون",
+    "Failed to delete coupon": "فشل في حذف الكوبون"
                   
                 
               

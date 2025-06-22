@@ -240,7 +240,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final isEditing = widget.product != null;
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           isEditing ? "Edit Product".tr() : "Add New Product".tr(),
           style: TextStyle(
@@ -256,7 +258,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: theme.primaryColor))
+          ? Center(child: CircularProgressIndicator(color: pkColor))
           : Container(
               decoration: BoxDecoration(
                 color: isDark ? Colors.grey[900] : Colors.grey[50],
@@ -397,7 +399,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     _installmentAvailable = value ?? false;
                                   });
                                 },
-                                activeColor: theme.primaryColor,
+                                activeColor:pkColor,
                               ),
                             ],
                           ),
@@ -451,7 +453,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     )
                                   : Text("Generate AI Description".tr()),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: theme.primaryColor,
+                                backgroundColor:pkColor,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                     vertical: 12, horizontal: 16),
@@ -526,7 +528,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       child: ElevatedButton(
                         onPressed: _isSubmitting ? null : _submitForm,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.primaryColor,
+                          backgroundColor:pkColor,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -579,7 +581,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             width: 4,
             height: 20,
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
+              color: pkColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -589,7 +591,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Theme.of(context).primaryColor,
+              color: pkColor
+              ,
             ),
           ),
         ],
@@ -607,7 +610,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: theme.textTheme.bodyLarge?.color,
+            color: pkColor,
           ),
         ),
         const SizedBox(height: 8),
@@ -628,7 +631,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               border: Border.all(
-                color: isDonation ? theme.primaryColor : Colors.grey[300]!,
+                color: isDonation ? pkColor
+
+                    : Colors.grey[300]!,
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(12),
@@ -640,7 +645,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   isDonation
                       ? Icons.volunteer_activism
                       : Icons.volunteer_activism_outlined,
-                  color: isDonation ? theme.primaryColor : Colors.grey[600],
+                  color: isDonation ? pkColor : Colors.grey[600],
                   size: 24,
                 ),
                 const SizedBox(width: 12),
@@ -656,7 +661,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: isDonation
-                              ? theme.primaryColor
+                              ?pkColor
                               : Colors.grey[800],
                         ),
                       ),
@@ -673,7 +678,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 ),
                 Icon(
                   isDonation ? Icons.check_circle : Icons.circle_outlined,
-                  color: isDonation ? theme.primaryColor : Colors.grey[600],
+                  color: isDonation ? pkColor : Colors.grey[600],
                   size: 20,
                 ),
               ],
@@ -731,25 +736,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? theme.primaryColor : Colors.grey[300]!,
+            color: isSelected ? pkColor : Colors.grey[300]!,
             width: 2,
           ),
           borderRadius: BorderRadius.circular(8),
-          color: isSelected ? theme.primaryColor.withOpacity(0.1) : null,
+          color: isSelected ? pkColor.withOpacity(0.1) : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              color: isSelected ? theme.primaryColor : Colors.grey[600],
+              color: isSelected ? pkColor: Colors.grey[600],
               size: 28,
             ),
             const SizedBox(height: 8),
             Text(
               status,
               style: TextStyle(
-                color: isSelected ? theme.primaryColor : Colors.grey[800],
+                color: isSelected ? pkColor : Colors.grey[800],
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -779,7 +784,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).primaryColor,
+                      color: pkColor
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -801,7 +806,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             _isReturnAgreementAccepted = value ?? false;
                           });
                         },
-                        activeColor: Theme.of(context).primaryColor,
+                        activeColor: pkColor,
                       ),
                       Expanded(
                         child: Text(
@@ -819,7 +824,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           ? () => Navigator.pop(context)
                           : null,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
+                        backgroundColor: pkColor,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -1216,9 +1221,9 @@ class ImageUploadSection extends StatelessWidget {
                 height: 100,
                 decoration: BoxDecoration(
                   border: Border.all(
-                      color: theme.primaryColor.withOpacity(0.5), width: 1),
+                      color: pkColor.withOpacity(0.5), width: 1),
                   borderRadius: BorderRadius.circular(12),
-                  color: theme.primaryColor.withOpacity(0.05),
+                  color: pkColor.withOpacity(0.05),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1226,13 +1231,13 @@ class ImageUploadSection extends StatelessWidget {
                     Icon(
                       Icons.add_photo_alternate_outlined,
                       size: 36,
-                      color: theme.primaryColor,
+                      color: pkColor,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       "Add Images".tr(),
                       style: TextStyle(
-                        color: theme.primaryColor,
+                        color: pkColor,
                         fontSize: 12,
                       ),
                     ),

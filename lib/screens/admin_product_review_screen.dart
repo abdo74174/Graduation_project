@@ -77,15 +77,17 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
+
+        centerTitle: true,
         title: Text(
           'Review Products'.tr(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black87,
+            color: isDark ? Colors.white : Colors.white,
           ),
         ),
         backgroundColor:
-            isDark ? theme.appBarTheme.backgroundColor : Colors.white,
+            isDark ? theme.appBarTheme.backgroundColor : pkColor,
         iconTheme: IconThemeData(
           color: isDark ? Colors.white : Colors.black87,
         ),

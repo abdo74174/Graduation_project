@@ -99,6 +99,7 @@ class _ChatListPageState extends State<ChatListPage> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           "Chats".tr(),
           style: TextStyle(

@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/components/productc/product.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/pr_cat_sub.dart/add_product.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
@@ -181,12 +182,13 @@ class _UserProductsPageState extends State<UserProductsPage> {
     return Scaffold(
       backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           'My Products'.tr(),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
-            color: isDark ? Colors.white : Colors.black87,
+            color: isDark ? Colors.white : Colors.black,
           ),
         ),
         backgroundColor: isDark ? Colors.grey[900] : Colors.white,
@@ -218,7 +220,7 @@ class _UserProductsPageState extends State<UserProductsPage> {
             MaterialPageRoute(builder: (context) => const AddProductScreen()),
           ).then((_) => _loadUserProducts());
         },
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: pkColor,
         elevation: 4,
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),

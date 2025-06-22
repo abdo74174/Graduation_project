@@ -153,6 +153,29 @@ class USerService {
     }
   }
 
+  Future<bool> isDelivery(int userId) async {
+    try {
+      final response = await dio.get('/IsDelvirey/$userId');
+
+      if (response.statusCode == 200) {
+        // ✅ User is a delivery person
+        return true;
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        // ❌ User is not a delivery person
+        return false;
+      } else {
+        // 🔴 Unexpected error
+        print('Error: ${e.message}');
+      }
+    } catch (e) {
+      print('Unexpected error: $e');
+    }
+
+    return false; // Default fallback
+  }
+
   Future<void> signup({
     required String name,
     required String email,
@@ -254,7 +277,10 @@ class USerService {
       );
 
       if (response.statusCode == 200) {
+        // final token = response.data['token'];
         final token = response.data['token'];
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwt_token', token);
         final kindOfWork = response.data['kindOfWork'];
         final medicalSpecialist = response.data['medicalSpecialist'];
         final isAdmin = response.data['isAdmin'];

@@ -278,8 +278,9 @@ class _ProductPageState extends State<ProductPage> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 20, vertical: 10),
                             decoration: BoxDecoration(
-                              color:
-                                  widget.product.isNew ? pkColor : Colors.black,
+                              color: widget.product.isNew
+                                  ? Color(0xff4CAF50)
+                                  : Color(0xff607D8B),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -414,7 +415,12 @@ class _ProductPageState extends State<ProductPage> {
                     Center(
                       child: ElevatedButton(
                         onPressed: _submitRating,
-                        child: Text('Submit'.tr()),
+                        child: Text(
+                          'Submit'.tr(),
+                          style: TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: pkColor,
                           padding: EdgeInsets.symmetric(
@@ -525,7 +531,7 @@ class _ProductPageState extends State<ProductPage> {
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                                  color: pTexColor,
                                   decoration: TextDecoration.lineThrough,
                                   decorationColor: Colors.red,
                                   decorationThickness: 2,
@@ -534,7 +540,7 @@ class _ProductPageState extends State<ProductPage> {
                             : Text(
                                 "No Discount",
                                 style: TextStyle(
-                                  color: Colors.grey,
+                                  color: pTexColor,
                                 ),
                               ),
                         Text(
@@ -542,7 +548,7 @@ class _ProductPageState extends State<ProductPage> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.grey : Colors.black,
+                            color: isDark ? Colors.grey : pTexColor,
                           ),
                         ),
                       ],

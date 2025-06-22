@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:graduation_project/Models/order_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
-import 'package:graduation_project/services/elivery_person_service.dart';
 import 'package:graduation_project/services/order/order_service.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -17,8 +16,6 @@ class UserOrderStatusPage extends StatefulWidget {
 class _UserOrderStatusPageState extends State<UserOrderStatusPage>
     with TickerProviderStateMixin {
   final OrderService _orderService = OrderService();
-  final DeliveryPersonService _deliveryPersonService = DeliveryPersonService();
-  int? _deliveryPersonId;
   List<OrderModel> _orders = [];
   List<OrderModel> _filteredOrdersShipped = [];
   List<OrderModel> _filteredOrdersOther = [];
@@ -36,6 +33,8 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
     'Delivered',
     'Cancelled',
     'Assigned',
+    'AwaitingUserConfirmation',
+    'AwaitingDeliveryConfirmation',
   ];
   late TabController _tabController;
   late AnimationController _fadeController;
@@ -92,37 +91,15 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       }
       print("===== Fetching Data for User ID: ${widget.userId} =====");
 
-      final deliveryList = await _deliveryPersonService
-          .fetchDeliveryPersonInfoById(widget.userId);
-      DeliveryPersonRequestModel? profile;
-      int? fetchedDeliveryPersonId;
-
-      if (deliveryList != null && deliveryList.isNotEmpty) {
-        profile = deliveryList.first;
-        fetchedDeliveryPersonId = profile.userId;
-        print("Delivery Person ID: $fetchedDeliveryPersonId");
-        print("Delivery Person Profile: ${profile.toString()}");
-      } else {
-        print("No delivery person found for userId ${widget.userId}");
-      }
-
-      List<OrderModel> orders = [];
-      try {
-        orders = await _orderService.getOrdersByforUserbyUserId(widget.userId);
-        print('Orders fetched for userId ${widget.userId}: ${orders.map((o) => {
-              'id': o.orderId,
-              'status': o.status
-            }).toList()}');
-      } catch (e) {
-        print('Error fetching orders: $e');
-        setState(() {
-          _errorMessage =
-              'error_fetching_orders'.tr(namedArgs: {'error': e.toString()});
-        });
-      }
+      // Fetch orders for the user
+      final orders =
+          await _orderService.getOrdersByforUserbyUserId(widget.userId);
+      print('Orders fetched for userId ${widget.userId}: ${orders.map((o) => {
+            'id': o.orderId,
+            'status': o.status
+          }).toList()}');
 
       setState(() {
-        _deliveryPersonId = fetchedDeliveryPersonId;
         _orders = orders;
         _selectedStatus = 'All';
         print('Unfiltered Orders: ${orders.map((o) => {
@@ -136,43 +113,33 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       print('Error fetching data: $e');
       setState(() {
         _errorMessage =
-            'error_fetching_profile'.tr(namedArgs: {'error': e.toString()});
+            'error_fetching_orders'.tr(namedArgs: {'error': e.toString()});
         _isLoading = false;
       });
     }
   }
 
-  Future<void> _updateOrderStatus(int orderId, String newStatus) async {
-    if (_deliveryPersonId == null) {
-      setState(() {
-        _errorMessage = 'error_delivery_person_id_not_found'.tr();
-      });
-      return;
-    }
-
+  Future<void> _confirmShipped(int orderId) async {
     setState(() {
       _isUpdatingStatus = true;
       _errorMessage = '';
     });
 
     try {
-      print(
-          "Updating order ID $orderId to status: $newStatus by deliveryPersonId: $_deliveryPersonId");
-      await _orderService.updateOrderStatus(
-          orderId, _deliveryPersonId!, newStatus);
+      print("User confirming shipped status for order ID $orderId");
+      await _orderService.confirmOrderShippedByUser(orderId, widget.userId);
       await _fetchData();
       setState(() {
         _isUpdatingStatus = false;
       });
 
-      // Show success snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
               const Icon(Icons.check_circle, color: Colors.white),
               const SizedBox(width: 8),
-              Text('Order status updated successfully'),
+              Text('shipped_status_confirmed_successfully'.tr()),
             ],
           ),
           backgroundColor: Colors.green,
@@ -184,13 +151,13 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
     } catch (e) {
       String errorKey = 'error_generic';
       if (e.toString().contains('Status: 403')) {
-        errorKey = 'error_not_assigned';
+        errorKey = 'error_not_authorized';
       } else if (e.toString().contains('Status: 400')) {
-        errorKey = 'error_invalid_status';
+        errorKey = 'error_not_awaiting_confirmation';
       } else if (e.toString().contains('Status: 404')) {
         errorKey = 'error_order_not_found';
       }
-      print('Error updating order status: $e');
+      print('Error confirming shipped status: $e');
       setState(() {
         _errorMessage = errorKey.tr(namedArgs: {'error': e.toString()});
         _isUpdatingStatus = false;
@@ -333,7 +300,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
                       ),
                     ),
                     Text(
-                      'Track and manage your orders',
+                      'track_manage_orders'.tr(),
                       style: TextStyle(
                         fontSize: 14,
                         color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -681,7 +648,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Order Items',
+                      'order_items'.tr(),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -785,75 +752,69 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
                       );
                     }).toList(),
                     const SizedBox(height: 16),
-                    Container(
-                      width: double.infinity,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Theme.of(context).primaryColor,
-                            Theme.of(context).primaryColor.withOpacity(0.8),
+                    if (order.status == 'AwaitingUserConfirmation' &&
+                        !order.userConfirmedShipped)
+                      Container(
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blue,
+                              Colors.blue.withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Theme.of(context).primaryColor.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
-                          onTap: _isUpdatingStatus
-                              ? null
-                              : () {
-                                  final newStatus =
-                                      isShippedTab ? 'Processing' : 'Shipped';
-                                  _updateOrderStatus(order.orderId, newStatus);
-                                },
-                          child: Container(
-                            alignment: Alignment.center,
-                            child: _isUpdatingStatus
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        isShippedTab
-                                            ? Icons.undo
-                                            : Icons.local_shipping,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: _isUpdatingStatus
+                                ? null
+                                : () => _confirmShipped(order.orderId),
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _isUpdatingStatus
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
                                         color: Colors.white,
-                                        size: 20,
+                                        strokeWidth: 2,
                                       ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        isShippedTab
-                                            ? 'mark_as_not_shipped'.tr()
-                                            : 'mark_as_shipped'.tr(),
-                                        style: const TextStyle(
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.check,
                                           color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
+                                          size: 20,
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'confirm_shipped'.tr(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -892,6 +853,14 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       case 'assigned':
         chipColor = Colors.teal;
         icon = Icons.assignment;
+        break;
+      case 'awaitinguserconfirmation':
+        chipColor = Colors.amber;
+        icon = Icons.hourglass_top;
+        break;
+      case 'awaitingdeliveryconfirmation':
+        chipColor = Colors.cyan;
+        icon = Icons.hourglass_bottom;
         break;
       default:
         chipColor = Colors.grey;
@@ -1017,7 +986,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
           ),
           const SizedBox(height: 24),
           Text(
-            'Oops! Something went wrong',
+            'error_title'.tr(),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -1148,7 +1117,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
           ),
           const SizedBox(height: 8),
           Text(
-            'You don\'t have any orders matching your criteria',
+            'no_orders_matching_criteria'.tr(),
             style: TextStyle(
               fontSize: 14,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -1183,7 +1152,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Refresh',
+                        'refresh'.tr(),
                         style: TextStyle(
                           color: isDark ? Colors.grey[300] : Colors.grey[700],
                           fontSize: 14,

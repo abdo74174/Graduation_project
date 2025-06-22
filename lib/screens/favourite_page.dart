@@ -14,7 +14,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:graduation_project/Models/category_model.dart';
 
 // Define pkColor if not present in constant.dart
-const Color pkColor = Colors.blue;
+// const Color pkColor = Colors.blue;
 const String defaultProductImage = 'assets/images/placeholder.png';
 
 class FavouritePage extends StatefulWidget {
@@ -421,17 +421,17 @@ class _FavoritePageState extends State<FavouritePage>
   Widget _buildAppBar() {
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            pkColor,
-            Theme.of(context).colorScheme.primary.withOpacity(0.8),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        // gradient: LinearGradient(
+        //   colors: [
+        //     pkColor,
+        //     Theme.of(context).colorScheme.primary.withOpacity(0.8),
+        //   ],
+        //   begin: Alignment.topLeft,
+        //   end: Alignment.bottomRight,
+        // ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.white,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -445,7 +445,7 @@ class _FavoritePageState extends State<FavouritePage>
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
                     onPressed: () => Navigator.of(context).pop(),
                   ),
                   Expanded(
@@ -458,17 +458,16 @@ class _FavoritePageState extends State<FavouritePage>
                             child: TextField(
                               controller: _searchController,
                               autofocus: true,
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.black),
                               decoration: InputDecoration(
                                 hintText: 'Search favourites...'.tr(),
-                                hintStyle:
-                                    const TextStyle(color: Colors.white70),
+                                hintStyle: const TextStyle(color: Colors.black),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 20, vertical: 15),
                                 suffixIcon: IconButton(
                                   icon: const Icon(Icons.clear,
-                                      color: Colors.white),
+                                      color: Colors.black),
                                   onPressed: () {
                                     _searchController.clear();
                                     setState(() => isSearchExpanded = false);
@@ -483,7 +482,7 @@ class _FavoritePageState extends State<FavouritePage>
                                 .textTheme
                                 .titleLarge
                                 ?.copyWith(
-                                  color: Colors.white,
+                                  color: Colors.black,
                                   fontWeight: FontWeight.bold,
                                 ),
                           ),
@@ -491,7 +490,7 @@ class _FavoritePageState extends State<FavouritePage>
                   IconButton(
                     icon: Icon(
                       isSearchExpanded ? Icons.search_off : Icons.search,
-                      color: Colors.white,
+                      color: Colors.black,
                     ),
                     onPressed: () {
                       setState(() {
@@ -501,7 +500,7 @@ class _FavoritePageState extends State<FavouritePage>
                     },
                   ),
                   IconButton(
-                    icon: const Icon(Icons.tune, color: Colors.white),
+                    icon: const Icon(Icons.tune, color: Colors.black),
                     onPressed: _toggleSidebar,
                   ),
                 ],
@@ -514,7 +513,7 @@ class _FavoritePageState extends State<FavouritePage>
                     Text(
                       '${filteredFavourites.length} ${'items'.tr()}',
                       style: const TextStyle(
-                        color: Colors.white70,
+                        color: Colors.black,
                         fontSize: 14,
                       ),
                     ),
@@ -526,7 +525,7 @@ class _FavoritePageState extends State<FavouritePage>
                             sortAscending
                                 ? Icons.arrow_upward
                                 : Icons.arrow_downward,
-                            color: Colors.white,
+                            color: Colors.black,
                             size: 20,
                           ),
                           onPressed: () => _sortItems(!sortAscending),
@@ -536,7 +535,7 @@ class _FavoritePageState extends State<FavouritePage>
                               ? 'Low to High'.tr()
                               : 'High to Low'.tr(),
                           style: const TextStyle(
-                            color: Colors.white70,
+                            color: Colors.black,
                             fontSize: 12,
                           ),
                         ),
@@ -1033,27 +1032,28 @@ class _FavoritePageState extends State<FavouritePage>
                               fit: BoxFit.cover,
                             ),
                     ),
-                    if (item.isNew != null)
-                      Positioned(
-                        top: 12,
-                        left: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: item.isNew! ? Colors.green : Colors.orange,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            item.isNew! ? 'NEW' : 'USED',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: item.isNew
+                              ? Color(0xff4CAF50)
+                              : Color(0xff607D8B),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          item.isNew! ? 'NEW' : 'USED',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
+                    ),
                     Positioned(
                       top: 12,
                       right: 12,

@@ -19,9 +19,11 @@ Future<T> debugTryCatch<T>(Future<T> Function() block, String context) async {
 class AdminDeliveryService {
   static final String _baseUrl = baseUri;
 
-  Future<List<OrderModel>> GetAllOrders() async {
+  Future<List<OrderModel>> getAllOrders(
+      {int page = 1, int pageSize = 20}) async {
     return await debugTryCatch(() async {
-      final uri = Uri.parse('${_baseUrl}DeliveryPersonAdmin/orders');
+      final uri = Uri.parse(
+          '${_baseUrl}DeliveryPersonAdmin/orders?page=$page&pageSize=$pageSize');
       if (kDebugMode) debugPrint('➡️ [GET] $uri');
       final response = await http.get(uri);
       if (kDebugMode)
@@ -31,12 +33,13 @@ class AdminDeliveryService {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => OrderModel.fromJson(json)).toList();
       } else {
-        throw Exception('Failed to load orders: ${response.statusCode}');
+        throw Exception(
+            'Failed to load orders: ${response.statusCode} - ${response.body}');
       }
     }, 'GetAllOrders');
   }
 
-  Future<List<DeliveryPersonModel>> GetAvailableDeliveryPersons(
+  Future<List<DeliveryPersonModel>> getAvailableDeliveryPersons(
       String address) async {
     return await debugTryCatch(() async {
       final uri = Uri.parse(
@@ -51,12 +54,12 @@ class AdminDeliveryService {
         return data.map((json) => DeliveryPersonModel.fromJson(json)).toList();
       } else {
         throw Exception(
-            'Failed to load delivery persons: ${response.statusCode}');
+            'Failed to load delivery persons: ${response.statusCode} - ${response.body}');
       }
     }, 'GetAvailableDeliveryPersons');
   }
 
-  Future<List<DeliveryPersonRequestModel>> GetDeliveryPersonRequests() async {
+  Future<List<DeliveryPersonRequestModel>> getDeliveryPersonRequests() async {
     return await debugTryCatch(() async {
       final uri = Uri.parse('${_baseUrl}DeliveryPersonAdmin/requests');
       if (kDebugMode) debugPrint('➡️ [GET] $uri');
@@ -70,12 +73,13 @@ class AdminDeliveryService {
             .map((json) => DeliveryPersonRequestModel.fromJson(json))
             .toList();
       } else {
-        throw Exception('Failed to load requests: ${response.statusCode}');
+        throw Exception(
+            'Failed to load requests: ${response.statusCode} - ${response.body}');
       }
     }, 'GetDeliveryPersonRequests');
   }
 
-  Future<Map<String, dynamic>> GetOrderStatistics() async {
+  Future<Map<String, dynamic>> getOrderStatistics() async {
     return await debugTryCatch(() async {
       final uri = Uri.parse('${_baseUrl}DeliveryPersonAdmin/statistics');
       if (kDebugMode) debugPrint('➡️ [GET] $uri');
@@ -87,12 +91,12 @@ class AdminDeliveryService {
         return Map<String, dynamic>.from(jsonDecode(response.body));
       } else {
         throw Exception(
-            'Failed to load order statistics: ${response.statusCode}');
+            'Failed to load order statistics: ${response.statusCode} - ${response.body}');
       }
     }, 'GetOrderStatistics');
   }
 
-  Future<void> HandleDeliveryPersonRequest(int requestId, String action) async {
+  Future<void> handleDeliveryPersonRequest(int requestId, String action) async {
     return await debugTryCatch(() async {
       final uri = Uri.parse(
           '${_baseUrl}DeliveryPersonAdmin/request/$requestId?action=$action');
@@ -101,13 +105,16 @@ class AdminDeliveryService {
       if (kDebugMode)
         debugPrint('⬅️ Response (${response.statusCode}): ${response.body}');
 
-      if (response.statusCode != 204) {
-        throw Exception('Failed to handle request: ${response.statusCode}');
+      if (response.statusCode == 204) {
+        return;
+      } else {
+        throw Exception(
+            'Failed to handle request: ${response.statusCode} - ${response.body}');
       }
     }, 'HandleDeliveryPersonRequest');
   }
 
-  Future<void> AssignDeliveryPerson(int orderId, int deliveryPersonId) async {
+  Future<void> assignDeliveryPerson(int orderId, int deliveryPersonId) async {
     return await debugTryCatch(() async {
       final uri = Uri.parse('${_baseUrl}DeliveryPersonAdmin/assign-order');
       final headers = {'Content-Type': 'application/json'};
@@ -127,9 +134,11 @@ class AdminDeliveryService {
       if (kDebugMode)
         debugPrint('⬅️ Response (${response.statusCode}): ${response.body}');
 
-      if (response.statusCode != 204) {
+      if (response.statusCode == 204) {
+        return;
+      } else {
         throw Exception(
-            'Failed to assign delivery person: ${response.statusCode}');
+            'Failed to assign delivery person: ${response.statusCode} - ${response.body}');
       }
     }, 'AssignDeliveryPerson');
   }

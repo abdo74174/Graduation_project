@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:graduation_project/services/contact_us.dart/contact_us.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -195,17 +196,17 @@ class _ContactUsPageState extends State<ContactUsPage> {
               Center(
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF3E84D7),
-                        Color(0xFF407BD4),
-                        Color(0xFF4A50C6)
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
+                      borderRadius: BorderRadius.circular(10),
+                      // gradient: const LinearGradient(
+                      //   colors: [
+                      //     Color(0xFF3E84D7),
+                      //     Color(0xFF407BD4),
+                      //     Color(0xFF4A50C6)
+                      //   ],
+                      //   begin: Alignment.topLeft,
+                      //   end: Alignment.bottomRight,
+                      // ),
+                      color: pkColor),
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitMessage,
                     style: ElevatedButton.styleFrom(
@@ -217,7 +218,8 @@ class _ContactUsPageState extends State<ContactUsPage> {
                     child: _isSubmitting
                         ? const CircularProgressIndicator(color: Colors.white)
                         : Text('submit'.tr(),
-                            style: const TextStyle(fontSize: 16)),
+                            style: const TextStyle(
+                                fontSize: 16, color: Colors.white)),
                   ),
                 ),
               ),

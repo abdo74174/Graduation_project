@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/Models/product_model.dart';
 
@@ -22,7 +23,9 @@ class _ProductsPageState extends State<ProductsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Products".tr())),
+
+      appBar: AppBar(centerTitle: true,title: Text("Products".tr(),style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),),
+        backgroundColor:   pkColor,),
       body: FutureBuilder<List<ProductModel>>(
         future: _productsFuture,
         builder: (context, snapshot) {

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:graduation_project/Models/user_model.dart';
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/userInfo/profile.dart';
 import 'package:graduation_project/services/USer/sign.dart';
 import 'package:image_picker/image_picker.dart';
@@ -113,7 +114,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     height: 120,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.blue, width: 2),
+                      border: Border.all(color: pkColor, width: 2),
                     ),
                     child: ClipOval(
                       child: _profileImage != null
@@ -141,7 +142,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue,
+                          color: pkColor,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -236,7 +237,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               height: 50,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: pkColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),

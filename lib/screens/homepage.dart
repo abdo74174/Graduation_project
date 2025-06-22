@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:graduation_project/components/home_page/drawer.dart';
 import 'package:graduation_project/components/home_page/searchbar.dart';
-import 'package:graduation_project/core/constants/constant.dart' hide pkColor;
+import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/core/constants/dummy_static_data.dart';
 import 'package:graduation_project/components/category/Category_view.dart';
 import 'package:graduation_project/components/productc/product.dart';
@@ -29,6 +29,8 @@ import 'package:graduation_project/services/Server/server_status_service.dart';
 import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'fix_product_screen.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -47,7 +49,6 @@ class _HomePageState extends State<HomePage> {
   PageController _discountPageController =
       PageController(viewportFraction: 0.85);
   Timer? _autoSlideTimer;
-
   int? UserIdd;
 
   @override
@@ -73,12 +74,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHomeContent() {
+    final discountedProducts = products.where((p) => p.discount > 0).toList();
     return isLoading
         ? const Center(child: CircularProgressIndicator())
         : GestureDetector(
             onTap: _clearSearch,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Stack(
                 children: [
                   ListView(
@@ -116,7 +118,7 @@ class _HomePageState extends State<HomePage> {
       },
       child: SizedBox(
         width: double.infinity,
-        height: 200,
+        height: 230,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -143,23 +145,20 @@ class _HomePageState extends State<HomePage> {
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20.0),
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.black.withOpacity(0.3),
-                    Colors.transparent,
-                  ],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                ),
+                // gradient: LinearGradient(
+                //   colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+                //   begin: Alignment.bottomCenter,
+                //   end: Alignment.topCenter,
+                // ),
               ),
               child: Align(
-                alignment: Alignment.bottomLeft,
+                alignment: Alignment.bottomCenter,
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
                     "special_offers".tr(),
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: pTexColor,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       shadows: [
@@ -192,7 +191,7 @@ class _HomePageState extends State<HomePage> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Color(pkColor.value),
+                    color: isDark ? Colors.white : pTexColor,
                   ),
                 ),
               ),
@@ -232,7 +231,7 @@ class _HomePageState extends State<HomePage> {
                   right: index == categories.length - 1 ? 4 : 8,
                 ),
                 child: CategoryView(
-                  borderColor: isDark ? Colors.white : const Color(0xFF3B8FDA),
+                  borderColor: isDark ? Colors.grey : Colors.black87,
                   category: categories[index],
                   onTap: () {
                     Navigator.push(
@@ -260,16 +259,40 @@ class _HomePageState extends State<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Text(
-            "products".tr(),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Color(pkColor.value),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            GestureDetector(
+              onTap: () => setState(() => _selectedIndex = 1),
+              child: Text(
+                "Products".tr(),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : pTexColor,
+                ),
+              ),
             ),
-          ),
+            GestureDetector(
+              onTap: () => setState(() => _selectedIndex = 1),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Color(pkColor.value).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  "view_all".tr(),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Color(pkColor.value),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
         SizedBox(
@@ -350,145 +373,9 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               const SizedBox(height: 12),
-              SizedBox(
-                height: 220,
-                child: PageView.builder(
-                  controller: _discountPageController,
-                  itemCount: discountedProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = discountedProducts[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ProductPage(product: product),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          elevation: 8,
-                          shadowColor: Colors.black.withOpacity(0.2),
-                          child: Stack(
-                            children: [
-                              Positioned.fill(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(20),
-                                  child: product.images.isNotEmpty
-                                      ? Image.network(
-                                          product.images[0],
-                                          fit: BoxFit.cover,
-                                          loadingBuilder: (context, child,
-                                              loadingProgress) {
-                                            if (loadingProgress == null)
-                                              return child;
-                                            return const Center(
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            );
-                                          },
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  Container(
-                                                      color: Colors.grey[200]),
-                                        )
-                                      : Container(color: Colors.grey[200]),
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Colors.black.withOpacity(0.4),
-                                      Colors.transparent,
-                                    ],
-                                    begin: Alignment.bottomCenter,
-                                    end: Alignment.topCenter,
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                top: 12,
-                                right: 12,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: pkColor,
-                                    borderRadius: BorderRadius.circular(16),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    "-${product.discount}%",
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 16,
-                                left: 16,
-                                right: 16,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      product.name,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        shadows: [
-                                          Shadow(
-                                            blurRadius: 6,
-                                            color: Colors.black87,
-                                          ),
-                                        ],
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      "${product.price} EGP",
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        shadows: [
-                                          Shadow(
-                                            blurRadius: 6,
-                                            color: Colors.black87,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+              DiscountedProduct(
+                discountedProducts: discountedProducts,
+                discountPageController: _discountPageController,
               ),
             ],
           ),
@@ -500,73 +387,213 @@ class _HomePageState extends State<HomePage> {
             pkColor: Color(pkColor.value),
           ),
         _buildDeliveryAdSection(),
+        Divider(
+          height: 1,
+          indent: 20,
+          endIndent: 20,
+          thickness: .4,
+          color: Colors.black,
+        ),
+        // SizedBox(
+        //   height: 8,
+        // ),
+        _buildFixSection(),
+        SizedBox(
+          height: 10,
+        ),
         _buildFooterSection(),
       ],
     );
   }
 
+  int _selectedSection = -1;
+
   Widget _buildDeliveryAdSection() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Colors.grey[200],
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedSection = 0;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _selectedSection == 0 ? Colors.green : Colors.transparent,
+            width: 2,
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Work as Delivery".tr(),
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Join our delivery team and earn extra income!".tr(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? Colors.white70 : Colors.black54,
-                  ),
-                ),
-              ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return DeliveryPersonRequestPage(
-                  userId: UserIdd as int,
-                );
-              }));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Apply for Delivery Job".tr())),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(pkColor.value),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "Work as Delivery".tr(),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(Icons.motorcycle_outlined, size: 28),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Join our delivery team and earn extra income!".tr(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: Text("Apply Now".tr()),
+            ElevatedButton(
+              onPressed: () {
+                if (UserIdd == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("User ID not available".tr())),
+                  );
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        DeliveryPersonRequestPage(userId: UserIdd!),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Apply for Delivery Job".tr())),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(pkColor.value),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Apply Now".tr(),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFixSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedSection = 1;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _selectedSection == 1 ? Colors.green : Colors.transparent,
+            width: 2,
           ),
-        ],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        "Fix Your Equip".tr(),
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      const Icon(Icons.build, size: 24),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "U Now Can Repair Your Equipment ".tr(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDark ? Colors.white70 : Colors.black54,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (UserIdd == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("User ID not available".tr())),
+                  );
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                    FixProductScreen(),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Apply for Delivery Job".tr())),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(pkColor.value),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                "Contact With Us".tr(),
+                style: const TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -586,8 +613,7 @@ class _HomePageState extends State<HomePage> {
     }
 
     Future<void> _launchWhatsApp() async {
-      const phoneNumber =
-          "+201125411335"; // Replace with actual WhatsApp number
+      const phoneNumber = "+201125411335";
       const message = "Hello, I have a question about Loolia Closet!";
       final whatsappUrl = Uri.parse(
         "https://wa.me/$phoneNumber?text=${Uri.encodeComponent(message)}",
@@ -650,7 +676,8 @@ class _HomePageState extends State<HomePage> {
                         "About Us".tr(),
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                          color:
+                              isDark ? Colors.cyan[300] : Color(pkColor.value),
                         ),
                       ),
                     ),
@@ -661,7 +688,8 @@ class _HomePageState extends State<HomePage> {
                         "Privacy Policy".tr(),
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                          color:
+                              isDark ? Colors.cyan[300] : Color(pkColor.value),
                         ),
                       ),
                     ),
@@ -672,7 +700,8 @@ class _HomePageState extends State<HomePage> {
                         "Refund Policy".tr(),
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                          color:
+                              isDark ? Colors.cyan[300] : Color(pkColor.value),
                         ),
                       ),
                     ),
@@ -683,7 +712,8 @@ class _HomePageState extends State<HomePage> {
                         "Terms of Service".tr(),
                         style: TextStyle(
                           fontSize: 14,
-                          color: isDark ? Colors.cyan[300] : Colors.blue[600],
+                          color:
+                              isDark ? Colors.cyan[300] : Color(pkColor.value),
                         ),
                       ),
                     ),
@@ -886,13 +916,19 @@ class _HomePageState extends State<HomePage> {
   Future<void> _initApp() async {
     await _checkOfflineStatus();
     await _loadCategories();
-    await getUserid();
+    await getUserId();
     await _loadProducts();
   }
 
-  Future getUserid() async {
-    final Userid = await UserServicee().getUserId();
-    UserIdd = int.parse(Userid!);
+  Future<void> getUserId() async {
+    final userId = await UserServicee().getUserId();
+    if (userId != null) {
+      UserIdd = int.parse(userId);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load user ID".tr())),
+      );
+    }
   }
 
   Future<void> _checkOfflineStatus() async {
@@ -917,7 +953,7 @@ class _HomePageState extends State<HomePage> {
       } else {
         final result = await Future.any([
           CategoryService().fetchAllCategories(),
-          Future.delayed(const Duration(seconds: 15),
+          Future.delayed(const Duration(seconds: 100),
               () => throw TimeoutException('Timeout')),
         ]);
         if (mounted) {
@@ -949,7 +985,7 @@ class _HomePageState extends State<HomePage> {
       } else {
         final result = await Future.any([
           ProductService().fetchAllProducts(),
-          Future.delayed(const Duration(seconds: 15),
+          Future.delayed(const Duration(seconds: 100),
               () => throw TimeoutException('Timeout')),
         ]);
         if (mounted) {
@@ -1074,7 +1110,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: isDark ? Colors.black : Colors.white,
       appBar: _selectedIndex == 0 ? _buildAppBar(isDark) : null,
       drawer: const DrawerHome(),
-      body: currentScreens[_selectedIndex],
+      body: SafeArea(child: currentScreens[_selectedIndex]),
       bottomNavigationBar: CurvedNavigationBar(
         index: _selectedIndex,
         height: 60.0,
@@ -1278,7 +1314,7 @@ class InstallmentSection extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : pkColor,
+                          color: isDark ? Colors.white : Color(pkColor.value),
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1289,8 +1325,9 @@ class InstallmentSection extends StatelessWidget {
                             child: Text(
                               "view_details".tr(),
                               style: TextStyle(
-                                color: pkColor,
+                                color: Colors.grey[600],
                                 fontSize: 16,
+                                fontWeight: FontWeight.w700,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1391,6 +1428,156 @@ class InstallmentSection extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class DiscountedProduct extends StatelessWidget {
+  final List<ProductModel> discountedProducts;
+  final PageController discountPageController;
+
+  const DiscountedProduct({
+    super.key,
+    required this.discountedProducts,
+    required this.discountPageController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: PageView.builder(
+        controller: discountPageController,
+        itemCount: discountedProducts.length,
+        itemBuilder: (context, index) {
+          final product = discountedProducts[index];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductPage(product: product),
+                  ),
+                );
+              },
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                elevation: 8,
+                shadowColor: Colors.black.withOpacity(0.2),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      product.images.isNotEmpty
+                          ? Image.network(
+                              product.images[0],
+                              fit: BoxFit.cover,
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                    child: CircularProgressIndicator());
+                              },
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                color: Colors.grey[200],
+                              ),
+                            )
+                          : Container(color: Colors.grey[200]),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.black.withOpacity(0.4),
+                              Colors.transparent,
+                            ],
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Color(pkColor.value),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            "-${product.discount}%",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: 8,
+                        left: 12,
+                        right: 12,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              product.name,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 6,
+                                    color: Colors.black87,
+                                  ),
+                                ],
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "${product.price} EGP",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 6,
+                                    color: Colors.black87,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
