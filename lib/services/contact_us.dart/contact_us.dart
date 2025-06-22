@@ -3,7 +3,7 @@ import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/models/contact_us_model.dart';
 
 class ContactUsService {
-  static final String baseUrl = '${baseUri}ContactUs';
+  static final String baseUrl = '${baseUri}api/ContactUs';
   late final Dio _dio;
 
   ContactUsService() {
@@ -42,7 +42,7 @@ class ContactUsService {
     ));
   }
 
-  Future<bool> submitContactUsMessage(
+  Future<Map<String, dynamic>> submitContactUsMessage(
       String problemType, String message, String? email) async {
     try {
       final response = await _dio.post(
@@ -54,19 +54,22 @@ class ContactUsService {
         },
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         print('✅ Message submitted successfully');
-        return true;
+        return {'success': true, 'message': 'Message submitted successfully'};
       } else {
         print('⚠️ Failed to submit message: Status ${response.statusCode}');
-        return false;
+        return {
+          'success': false,
+          'message': 'Failed to submit message: Status ${response.statusCode}'
+        };
       }
     } on DioException catch (e) {
-      _handleDioError(e, 'submitContactUsMessage');
-      return false;
+      final errorDetails = _handleDioError(e, 'submitContactUsMessage');
+      return {'success': false, 'message': errorDetails};
     } catch (e) {
       print('❌ Unexpected error in submitContactUsMessage: $e');
-      return false;
+      return {'success': false, 'message': 'Unexpected error: $e'};
     }
   }
 
@@ -91,30 +94,44 @@ class ContactUsService {
     }
   }
 
-  void _handleDioError(DioException e, String methodName) {
+  String _handleDioError(DioException e, String methodName) {
     String errorMessage = '❌ [$methodName] ';
+    String userMessage = 'An error occurred. Please try again.';
+
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
         errorMessage += 'Connection timeout';
+        userMessage = 'Connection timed out. Check your internet connection.';
         break;
       case DioExceptionType.sendTimeout:
         errorMessage += 'Send timeout';
+        userMessage = 'Request timed out. Please try again.';
         break;
       case DioExceptionType.receiveTimeout:
         errorMessage += 'Receive timeout';
+        userMessage = 'Server response timed out. Please try again.';
         break;
       case DioExceptionType.badResponse:
         errorMessage +=
             'Bad response: ${e.response?.statusCode} ${e.response?.data}';
+        if (e.response?.statusCode == 400 &&
+            e.response?.data['Errors'] != null) {
+          userMessage = (e.response?.data['Errors'] as List).join(', ');
+        } else {
+          userMessage = 'Invalid response from server. Please try again.';
+        }
         break;
       case DioExceptionType.cancel:
         errorMessage += 'Request cancelled';
+        userMessage = 'Request was cancelled.';
         break;
       case DioExceptionType.connectionError:
         errorMessage += 'Connection error';
+        userMessage = 'Unable to connect to the server. Check your network.';
         break;
       case DioExceptionType.unknown:
         errorMessage += 'Unknown error: ${e.message}';
+        userMessage = 'An unexpected error occurred: ${e.message}';
         break;
       default:
         errorMessage += 'Other error: ${e.type}';
@@ -123,5 +140,6 @@ class ContactUsService {
     if (e.response != null) {
       print('Response data: ${e.response?.data}');
     }
+    return userMessage;
   }
 }

@@ -11,11 +11,11 @@ import 'package:graduation_project/screens/payment/PaymentScreen.dart';
 import 'package:graduation_project/services/Cart/cart_service.dart';
 import 'package:graduation_project/services/Product/product_service.dart';
 import 'package:graduation_project/services/Server/server_status_service.dart';
-
 import 'package:easy_localization/easy_localization.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
 import 'dart:convert';
-
 import 'package:graduation_project/services/cuoponService.dart';
+import 'package:graduation_project/screens/Auth/login_page.dart';
 
 class ShoppingCartPage extends StatefulWidget {
   const ShoppingCartPage({super.key});
@@ -33,6 +33,7 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
   String appliedCode = '';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  final UserServicee _userServicee = UserServicee();
 
   @override
   void initState() {
@@ -93,7 +94,54 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
 
   double get total => subtotal * (1 - discountPercent);
 
+  Future<bool> _checkLoginStatus() async {
+    final token = await _userServicee.getJwtToken();
+    return token != null;
+  }
+
+  void _showLoginPrompt() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'You must be logged in to proceed'.tr(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: SnackBarAction(
+          label: 'Login'.tr(),
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            ).then((_) {
+              // Reload cart after login to ensure data consistency
+              _loadEverything();
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   void _applyDiscount() async {
+    final isLoggedIn = await _checkLoginStatus();
+    if (!isLoggedIn) {
+      _showLoginPrompt();
+      return;
+    }
+
     String enteredCode = discountController.text.trim().toUpperCase();
     try {
       final couponService = CouponService();
@@ -761,6 +809,12 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
+                final isLoggedIn = await _checkLoginStatus();
+                if (!isLoggedIn) {
+                  _showLoginPrompt();
+                  return;
+                }
+
                 final isValid = await _validateStock();
                 if (!isValid) return;
 

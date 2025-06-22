@@ -10,11 +10,13 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/services/Product/recommendation_service.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:graduation_project/services/Rating/rating_service.dart';
-import 'package:graduation_project/services/User/sign.dart';
+import 'package:graduation_project/services/SharedPreferences/EmailRef.dart';
+import 'package:graduation_project/services/USer/sign.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:graduation_project/routes.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:graduation_project/screens/Auth/login_page.dart';
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, required this.product});
@@ -25,6 +27,8 @@ class ProductPage extends StatefulWidget {
 }
 
 class _ProductPageState extends State<ProductPage> {
+  final USerService _userService = USerService();
+  final UserServicee _userServicee = UserServicee();
   double getDiscountedPrice(ProductModel product) {
     double discountedPrice =
         product.price - (product.price * product.discount / 100);
@@ -54,6 +58,12 @@ class _ProductPageState extends State<ProductPage> {
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
   }
 
   Future<void> loadRecommendations() async {
@@ -87,28 +97,25 @@ class _ProductPageState extends State<ProductPage> {
     try {
       final ratings = await RatingService()
           .getRatings(productId: widget.product.productId.toString());
-      // Debug log
       if (ratings.isNotEmpty) {
         double total = ratings.fold(
-            0.0, (sum, item) => sum + (item['ratingValue'] as int).toDouble());
+            0.0, (sum, item) => sum + (item['ratingValue'] as num).toDouble());
         setState(() {
           _averageRating = total / ratings.length;
         });
         _comments = await Future.wait(ratings.map((item) async {
           final email = await getEmailFromUserId(item['userId']);
-          final userData = await USerService().fetchUserByEmail(email);
-          // Debug log
+          final userData = await _userService.fetchUserByEmail(email);
           return {
             'comment': item['comment']?.isNotEmpty == true
                 ? item['comment']
                 : 'No comment provided',
             'rating': item['ratingValue'],
             'userName': userData?.name ?? 'Anonymous',
-            'profileImage': userData?.profileImage ??
-                null, // Changed to null to trigger local asset
+            'profileImage': userData?.profileImage,
+            'date': item['date'] ?? DateTime.now().toIso8601String(),
           };
         }).toList());
-        // Debug log
       } else {
         setState(() {
           _comments = [];
@@ -125,11 +132,66 @@ class _ProductPageState extends State<ProductPage> {
     }
   }
 
+  Future<bool> _checkLoginStatus() async {
+    final token = await _userServicee.getJwtToken();
+    return token != null;
+  }
+
+  void _showLoginPrompt() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.error, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'You must be logged in to submit a rating'.tr(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        action: SnackBarAction(
+          label: 'Login'.tr(),
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            ).then((_) {
+              // Refresh ratings after login
+              fetchAverageRatingAndComments();
+            });
+          },
+        ),
+      ),
+    );
+  }
+
   void _submitRating() async {
+    final isLoggedIn = await _checkLoginStatus();
+    if (!isLoggedIn) {
+      _showLoginPrompt();
+      return;
+    }
+
+    final userId = await _userServicee.getUserId();
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('User ID not found. Please log in again.'.tr())),
+      );
+      return;
+    }
+
     try {
       await RatingService().submitRating(
         productId: widget.product.productId.toString(),
-        userId: 'user123', // Ensure this is a string
+        userId: userId,
         rating: _userRating.toInt(),
         comment:
             _commentController.text.isNotEmpty ? _commentController.text : null,
@@ -140,12 +202,10 @@ class _ProductPageState extends State<ProductPage> {
       );
       _commentController.clear();
       setState(() {
-        _userRating = 0.0;
+        _userRating = 3.0; // Reset to default rating
       });
-      // Refresh comments after submission
       await fetchAverageRatingAndComments();
     } catch (e) {
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to submit rating: $e'.tr())),
       );
@@ -169,7 +229,6 @@ class _ProductPageState extends State<ProductPage> {
           ListView(
             padding: EdgeInsets.only(bottom: 120),
             children: [
-              // Product images carousel
               SizedBox(
                 height: 400,
                 child: PageView.builder(
@@ -189,8 +248,6 @@ class _ProductPageState extends State<ProductPage> {
                   },
                 ),
               ),
-
-              // Product Name and Sale Badge
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -229,8 +286,6 @@ class _ProductPageState extends State<ProductPage> {
                   ],
                 ),
               ),
-
-              // Rating and Review Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -300,8 +355,6 @@ class _ProductPageState extends State<ProductPage> {
                   ],
                 ),
               ),
-
-              // Product Description
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
@@ -311,11 +364,9 @@ class _ProductPageState extends State<ProductPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-
-              // Divider
               Divider(color: dividerColor, thickness: .5),
-
-              // Related Products
+              _buildProductDetailsSection(textColor, Colors.white),
+              Divider(color: dividerColor, thickness: .5),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
@@ -326,10 +377,7 @@ class _ProductPageState extends State<ProductPage> {
                       color: textColor),
                 ),
               ),
-
               SizedBox(height: 20),
-
-              // Horizontal List of Related Products
               SizedBox(
                 height: 300,
                 child: _isLoading
@@ -378,136 +426,11 @@ class _ProductPageState extends State<ProductPage> {
                             },
                           ),
               ),
-
-              // Rating and Comment Section
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Rate this product'.tr(),
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
-                    RatingBar.builder(
-                      initialRating: _userRating,
-                      minRating: 1,
-                      allowHalfRating: true,
-                      itemCount: 5,
-                      itemBuilder: (context, _) =>
-                          Icon(Icons.star, color: Colors.amber),
-                      onRatingUpdate: (rating) {
-                        setState(() {
-                          _userRating = rating;
-                        });
-                      },
-                    ),
-                    SizedBox(height: 20),
-                    TextField(
-                      controller: _commentController,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        labelText: 'Leave a comment'.tr(),
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _submitRating,
-                        child: Text(
-                          'Submit'.tr(),
-                          style: TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: pkColor,
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 12),
-                        ),
-                      ),
-                    ),
-
-                    // Comments Section
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Comments'.tr(),
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          SizedBox(height: 10),
-                          _isCommentsLoading
-                              ? Center(child: CircularProgressIndicator())
-                              : _comments.isEmpty
-                                  ? Text('No comments yet.'.tr(),
-                                      style: TextStyle(color: Colors.grey))
-                                  : Column(
-                                      children: _comments
-                                          .map((comment) => Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 5),
-                                                child: Row(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    CircleAvatar(
-                                                      backgroundImage: comment[
-                                                                      'profileImage'] !=
-                                                                  null &&
-                                                              comment['profileImage']
-                                                                  .startsWith(
-                                                                      'http')
-                                                          ? NetworkImage(comment[
-                                                              'profileImage'])
-                                                          : AssetImage(
-                                                                  'assets/images/user (1).png')
-                                                              as ImageProvider,
-                                                      radius: 20,
-                                                    ),
-                                                    SizedBox(width: 10),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                              comment[
-                                                                  'userName'],
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                          Text(
-                                                              'Rating: ${comment['rating']}',
-                                                              style: TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold)),
-                                                          Text(comment[
-                                                              'comment']),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ))
-                                          .toList(),
-                                    ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildEnhancedRatingSection(textColor, Colors.white),
+              Divider(color: dividerColor, thickness: .5),
+              _buildCommentsSection(textColor, Colors.white),
             ],
           ),
-
-          // Bottom Bar with Add to Cart Button
           Positioned(
             bottom: 0,
             left: 0,
@@ -519,7 +442,6 @@ class _ProductPageState extends State<ProductPage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Price and Discounted Price
                   Flexible(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -527,7 +449,7 @@ class _ProductPageState extends State<ProductPage> {
                       children: [
                         widget.product.discount > 0
                             ? Text(
-                                "${widget.product.price} EGP ",
+                                "${widget.product.price} EGP",
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
@@ -544,18 +466,16 @@ class _ProductPageState extends State<ProductPage> {
                                 ),
                               ),
                         Text(
-                          "${getDiscountedPrice(widget.product)} EGP ",
+                          "${getDiscountedPrice(widget.product)} EGP",
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.grey : pTexColor,
+                            color: isDark ? Colors.black : pTexColor,
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                  // Add to Cart Button
                   SizedBox(
                     width: 200,
                     height: 60,
@@ -594,6 +514,488 @@ class _ProductPageState extends State<ProductPage> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductDetailsSection(Color textColor, Color backgroundColor) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 15,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: pkColor,
+                size: 24,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Product Details'.tr(),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          _buildEnhancedDetailRow(
+            icon: Icons.inventory_2_outlined,
+            label: 'Stock Availability',
+            value: widget.product.StockQuantity > 0
+                ? '${widget.product.StockQuantity} items available'
+                : 'Out of stock',
+            textColor: textColor,
+            valueColor:
+                widget.product.StockQuantity > 0 ? Colors.green : Colors.red,
+          ),
+          _buildEnhancedDetailRow(
+            icon: Icons.location_on_outlined,
+            label: 'Location',
+            value: widget.product.address.isNotEmpty
+                ? widget.product.address
+                : 'Location not specified',
+            textColor: textColor,
+          ),
+          _buildEnhancedDetailRow(
+            icon: Icons.verified_user_outlined,
+            label: 'Warranty',
+            value: widget.product.guarantee != null &&
+                    widget.product.guarantee! > 0
+                ? '${widget.product.guarantee} months warranty'
+                : 'No warranty included',
+            textColor: textColor,
+            valueColor: widget.product.guarantee != null &&
+                    widget.product.guarantee! > 0
+                ? Colors.green
+                : textColor.withOpacity(0.7),
+          ),
+          _buildEnhancedDetailRow(
+            icon: Icons.payment_outlined,
+            label: 'Payment Options',
+            value: widget.product.installmentAvailable
+                ? 'Installment available'
+                : 'Full payment only',
+            textColor: textColor,
+            valueColor: widget.product.installmentAvailable
+                ? Colors.blue
+                : textColor.withOpacity(0.7),
+          ),
+          _buildEnhancedDetailRow(
+            icon: widget.product.isNew
+                ? Icons.new_releases_outlined
+                : Icons.recycling_outlined,
+            label: 'Condition',
+            value: widget.product.isNew ? 'Brand New' : 'Used/Pre-owned',
+            textColor: textColor,
+            valueColor: widget.product.isNew ? Colors.green : Colors.orange,
+          ),
+          if (widget.product.discount > 0)
+            _buildEnhancedDetailRow(
+              icon: Icons.local_offer_outlined,
+              label: 'Discount',
+              value: '${widget.product.discount.toStringAsFixed(0)}% OFF',
+              textColor: textColor,
+              valueColor: Colors.red,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color textColor,
+    Color? valueColor,
+  }) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: textColor.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: textColor.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: pkColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: pkColor,
+              size: 20,
+            ),
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: textColor.withOpacity(0.7),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: valueColor ?? textColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedRatingSection(Color textColor, Color backgroundColor) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _averageRating.toStringAsFixed(1),
+                    style: TextStyle(
+                      fontSize: 48,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < _averageRating.toInt()
+                            ? Icons.star
+                            : Icons.star_border,
+                        color: Colors.amber,
+                        size: 20,
+                      );
+                    }),
+                  ),
+                  Text(
+                    '${_comments.length} reviews',
+                    style: TextStyle(
+                      color: textColor.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  children: List.generate(5, (index) {
+                    int starCount = 5 - index;
+                    int count =
+                        _comments.where((c) => c['rating'] == starCount).length;
+                    double percentage =
+                        _comments.isNotEmpty ? count / _comments.length : 0;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Text('$starCount',
+                              style: TextStyle(color: textColor)),
+                          Icon(Icons.star, size: 16, color: Colors.amber),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: percentage,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Text('$count',
+                              style: TextStyle(color: textColor, fontSize: 12)),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          Divider(color: textColor.withOpacity(0.2)),
+          SizedBox(height: 16),
+          Text(
+            'Rate this product'.tr(),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Text('Your rating: ', style: TextStyle(color: textColor)),
+              RatingBar.builder(
+                initialRating: _userRating,
+                minRating: 1,
+                allowHalfRating: false,
+                itemCount: 5,
+                itemSize: 30,
+                itemBuilder: (context, _) =>
+                    Icon(Icons.star, color: Colors.amber),
+                onRatingUpdate: (rating) {
+                  setState(() {
+                    _userRating = rating;
+                  });
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          TextField(
+            controller: _commentController,
+            maxLines: 3,
+            style: TextStyle(color: textColor),
+            decoration: InputDecoration(
+              labelText: 'Write your review'.tr(),
+              labelStyle: TextStyle(color: textColor.withOpacity(0.7)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: textColor.withOpacity(0.3)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: pkColor),
+              ),
+            ),
+          ),
+          SizedBox(height: 16),
+          Center(
+            child: ElevatedButton(
+              onPressed: _submitRating,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: pkColor,
+                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Text(
+                'Submit Review'.tr(),
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommentsSection(Color textColor, Color backgroundColor) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Customer Reviews'.tr(),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+          SizedBox(height: 16),
+          _isCommentsLoading
+              ? Center(child: CircularProgressIndicator())
+              : _comments.isEmpty
+                  ? Container(
+                      padding: EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Icon(Icons.rate_review_outlined,
+                              size: 48, color: textColor.withOpacity(0.5)),
+                          SizedBox(height: 8),
+                          Text(
+                            'No reviews yet'.tr(),
+                            style: TextStyle(
+                                color: textColor.withOpacity(0.7),
+                                fontSize: 16),
+                          ),
+                          Text(
+                            'Be the first to review this product!'.tr(),
+                            style: TextStyle(
+                                color: textColor.withOpacity(0.5),
+                                fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    )
+                  : Column(
+                      children: _comments
+                          .map((comment) => Container(
+                                margin: EdgeInsets.only(bottom: 16),
+                                padding: EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: textColor.withOpacity(0.1)),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundImage: comment[
+                                                      'profileImage'] !=
+                                                  null &&
+                                              comment['profileImage']
+                                                  .startsWith('http')
+                                          ? NetworkImage(
+                                              comment['profileImage'])
+                                          : AssetImage(
+                                                  'assets/images/user (1).png')
+                                              as ImageProvider,
+                                      child: comment['profileImage'] != null &&
+                                              comment['profileImage']
+                                                  .startsWith('http')
+                                          ? null
+                                          : Icon(Icons.person,
+                                              color: Colors.grey),
+                                    ),
+                                    SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                comment['userName'],
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: textColor,
+                                                ),
+                                              ),
+                                              Row(
+                                                children:
+                                                    List.generate(5, (index) {
+                                                  return Icon(
+                                                    index < comment['rating']
+                                                        ? Icons.star
+                                                        : Icons.star_border,
+                                                    color: Colors.amber,
+                                                    size: 16,
+                                                  );
+                                                }),
+                                              ),
+                                            ],
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            comment['comment'],
+                                            style: TextStyle(color: textColor),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            comment['date'] != null
+                                                ? DateFormat('MMM d, yyyy')
+                                                    .format(DateTime.parse(
+                                                        comment['date']))
+                                                : 'Recent',
+                                            style: TextStyle(
+                                              color: textColor.withOpacity(0.5),
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
+                    ),
         ],
       ),
     );

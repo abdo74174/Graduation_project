@@ -55,7 +55,9 @@ Future<void> main() async {
           builder: (context) {
             final notificationService = NotificationService(context);
             notificationService.initNotifications();
-            return MedicalApp(isLoggedIn: isLoggedIn);
+            return MedicalApp(
+              isLoggedIn: isLoggedIn,
+            );
           },
         ),
       ),

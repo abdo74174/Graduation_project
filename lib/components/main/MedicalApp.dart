@@ -15,7 +15,7 @@ import 'package:graduation_project/routes.dart';
 class MedicalApp extends StatelessWidget {
   final bool isLoggedIn;
 
-  const MedicalApp({required this.isLoggedIn, super.key});
+  const MedicalApp({super.key, required this.isLoggedIn});
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +28,7 @@ class MedicalApp extends StatelessWidget {
       locale: context.locale,
       supportedLocales: context.supportedLocales,
       localizationsDelegates: context.localizationDelegates,
-      home: isLoggedIn ? const HomePage() : const LoginPage(),
+      home: isLoggedIn ? HomePage() : LoginPage(),
       onGenerateRoute: AppRoutes.generateRoute,
       routes: {
         '/dashboard': (context) => DashboardScreen(),

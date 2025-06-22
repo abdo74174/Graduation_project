@@ -54,32 +54,31 @@ class _ContactUsPageState extends State<ContactUsPage> {
       _isSubmitting = true;
     });
 
-    final success = await _apiService.submitContactUsMessage(
+    final result = await _apiService.submitContactUsMessage(
         _selectedProblemType!, _messageController.text, email);
 
     setState(() {
       _isSubmitting = false;
     });
 
-    if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('message_submitted'.tr())),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(result['message'].tr())),
+    );
+
+    if (result['success']) {
       _messageController.clear();
       _problemTypeController.clear();
       setState(() {
         _selectedProblemType = null;
       });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('failed_to_submit'.tr())),
-      );
     }
   }
 
   Future<void> _launchUrl(String url) async {
     if (!await launchUrl(Uri.parse(url))) {
-      throw Exception('Could not launch $url');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('could_not_launch_url'.tr(args: [url]))),
+      );
     }
   }
 
@@ -196,17 +195,9 @@ class _ContactUsPageState extends State<ContactUsPage> {
               Center(
                 child: Container(
                   decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10),
-                      // gradient: const LinearGradient(
-                      //   colors: [
-                      //     Color(0xFF3E84D7),
-                      //     Color(0xFF407BD4),
-                      //     Color(0xFF4A50C6)
-                      //   ],
-                      //   begin: Alignment.topLeft,
-                      //   end: Alignment.bottomRight,
-                      // ),
-                      color: pkColor),
+                    borderRadius: BorderRadius.circular(10),
+                    color: pkColor,
+                  ),
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitMessage,
                     style: ElevatedButton.styleFrom(
@@ -217,20 +208,24 @@ class _ContactUsPageState extends State<ContactUsPage> {
                     ),
                     child: _isSubmitting
                         ? const CircularProgressIndicator(color: Colors.white)
-                        : Text('submit'.tr(),
+                        : Text(
+                            'submit'.tr(),
                             style: const TextStyle(
-                                fontSize: 16, color: Colors.white)),
+                                fontSize: 16, color: Colors.white),
+                          ),
                   ),
                 ),
               ),
               const SizedBox(height: 30),
               Center(
-                child: Text('urgent_help'.tr(),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red,
-                    )),
+                child: Text(
+                  'urgent_help'.tr(),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
               ),
               const SizedBox(height: 15),
               Row(
@@ -260,32 +255,38 @@ class _ContactUsPageState extends State<ContactUsPage> {
               ),
               const SizedBox(height: 10),
               ContactDetailRow(
-                  icon: Icons.location_on,
-                  label: 'address'.tr(),
-                  value: '123 Main St, City, Country',
-                  onTap: () => _launchUrl(
-                      'https://maps.google.com/?q=123+Main+St,+City,+Country')),
+                icon: Icons.location_on,
+                label: 'address'.tr(),
+                value: '123 Main St, City, Country',
+                onTap: () => _launchUrl(
+                    'https://maps.google.com/?q=123+Main+St,+City,+Country'),
+              ),
               ContactDetailRow(
-                  icon: Icons.phone,
-                  label: 'phone'.tr(),
-                  value: '+1234567890',
-                  onTap: () => _launchUrl('tel:+1234567890')),
+                icon: Icons.phone,
+                label: 'phone'.tr(),
+                value: '+1234567890',
+                onTap: () => _launchUrl('tel:+1234567890'),
+              ),
               ContactDetailRow(
-                  icon: Icons.email,
-                  label: 'email_contact'.tr(),
-                  value: 'support@example.com',
-                  onTap: () => _launchUrl('mailto:support@example.com')),
+                icon: Icons.email,
+                label: 'email_contact'.tr(),
+                value: 'support@example.com',
+                onTap: () => _launchUrl('mailto:support@example.com'),
+              ),
               ContactDetailRow(
-                  icon: Icons.access_time,
-                  label: 'availability'.tr(),
-                  value: 'Mon-Fri: 9AM-5PM'),
+                icon: Icons.access_time,
+                label: 'availability'.tr(),
+                value: 'Mon-Fri: 9AM-5PM',
+              ),
               const SizedBox(height: 20),
               Divider(color: Colors.grey.shade400),
               const SizedBox(height: 10),
               Center(
-                child: Text('follow_us'.tr(),
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(
+                  'follow_us'.tr(),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
               const SizedBox(height: 10),
               Row(
@@ -344,8 +345,10 @@ class ContactDetailRow extends StatelessWidget {
           children: [
             Icon(icon, color: Colors.black54),
             const SizedBox(width: 10),
-            Text("$label:",
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              "$label:",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(width: 5),
             Expanded(child: Text(value)),
             if (onTap != null)
