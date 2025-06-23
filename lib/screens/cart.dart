@@ -893,17 +893,17 @@ class _ShoppingCartPageState extends State<ShoppingCartPage>
         final product = productMap[item.productId];
         if (product == null) {
           await CartService().deleteFromCart(item.productId);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Product ${item.productId} has been removed as it is no longer available'
-                      .tr()),
-              backgroundColor: Colors.orange,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-            ),
-          );
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text(
+          //         'Product ${item.productId} has been removed as it is no longer available'
+          //             .tr()),
+          //     backgroundColor: Colors.orange,
+          //     behavior: SnackBarBehavior.floating,
+          //     shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(12)),
+          //   ),
+          // );
           setState(() {
             cartModel!.cartItems.removeWhere(
                 (cartItem) => cartItem.productId == item.productId);

@@ -945,7 +945,24 @@
   "Coupon deleted successfully": "Coupon deleted successfully",
   "Failed to add coupon": "Failed to add coupon",
   "Failed to update coupon": "Failed to update coupon",
-  "Failed to delete coupon": "Failed to delete coupon"
+  "Failed to delete coupon": "Failed to delete coupon",
+  "Offer this product for free to support a cause.": "Offer this product for free to support a cause.",
+  "Pricing Information": "Pricing Information",
+  "First Aid Kits": "First Aid Kits",
+  "Notifications": "Notifications",
+  "Performance Overview": "Performance Overview",
+  "Financial Summary": "Financial Summary",
+  "created": "Created",
+  "Failed to load pending products": "Failed to load pending products",
+  "Product Approved successfully": "Product approved successfully",
+  "Product Rejected successfully": "Product rejected successfully",
+  "Failed to update product status": "Failed to update product status",
+  "Failed to initialize notifications": "Failed to initialize notifications",
+  "Failed to load product": "Failed to load product",
+  "View": "View" ,
+  "follow_us": "Follow Us",
+  "could_not_launch_url": "Could not launch the URL: {}",
+  "failed_to_submit_message_status_404": "Failed to submit message: Server not found (404)"
                                 
                                                 
                                               

@@ -890,7 +890,30 @@
     "Coupon deleted successfully": "تم حذف الكوبون بنجاح",
     "Failed to add coupon": "فشل في إضافة الكوبون",
     "Failed to update coupon": "فشل في تحديث الكوبون",
-    "Failed to delete coupon": "فشل في حذف الكوبون"
+    "Failed to delete coupon": "فشل في حذف الكوبون",
+    "Donate this product": "تبرع بهذا المنتج",
+    "Enable Donation": "تفعيل التبرع",
+    "New": "جديد",
+    "Used": "مستعمل",
+    "Select a subcategory": "اختر فئة فرعية",
+    "Guarantee (months)": "مدة الضمان (بالشهور)",
+    "Product Address": "عنوان المنتج",
+    "Installment Available": "التقسيط متاح",
+    "Product Description": "وصف المنتج",
+    "Generating...": "جاري التوليد...",
+    "Product Images": "صور المنتج",
+    "Please add at least one product image": "يرجى إضافة صورة واحدة على الأقل",
+    "Crutches and Walkers": "العكاكيز والمشايات",
+    "Oxygen Concentrators": "أجهزة تركيز الأكسجين",
+    "Physical Therapy Tools": "أدوات العلاج الطبيعي",
+    "Respiratory Devices": "أجهزة التنفس",
+    "Hospital Beds": "أسرة المستشفيات",
+    "Generate AI Description": "توليد وصف ذكي",
+    "Add Images": "أضف صور",
+    "No images selected": "لم يتم اختيار صور",
+  
+    "could_not_launch_url": "تعذر فتح الرابط: {}",
+    "failed_to_submit_message_status_404": "فشل إرسال الرسالة: السيرفر غير موجود (404)"
                   
                 
               

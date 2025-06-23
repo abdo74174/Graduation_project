@@ -62,7 +62,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(result['message'].tr())),
+      SnackBar(content: Text(result['message'].toString())),
     );
 
     if (result['success']) {

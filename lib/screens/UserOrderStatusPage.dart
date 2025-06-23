@@ -91,21 +91,17 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
       }
       print("===== Fetching Data for User ID: ${widget.userId} =====");
 
-      // Fetch orders for the user
       final orders =
           await _orderService.getOrdersByforUserbyUserId(widget.userId);
       print('Orders fetched for userId ${widget.userId}: ${orders.map((o) => {
             'id': o.orderId,
-            'status': o.status
+            'status': o.status,
+            'userConfirmed': o.userConfirmedShipped
           }).toList()}');
 
       setState(() {
         _orders = orders;
         _selectedStatus = 'All';
-        print('Unfiltered Orders: ${orders.map((o) => {
-              'id': o.orderId,
-              'status': o.status
-            }).toList()}');
         _filterOrders();
         _isLoading = false;
       });
@@ -162,6 +158,22 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
         _errorMessage = errorKey.tr(namedArgs: {'error': e.toString()});
         _isUpdatingStatus = false;
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 8),
+              Text(_errorMessage),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
     }
   }
 
@@ -779,7 +791,26 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
                             borderRadius: BorderRadius.circular(16),
                             onTap: _isUpdatingStatus
                                 ? null
-                                : () => _confirmShipped(order.orderId),
+                                : () async {
+                                    if (order.status !=
+                                        'AwaitingUserConfirmation') {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'error_not_awaiting_confirmation'
+                                                  .tr()),
+                                          backgroundColor: Colors.red,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10)),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    await _confirmShipped(order.orderId);
+                                  },
                             child: Container(
                               alignment: Alignment.center,
                               child: _isUpdatingStatus
@@ -813,6 +844,30 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
                                     ),
                             ),
                           ),
+                        ),
+                      ),
+                    if (order.status == 'Shipped' && order.userConfirmedShipped)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle,
+                                color: Colors.green, size: 24),
+                            const SizedBox(width: 8),
+                            Text(
+                              'shipped_confirmed'.tr(),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    isDark ? Colors.green[200] : Colors.green,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
@@ -869,23 +924,7 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            chipColor,
-            chipColor.withOpacity(0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: chipColor.withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -902,6 +941,22 @@ class _UserOrderStatusPageState extends State<UserOrderStatusPage>
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
+          ),
+        ],
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            chipColor,
+            chipColor.withOpacity(0.8),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: chipColor.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),

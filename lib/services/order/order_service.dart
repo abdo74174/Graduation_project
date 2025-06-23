@@ -287,6 +287,45 @@ class OrderService {
     }
   }
 
+  Future<void> confirmOrderShippedByDeliveryPerson(
+      int orderId, int deliveryPersonId) async {
+    try {
+      if (orderId <= 0) throw Exception('Invalid orderId: $orderId');
+      if (deliveryPersonId <= 0)
+        throw Exception('Invalid deliveryPersonId: $deliveryPersonId');
+
+      final response = await _dio.put(
+        '$_baseUrl/$orderId/delivery-status',
+        queryParameters: {
+          'deliveryPersonId': deliveryPersonId,
+          'status': 'Shipped',
+        },
+      );
+
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception(
+            'Failed to confirm shipped status by delivery person: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      String errorMsg =
+          'Network error in confirmOrderShippedByDeliveryPerson: ${e.message}';
+      if (e.response != null) {
+        errorMsg += ' (Status: ${e.response?.statusCode})';
+        if (e.response?.statusCode == 403) {
+          errorMsg = 'You are not authorized to confirm this order.';
+        } else if (e.response?.statusCode == 400) {
+          errorMsg =
+              'Order is not in a state that allows delivery confirmation.';
+        } else if (e.response?.statusCode == 404) {
+          errorMsg = 'Order not found.';
+        }
+      }
+      throw Exception(errorMsg);
+    } catch (e) {
+      throw Exception('Failed to confirm shipped status: $e');
+    }
+  }
+
   Future<void> confirmOrderDelivery(int orderId, bool isDelivered) async {
     try {
       if (orderId <= 0) throw Exception('Invalid orderId: $orderId');

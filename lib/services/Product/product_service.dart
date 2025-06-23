@@ -46,27 +46,39 @@ class ProductService {
     }
   }
 
-  Future<List<ProductModel>> fetchProductId(int productId) async {
+  Future<ProductModel?> fetchProductId(int productId) async {
     try {
-      print('🌐 Making API request to: ${dio.options.baseUrl}Product');
-      Response response = await dio.get('Product/id');
-      print('✅ API Response Status: ${response.statusCode}');
-      print('📦 API Response Data: ${response.data}');
+      Response response = await dio.get('Product/$productId');
 
-      if (response.statusCode == 200) {
-        List data = response.data;
-        List<ProductModel> products =
-            data.map((item) => ProductModel.fromJson(item)).toList();
-        print('📥 Parsed ${products.length} products');
-        return products;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+
+        // Log the type of data
+        print("🔍 fetchProductId: type = ${data.runtimeType}");
+        print("📦 fetchProductId: data = $data");
+
+        if (data is Map<String, dynamic>) {
+          return ProductModel.fromJson(data);
+        }
+
+        if (data is List && data.isNotEmpty) {
+          print(
+              "⚠️ Warning: Unexpected List response from single product API.");
+          return ProductModel.fromJson(data[0] as Map<String, dynamic>);
+        }
+
+        if (data is Map && data.containsKey('data')) {
+          return ProductModel.fromJson(data['data'] as Map<String, dynamic>);
+        }
+
+        return null;
       } else {
-        print('❌ Failed to load products: ${response.statusCode}');
-        throw Exception("Failed to load products");
+        print("❌ Failed to fetch product. Status code: ${response.statusCode}");
+        return null;
       }
     } catch (e, stackTrace) {
-      print('❌ API error: $e');
-      print('Stack trace: $stackTrace');
-      throw Exception("API error: $e");
+      print("❌ fetchProductId error: $e\n$stackTrace");
+      return null;
     }
   }
 

@@ -9,7 +9,6 @@ class AdminProductReviewScreen extends StatefulWidget {
   const AdminProductReviewScreen({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _AdminProductReviewScreenState createState() =>
       _AdminProductReviewScreenState();
 }
@@ -28,17 +27,24 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
   Future<void> _fetchPendingProducts() async {
     setState(() => _isLoading = true);
     try {
+      print('Fetching pending products from: ${baseUri}Product/pending');
       final response = await _dio.get('Product/pending');
+      print(
+          'Pending products response: ${response.statusCode} ${response.data}');
       if (response.statusCode == 200) {
         final data = response.data as List;
         setState(() {
           _pendingProducts =
               data.map((item) => ProductModel.fromJson(item)).toList();
         });
+        print('Loaded ${_pendingProducts.length} pending products');
       } else {
+        print(
+            'Error: Failed to load pending products, status: ${response.statusCode}');
         _showSnackbar('Failed to load pending products');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Error fetching pending products: $e\n$stackTrace');
       _showSnackbar('Error: $e');
     } finally {
       setState(() => _isLoading = false);
@@ -47,27 +53,37 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
 
   Future<void> _updateProductStatus(int productId, String status) async {
     try {
+      print('Updating product $productId to status: $status');
       final response = await _dio.put(
         'Product/approve/$productId',
         data: {'Status': status},
       );
+      print('Update status response: ${response.statusCode} ${response.data}');
       if (response.statusCode == 200) {
         _showSnackbar('Product $status successfully');
         setState(() {
           _pendingProducts
               .removeWhere((product) => product.productId == productId);
         });
+        print('Product $productId removed from pending list');
       } else {
+        print(
+            'Error: Failed to update product status, status: ${response.statusCode}');
         _showSnackbar('Failed to update product status');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Error updating product status: $e\n$stackTrace');
       _showSnackbar('Error: $e');
     }
   }
 
   void _showSnackbar(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message.tr())));
+    } else {
+      print('Error: Context not mounted for SnackBar: $message');
+    }
   }
 
   @override
@@ -77,7 +93,6 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
-
         centerTitle: true,
         title: Text(
           'Review Products'.tr(),
@@ -86,8 +101,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
             color: isDark ? Colors.white : Colors.white,
           ),
         ),
-        backgroundColor:
-            isDark ? theme.appBarTheme.backgroundColor : pkColor,
+        backgroundColor: isDark ? theme.appBarTheme.backgroundColor : pkColor,
         iconTheme: IconThemeData(
           color: isDark ? Colors.white : Colors.black87,
         ),
@@ -179,9 +193,12 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                                               color: theme.primaryColor,
                                             ),
                                           ),
-                                          errorWidget: (context, url, error) =>
-                                              Icon(Icons.error,
-                                                  color: Colors.red),
+                                          errorWidget: (context, url, error) {
+                                            print(
+                                                'Error loading image: $url, $error');
+                                            return Icon(Icons.error,
+                                                color: Colors.red);
+                                          },
                                         ),
                                       ),
                                     );
@@ -194,7 +211,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                               children: [
                                 ElevatedButton(
                                   onPressed: () => _updateProductStatus(
-                                      product.productId, 'Approved'.tr()),
+                                      product.productId, 'Approved'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.green,
                                     foregroundColor: Colors.white,
@@ -207,7 +224,7 @@ class _AdminProductReviewScreenState extends State<AdminProductReviewScreen> {
                                 const SizedBox(width: 8),
                                 ElevatedButton(
                                   onPressed: () => _updateProductStatus(
-                                      product.productId, 'Rejected'.tr()),
+                                      product.productId, 'Rejected'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.red,
                                     foregroundColor: Colors.white,

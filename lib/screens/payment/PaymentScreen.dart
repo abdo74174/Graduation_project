@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:graduation_project/Models/cart_item.dart';
+import 'package:graduation_project/Models/product_model.dart';
 import 'package:graduation_project/Models/user_model.dart';
 import 'package:graduation_project/core/constants/constant.dart';
 import 'package:graduation_project/screens/payment/PaymentSuccessfulscreen.dart';
@@ -12,8 +13,9 @@ import 'package:graduation_project/services/USer/sign.dart';
 import 'package:graduation_project/services/cart/cart_service.dart';
 import 'package:graduation_project/services/order/order_service.dart';
 import 'package:graduation_project/services/payment/payment_service.dart';
-import 'package:graduation_project/services/product/product_service.dart';
 import 'package:graduation_project/screens/payment/add_card_screen.dart';
+import 'package:graduation_project/services/product/product_service.dart';
+import 'package:graduation_project/testing/test.dart';
 
 class Logger {
   static void log(String method, String message) {
@@ -49,6 +51,10 @@ class _PaymentScreenState extends State<PaymentScreen>
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   String? _selectedAddress;
+  String? _selectedGovernorate;
+  double _shippingPrice = 5.0; // Default shipping price
+  Timer? _debounceUpdate;
+  Map<String, double> governorateShippingPrices = {};
 
   @override
   void initState() {
@@ -57,6 +63,8 @@ class _PaymentScreenState extends State<PaymentScreen>
         widget.cartItems.where((item) => item.productId != 42).toList();
     _setupAnimations();
     _fetchUserData();
+    _fetchShippingPrices();
+    _validateCartItems();
     Logger.log('PaymentScreen.initState', 'Initializing PaymentScreen');
   }
 
@@ -78,8 +86,86 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   @override
   void dispose() {
+    _debounceUpdate?.cancel();
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchShippingPrices() async {
+    const method = 'PaymentScreen._fetchShippingPrices';
+    try {
+      final prices = await ShippingService().getShippingPrices();
+      if (mounted) {
+        setState(() {
+          governorateShippingPrices = prices;
+          _updateShippingPrice();
+        });
+        Logger.log(method, 'Fetched ${prices.length} shipping prices');
+      }
+    } catch (e, stackTrace) {
+      Logger.log(method, 'Error fetching shipping prices: $e\n$stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text(
+                  'failed_to_load_shipping_prices'.tr(args: [e.toString()]))),
+        );
+      }
+    }
+  }
+
+  Future<void> _validateCartItems() async {
+    const method = 'PaymentScreen._validateCartItems';
+    Logger.log(method, 'Validating ${_filteredCartItems.length} cart items');
+    Logger.log(method,
+        'Cart item IDs: ${_filteredCartItems.map((i) => i.productId).toList()}');
+
+    final invalidItems = <CartItems>[];
+    final productService = ProductService();
+    for (var item in _filteredCartItems) {
+      final product = await productService.fetchProductId(item.productId!);
+      if (product == null) {
+        Logger.log(method, 'Product not found: ${item.productId}');
+        invalidItems.add(item);
+        continue;
+      }
+
+      Logger.log(method,
+          'Product ${item.productId} - StockQuantity: ${product.StockQuantity}, Status: ${product.isNew}, isDeleted: ${product.isDeleted}');
+
+      if (product.StockQuantity < item.quantity) {
+        Logger.log(method, 'Insufficient stock for product: ${item.productId}');
+        invalidItems.add(item);
+        continue;
+      }
+      if (product.isDeleted) {
+        Logger.log(method, 'Deleted product: ${item.productId}');
+        invalidItems.add(item);
+        continue;
+      }
+    }
+
+    if (invalidItems.isNotEmpty) {
+      for (var item in invalidItems) {
+        await CartService().deleteFromCart(item.productId!);
+        _filteredCartItems.removeWhere((i) => i.productId == item.productId);
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('removed_unavailable_products').tr(),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
+
+    if (_filteredCartItems.isEmpty && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('check_cart').tr()),
+      );
+      Navigator.pop(context);
+    }
   }
 
   Future<void> _fetchUserData() async {
@@ -94,7 +180,9 @@ class _PaymentScreenState extends State<PaymentScreen>
       if (fetchedUser != null && mounted) {
         setState(() {
           user = fetchedUser;
-          _selectedAddress = fetchedUser.address ?? 'sohag';
+          _selectedAddress = fetchedUser.address ?? 'Sohag';
+          _selectedGovernorate = _extractGovernorate();
+          _updateShippingPrice();
         });
         await _loadCustomerId();
       } else {
@@ -104,6 +192,24 @@ class _PaymentScreenState extends State<PaymentScreen>
       Logger.log('PaymentScreen._fetchUserData',
           'Error fetching user: $e\n$stackTrace');
     }
+  }
+
+  String _extractGovernorate() {
+    if (_selectedAddress == null) return 'Sohag';
+    for (var governorate in governorateShippingPrices.keys) {
+      if (_selectedAddress!.toLowerCase().contains(governorate.toLowerCase())) {
+        return governorate;
+      }
+    }
+    return 'Sohag'; // Default governorate
+  }
+
+  void _updateShippingPrice() {
+    setState(() {
+      _shippingPrice = governorateShippingPrices[_selectedGovernorate] ?? 5.0;
+    });
+    Logger.log('PaymentScreen._updateShippingPrice',
+        'Set shipping price to $_shippingPrice for governorate $_selectedGovernorate');
   }
 
   Future<void> _loadCustomerId() async {
@@ -254,20 +360,46 @@ class _PaymentScreenState extends State<PaymentScreen>
         method, 'Validating stock for ${_filteredCartItems.length} items');
 
     try {
-      final products = await ProductService().fetchAllProducts();
-      final productMap = {for (var p in products) p.productId: p};
+      final productService = ProductService();
+      final invalidItems = <CartItems>[];
 
       for (var item in _filteredCartItems) {
-        final product = productMap[item.productId];
+        final product = await productService.fetchProductId(item.productId!);
         if (product == null) {
-          throw Exception(
-              'product_not_found'.tr(args: [item.productId.toString()]));
+          Logger.log(method, 'Product not found: ${item.productId}');
+          invalidItems.add(item);
+          continue;
         }
         if (product.StockQuantity < item.quantity) {
           throw Exception('insufficient_stock'
               .tr(args: [product.name, product.StockQuantity.toString()]));
         }
+        if (product.isDeleted) {
+          Logger.log(method, 'Deleted product: ${item.productId}');
+          invalidItems.add(item);
+          continue;
+        }
       }
+
+      if (invalidItems.isNotEmpty) {
+        for (var item in invalidItems) {
+          await CartService().deleteFromCart(item.productId!);
+          _filteredCartItems.removeWhere((i) => i.productId == item.productId);
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('removed_unavailable_products'.tr()),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        if (_filteredCartItems.isEmpty) {
+          Logger.log(method, 'No valid items in cart after validation');
+          return false;
+        }
+      }
+
       Logger.log(method, 'Stock validation passed');
       return true;
     } catch (e, stackTrace) {
@@ -284,28 +416,76 @@ class _PaymentScreenState extends State<PaymentScreen>
   Future<void> _updateStock() async {
     const method = 'PaymentScreen._updateStock';
     Logger.log(method, 'Updating stock for ${_filteredCartItems.length} items');
+    Logger.log(method,
+        'Cart item IDs: ${_filteredCartItems.map((i) => i.productId).toList()}');
 
-    try {
-      final products = await ProductService().fetchAllProducts();
-      final productMap = {for (var p in products) p.productId: p};
+    final productService = ProductService();
+    bool allUpdatesSuccessful = true;
+    String? errorMessage;
 
-      for (var item in _filteredCartItems) {
-        final product = productMap[item.productId];
-        if (product != null) {
-          final newStock = product.StockQuantity - item.quantity;
-          await ProductService()
-              .updateProductStock(product.productId, newStock);
+    for (var item in _filteredCartItems) {
+      Logger.log(method,
+          'Processing product ${item.productId}, quantity: ${item.quantity}');
+      const maxRetries = 3;
+      for (int attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          final product = await productService.fetchProductId(item.productId!);
+          if (product == null) {
+            Logger.log(method,
+                'Attempt $attempt: Product not found: ${item.productId}');
+            if (attempt == maxRetries) {
+              allUpdatesSuccessful = false;
+              errorMessage = 'Product not found: ${item.productId}';
+              break;
+            }
+            await Future.delayed(Duration(milliseconds: 500));
+            continue;
+          }
+
           Logger.log(method,
-              'Updated stock for product ${product.productId}: ${product.StockQuantity} -> $newStock');
-        } else {
-          throw Exception(
-              'product_not_found'.tr(args: [item.productId.toString()]));
+              'Product ${item.productId} - StockQuantity: ${product.StockQuantity}, Status: ${product.isNew}, isDeleted: ${product.isDeleted}');
+
+          if (product.isDeleted) {
+            Logger.log(method, 'Product is deleted: ${item.productId}');
+            allUpdatesSuccessful = false;
+            errorMessage = 'Product is deleted: ${item.productId}';
+            break;
+          }
+          if (product.StockQuantity < item.quantity) {
+            Logger.log(method,
+                'Insufficient stock for product ${item.productId}: available ${product.StockQuantity}, requested ${item.quantity}');
+            allUpdatesSuccessful = false;
+            errorMessage =
+                'Insufficient stock for product ${item.productId}: available ${product.StockQuantity}, requested ${item.quantity}';
+            break;
+          }
+
+          final newStock = product.StockQuantity - item.quantity;
+          Logger.log(method,
+              'Updating stock for product ${item.productId} to $newStock');
+          await productService.updateProductStock(item.productId!, newStock);
+          Logger.log(method,
+              'Stock updated successfully for product ${item.productId}');
+          break;
+        } catch (e, stackTrace) {
+          Logger.log(method,
+              'Attempt $attempt: Stock update failed for product ${item.productId}: $e\nStack trace: $stackTrace');
+          if (attempt == maxRetries) {
+            allUpdatesSuccessful = false;
+            errorMessage =
+                'Stock update failed for product ${item.productId}: $e';
+          }
+          await Future.delayed(Duration(milliseconds: 500));
         }
       }
-    } catch (e, stackTrace) {
-      Logger.log(method, 'Stock update failed: $e\n$stackTrace');
-      throw Exception('stock_update_failed'.tr(args: [e.toString()]));
     }
+
+    if (!allUpdatesSuccessful) {
+      Logger.log(method, 'Stock update failed: $errorMessage');
+      throw Exception('Failed to update stock: $errorMessage');
+    }
+
+    Logger.log(method, 'All stock updates completed successfully');
   }
 
   Future<void> _createOrder() async {
@@ -329,12 +509,12 @@ class _PaymentScreenState extends State<PaymentScreen>
               {'productId': item.productId, 'quantity': item.quantity})
           .toList();
 
-      await OrderService()
-          .createOrder(_customerId!, items, _selectedAddress ?? 'sohag');
-      await _updateStock();
+      // await OrderService()
+      //     .createOrder(_customerId!, items, _selectedAddress ?? 'Sohag');
+      // await _updateStock();
 
       for (var item in _filteredCartItems) {
-        await CartService().deleteFromCart(item.productId);
+        await CartService().deleteFromCart(item.productId!);
         Logger.log(method, 'Removed product ${item.productId} from cart');
       }
 
@@ -342,14 +522,12 @@ class _PaymentScreenState extends State<PaymentScreen>
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (c) => PaymentSuccessScreen(
-              totalAmount: widget.total + 5.0,
+            builder: (_) => PaymentSuccessScreen(
+              totalAmount: widget.total + _shippingPrice,
               customerId: _customerId!,
             ),
           ),
-        ).then((_) {
-          Navigator.pop(context, true);
-        });
+        ).then((_) => Navigator.pop(context, true));
       }
     } catch (e, stackTrace) {
       Logger.log(method, 'Order creation failed: $e\n$stackTrace');
@@ -367,12 +545,13 @@ class _PaymentScreenState extends State<PaymentScreen>
 
   Future<void> _handlePayment() async {
     const method = 'PaymentScreen._handlePayment';
-    Logger.log(method, 'Handling payment for total: ${widget.total + 5.0}');
+    Logger.log(
+        method, 'Handling payment for total: ${widget.total + _shippingPrice}');
 
     try {
       if (_filteredCartItems.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('empty_cart'.tr())),
+          SnackBar(content: Text('empty_cart').tr()),
         );
         return;
       }
@@ -380,13 +559,13 @@ class _PaymentScreenState extends State<PaymentScreen>
       setState(() => _isProcessing = true);
 
       bool paymentSuccessful = false;
-      final totalAmount = widget.total + 5.0;
+      final totalAmount = widget.total + _shippingPrice;
 
       if (_selectedPaymentMethod == 'card') {
         if (_savedCards.isEmpty) {
           final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const AddCardScreen()),
+            MaterialPageRoute(builder: (_) => const AddCardScreen()),
           );
           if (result == true) {
             await _fetchSavedCards();
@@ -437,7 +616,7 @@ class _PaymentScreenState extends State<PaymentScreen>
             style: TextStyle(
               fontSize: 16,
               fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-              color: isBold ? Color(0xFF1A1A1A) : Colors.grey[700],
+              color: isBold ? Color(0xFF1A1A1A) : Colors.grey[800],
             ),
           ),
         ],
@@ -508,10 +687,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                 width: 50,
                 height: 30,
                 color: Colors.white,
-                errorBuilder: (context, error, stackTrace) => const Icon(
-                    Icons.credit_card,
-                    color: Colors.white,
-                    size: 30),
+                errorBuilder: (_, __, ___) => const Icon(Icons.credit_card,
+                    color: Colors.white, size: 30),
               ),
               Container(
                 padding:
@@ -717,19 +894,48 @@ class _PaymentScreenState extends State<PaymentScreen>
               onPressed: () async {
                 final newAddress = await showDialog<String>(
                   context: context,
-                  builder: (context) => AlertDialog(
+                  builder: (_) => AlertDialog(
                     title: Text('enter_address'.tr()),
-                    content: TextField(
-                      decoration: InputDecoration(
-                        labelText: 'address'.tr(),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DropdownButtonFormField<String>(
+                          value: _selectedGovernorate,
+                          decoration: InputDecoration(
+                            labelText: 'governorate'.tr(),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          items: governorateShippingPrices.keys
+                              .map((governorate) => DropdownMenuItem(
+                                    value: governorate,
+                                    child: Text(governorate),
+                                  ))
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedGovernorate = value;
+                              _updateShippingPrice();
+                            });
+                          },
                         ),
-                      ),
-                      maxLines: 3,
-                      onChanged: (value) {
-                        _selectedAddress = value;
-                      },
+                        const SizedBox(height: 16),
+                        TextField(
+                          decoration: InputDecoration(
+                            labelText: 'address_details'.tr(),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          maxLines: 3,
+                          onChanged: (value) {
+                            _selectedAddress = value.isNotEmpty
+                                ? '$value, $_selectedGovernorate'
+                                : null;
+                          },
+                        ),
+                      ],
                     ),
                     actions: [
                       TextButton(
@@ -738,14 +944,14 @@ class _PaymentScreenState extends State<PaymentScreen>
                       ),
                       TextButton(
                         onPressed: () {
-                          if (_selectedAddress?.isNotEmpty ?? false) {
+                          if (_selectedAddress?.isNotEmpty ??
+                              false && _selectedGovernorate != null) {
                             Navigator.pop(context, _selectedAddress);
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content:
-                                    Text('please_enter_valid_address'.tr()),
-                              ),
+                                  content:
+                                      Text('please_enter_valid_address'.tr())),
                             );
                           }
                         },
@@ -757,6 +963,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                 if (newAddress != null && mounted) {
                   setState(() {
                     _selectedAddress = newAddress;
+                    _selectedGovernorate = _extractGovernorate();
+                    _updateShippingPrice();
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -778,10 +986,8 @@ class _PaymentScreenState extends State<PaymentScreen>
                 ),
               ),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(color: pkColor),
@@ -852,14 +1058,15 @@ class _PaymentScreenState extends State<PaymentScreen>
                             const SizedBox(height: 20),
                             _buildPriceRow('subtotal'.tr(),
                                 '${total.toStringAsFixed(2)} EGP'),
-                            _buildPriceRow('shipping'.tr(), '5.00 EGP'),
+                            _buildPriceRow('shipping'.tr(),
+                                '${_shippingPrice.toStringAsFixed(2)} EGP'),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 12),
                               child: Divider(thickness: 1),
                             ),
                             _buildPriceRow(
                               'total'.tr(),
-                              '${(total + 5.0).toStringAsFixed(2)} EGP',
+                              '${(total + _shippingPrice).toStringAsFixed(2)} EGP',
                               isBold: true,
                             ),
                           ],
@@ -888,7 +1095,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const AddCardScreen(),
+                                  builder: (_) => const AddCardScreen(),
                                 ),
                               );
                               if (result == true && mounted) {
@@ -913,9 +1120,7 @@ class _PaymentScreenState extends State<PaymentScreen>
                             ),
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 12,
-                              ),
+                                  horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(color: pkColor),

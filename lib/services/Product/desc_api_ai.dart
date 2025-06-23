@@ -3,11 +3,12 @@ import 'dart:async';
 
 class ProductDescriptionService {
   final Dio _dio = Dio();
-  static const String _baseUrl = 'https://api.openai.com/v1/chat/completions';
+  static const String _baseUrl =
+      'https://openrouter.ai/api/v1/chat/completions';
 
   // Store API keys
   static const List<String> _apiKeys = [
-    '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',
+    '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',
   ];
 
   int _currentKeyIndex = 0;
@@ -244,12 +245,14 @@ Example style:
               options: Options(
                 headers: {
                   'Authorization': 'Bearer $currentKey',
-                  'Content-Type': 'application/json',
+                  'HTTP-Referer':
+                      'https://yourapp.com', // Required by OpenRouter
+                  'X-Title': 'MedBridge', // Can be your app name
                 },
                 validateStatus: (status) => status! < 500,
               ),
               data: {
-                "model": "gpt-3.5-turbo",
+                "model": "mistralai/mistral-7b-instruct",
                 "messages": [
                   {
                     "role": "system",

@@ -16,53 +16,100 @@ import 'background/server_check.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await EasyLocalization.ensureInitialized();
-  Stripe.publishableKey =
-      'pk_test_51RYLblBFAxgnDhPb4pRPAmaoIiPTrfgJK4tfm5UYs8cnlZm19KYTuQplPfsXMWRkiPWTraQda979TjChHvkTfpKd00HAoPcRSm';
-  if (kDebugMode) {
-    HttpOverrides.global = MyHttpOverrides();
+  try {
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+    print('Firebase initialized successfully');
+  } catch (e, stackTrace) {
+    print('Error initializing Firebase: $e\n$stackTrace');
   }
 
-  final prefs = await SharedPreferences.getInstance();
-  final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-  final savedLocaleCode = prefs.getString('locale') ?? 'en';
+  try {
+    await EasyLocalization.ensureInitialized();
+    print('EasyLocalization initialized successfully');
+  } catch (e, stackTrace) {
+    print('Error initializing EasyLocalization: $e\n$stackTrace');
+  }
 
-  // Validate saved locale against supported locales
-  const supportedLocaleCodes = ['en', 'ar', 'de', 'zh'];
-  final startLocale = supportedLocaleCodes.contains(savedLocaleCode)
-      ? Locale(savedLocaleCode)
-      : const Locale('en'); // Default to English if saved locale is invalid
+  try {
+    Stripe.publishableKey =
+        'pk_test_51RYLblBFAxgnDhPb4pRPAmaoIiPTrfgJK4tfm5UYs8cnlZm19KYTuQplPfsXMWRkiPWTraQda979TjChHvkTfpKd00HAoPcRSm';
+    print('Stripe initialized successfully');
+  } catch (e, stackTrace) {
+    print('Error initializing Stripe: $e\n$stackTrace');
+  }
 
-  runApp(
-    EasyLocalization(
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ar'),
-        Locale('de'),
-        Locale('zh'),
-      ],
-      path: 'assets/translations',
-      fallbackLocale: const Locale('en'),
-      startLocale: startLocale,
-      child: MultiProvider(
-        providers: [
-          ChangeNotifierProvider(create: (_) => ThemeNotifier()),
-          BlocProvider(create: (_) => UserCubit()),
+  if (kDebugMode) {
+    HttpOverrides.global = MyHttpOverrides();
+    print('HttpOverrides set for debug mode');
+  }
+
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+    final savedLocaleCode = prefs.getString('locale') ?? 'en';
+    print(
+        'SharedPreferences loaded: isLoggedIn=$isLoggedIn, locale=$savedLocaleCode');
+
+    const supportedLocaleCodes = ['en', 'ar', 'de', 'zh'];
+    final startLocale = supportedLocaleCodes.contains(savedLocaleCode)
+        ? Locale(savedLocaleCode)
+        : const Locale('en');
+    print('Start locale set to: $startLocale');
+
+    runApp(
+      EasyLocalization(
+        supportedLocales: const [
+          Locale('en'),
+          Locale('ar'),
+          Locale('de'),
+          Locale('zh'),
         ],
-        child: Builder(
-          builder: (context) {
-            final notificationService = NotificationService(context);
-            notificationService.initNotifications();
-            return MedicalApp(
-              isLoggedIn: isLoggedIn,
-            );
-          },
+        path: 'assets/translations',
+        fallbackLocale: const Locale('en'),
+        startLocale: startLocale,
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => ThemeNotifier()),
+            BlocProvider(create: (_) => UserCubit()..loadUserData()),
+          ],
+          child: Builder(
+            builder: (context) {
+              try {
+                final notificationService = NotificationService(context);
+                notificationService.initNotifications().then((_) {
+                  print('NotificationService initialized successfully');
+                }).catchError((e, stackTrace) {
+                  print(
+                      'Error initializing NotificationService: $e\n$stackTrace');
+                });
+                return MedicalApp(
+                  isLoggedIn: isLoggedIn,
+                );
+              } catch (e, stackTrace) {
+                print('Error setting up NotificationService: $e\n$stackTrace');
+                return MedicalApp(
+                  isLoggedIn: isLoggedIn,
+                );
+              }
+            },
+          ),
         ),
       ),
-    ),
-  );
+    );
+  } catch (e, stackTrace) {
+    print('Error in main setup: $e\n$stackTrace');
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Text('Failed to initialize app: $e'),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MyHttpOverrides extends HttpOverrides {
@@ -70,7 +117,10 @@ class MyHttpOverrides extends HttpOverrides {
   HttpClient createHttpClient(SecurityContext? context) {
     final client = super.createHttpClient(context);
     client.badCertificateCallback =
-        (X509Certificate cert, String host, int port) => true;
+        (X509Certificate cert, String host, int port) {
+      print('Bypassing SSL for host: $host, port: $port');
+      return true;
+    };
     return client;
   }
 }

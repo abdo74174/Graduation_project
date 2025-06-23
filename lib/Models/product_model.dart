@@ -6,6 +6,7 @@ class ProductModel {
   final String description;
   final double price;
   final bool isNew;
+  final bool isDeleted;
   final double discount;
   final int subCategoryId;
   final String address;
@@ -28,6 +29,7 @@ class ProductModel {
     required this.description,
     required this.price,
     required this.isNew,
+    required this.isDeleted,
     this.guarantee,
     required this.address,
     required this.donation,
@@ -60,6 +62,7 @@ class ProductModel {
       description: parseStringField(json['description']),
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
       isNew: json['isNew'] ?? false,
+      isDeleted: json['isDeleted'] ?? false,
       address: json['address'] ?? "unknownAddress",
       discount: (json['discount'] as num?)?.toDouble() ?? 0.0,
       subCategoryId: json['subCategoryId'] ?? 0,
@@ -81,6 +84,7 @@ class ProductModel {
         price = 0,
         StockQuantity = 0,
         isNew = false,
+        isDeleted = false,
         donation = false,
         guarantee = 12,
         discount = 0,
@@ -98,6 +102,7 @@ class ProductModel {
       'description': description,
       'price': price,
       'isNew': isNew,
+      'isDeleted': isDeleted,
       'guarantee': guarantee,
       'discount': discount,
       "address": address,

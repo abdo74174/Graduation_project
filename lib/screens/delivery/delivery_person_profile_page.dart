@@ -184,6 +184,60 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
     }
   }
 
+  Future<void> _confirmShipped(int orderId) async {
+    if (_profile == null || _profile!.deliveryPersonId <= 0) {
+      setState(() {
+        _errorMessage = 'error_invalid_profile'.tr();
+      });
+      return;
+    }
+
+    setState(() {
+      _isUpdatingStatus = true;
+      _errorMessage = '';
+    });
+
+    try {
+      print("Delivery person confirming shipped status for order ID $orderId");
+      await _orderService.confirmOrderShippedByDeliveryPerson(
+          orderId, _profile!.deliveryPersonId);
+      await _fetchData();
+      setState(() {
+        _isUpdatingStatus = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Colors.white),
+              const SizedBox(width: 8),
+              Text('shipped_status_confirmed_successfully'.tr()),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    } catch (e) {
+      String errorKey = 'error_generic';
+      if (e.toString().contains('Status: 403')) {
+        errorKey = 'error_not_authorized';
+      } else if (e.toString().contains('Status: 400')) {
+        errorKey = 'error_not_awaiting_confirmation';
+      } else if (e.toString().contains('Status: 404')) {
+        errorKey = 'error_order_not_found';
+      }
+      print('Error confirming shipped status: $e');
+      setState(() {
+        _errorMessage = errorKey.tr(namedArgs: {'error': e.toString()});
+        _isUpdatingStatus = false;
+      });
+    }
+  }
+
   void _filterOrders() {
     final query = _searchController.text.toLowerCase();
     print("===== Filtering Orders =====");
@@ -317,139 +371,140 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
   }
 
   Widget _buildProfileCard(bool isDark) {
-    if (_profile == null) {
+    if (_profile != null) {
       return Container(
         margin: const EdgeInsets.all(20),
-        child: Shimmer.fromColors(
-          baseColor: Colors.grey[300]!,
-          highlightColor: Colors.grey[100]!,
-          child: Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    Colors.grey[850]!.withOpacity(0.8),
+                    Colors.grey[800]!.withOpacity(0.6),
+                  ]
+                : [
+                    Colors.white,
+                    Colors.grey[50]!.withOpacity(0.8),
+                  ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
+          ],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(20),
+          leading: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).primaryColor.withOpacity(0.7),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(15),
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).primaryColor.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.person,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+          title: Text(
+            _profile?.name ?? 'Unknown',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 4),
+              Text(
+                _profile?.email ?? 'No email',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+              Text(
+                _profile?.phone ?? 'No phone',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    'availability'.tr(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Switch(
+                    value: _profile?.isAvailable ?? false,
+                    onChanged: _isUpdatingStatus
+                        ? null
+                        : (value) => _updateDeliveryPersonAvailability(value),
+                    activeColor: Colors.green,
+                    inactiveThumbColor: Colors.red,
+                    activeTrackColor: Colors.green.withOpacity(0.5),
+                    inactiveTrackColor: Colors.red.withOpacity(0.5),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _profile?.isAvailable ?? false
+                        ? 'Available'
+                        : 'Not Available',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _profile?.isAvailable ?? false
+                          ? Colors.green
+                          : Colors.red,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       );
     }
 
+    // Show shimmer when _profile is null (loading)
     return Container(
       margin: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isDark
-              ? [
-                  Colors.grey[850]!.withOpacity(0.8),
-                  Colors.grey[800]!.withOpacity(0.6),
-                ]
-              : [
-                  Colors.white,
-                  Colors.grey[50]!.withOpacity(0.8),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(20),
-        leading: Container(
-          width: 60,
-          height: 60,
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Container(
+          height: 100,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Theme.of(context).primaryColor,
-                Theme.of(context).primaryColor.withOpacity(0.7),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).primaryColor.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.person,
             color: Colors.white,
-            size: 30,
+            borderRadius: BorderRadius.circular(24),
           ),
-        ),
-        title: Text(
-          _profile?.name ?? 'Unknown',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              _profile?.email ?? 'No email',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-            Text(
-              _profile?.phone ?? 'No phone',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Text(
-                  'availability'.tr(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Switch(
-                  value: _profile?.isAvailable ?? false,
-                  onChanged: _isUpdatingStatus
-                      ? null
-                      : (value) => _updateDeliveryPersonAvailability(value),
-                  activeColor: Colors.green,
-                  inactiveThumbColor: Colors.red,
-                  activeTrackColor: Colors.green.withOpacity(0.5),
-                  inactiveTrackColor: Colors.red.withOpacity(0.5),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _profile?.isAvailable ?? false
-                      ? 'Available'
-                      : 'Not Available',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: _profile?.isAvailable ?? false
-                        ? Colors.green
-                        : Colors.red,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );
@@ -830,6 +885,71 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
                         ),
                       );
                     }).toList(),
+                    const SizedBox(height: 16),
+                    if ((order.status == 'AwaitingDeliveryConfirmation' ||
+                            order.status == 'Assigned') &&
+                        !order.deliveryPersonConfirmedShipped)
+                      Container(
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.blue,
+                              Colors.blue.withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: _isUpdatingStatus
+                                ? null
+                                : () => _confirmShipped(order.orderId),
+                            child: Container(
+                              alignment: Alignment.center,
+                              child: _isUpdatingStatus
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'confirm_shipped'.tr(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -1115,7 +1235,7 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
                 ],
               ),
               child: const Icon(
-                Icons.local_shipping_outlined,
+                Icons.shopping_bag_outlined,
                 size: 60,
                 color: Colors.white,
               ),
@@ -1123,7 +1243,7 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
           ),
           const SizedBox(height: 24),
           Text(
-            'no_orders_assigned'.tr(),
+            'no_orders_found'.tr(),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -1132,7 +1252,7 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
           ),
           const SizedBox(height: 8),
           Text(
-            'no_orders_assigned_message'.tr(),
+            'no_orders_matching_criteria'.tr(),
             style: TextStyle(
               fontSize: 14,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -1156,7 +1276,7 @@ class _DeliveryPersonProfilePageState extends State<DeliveryPersonProfilePage>
                 onTap: _fetchData,
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
